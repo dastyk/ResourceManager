@@ -1,0 +1,398 @@
+Grammar
+
+    0 $accept: line "end of file"
+
+    1 line: statement
+    2     | line statement
+
+    3 statement: OBJECT NAME
+    4          | MTLLIB NAME
+    5          | POSITION REAL REAL REAL optreal
+    6          | TEXCOORD REAL REAL optreal2
+    7          | NORMAL REAL REAL REAL
+    8          | POINT REAL REAL optreal
+    9          | USEMTL NAME
+   10          | S BOOLEAN
+   11          | S INTEGER
+   12          | FACE createface
+
+   13 optreal: REAL
+   14        | %empty
+
+   15 optreal2: REAL
+   16         | %empty
+
+   17 createface: indices
+   18           | createface indices
+
+   19 indices: INTEGER
+   20        | indices SEP INTEGER
+
+
+Terminals, with rules where they appear
+
+"end of file" (0) 0
+error (256)
+REAL (258) 5 6 7 8 13 15
+INTEGER (259) 11 19 20
+POSITION (260) 5
+TEXCOORD (261) 6
+NORMAL (262) 7
+POINT (263) 8
+FACE (264) 12
+OBJECT (265) 3
+S (266) 10 11
+MTLLIB (267) 4
+USEMTL (268) 9
+NAME (269) 3 4 9
+BOOLEAN (270) 10
+SEP (271) 20
+
+
+Nonterminals, with rules where they appear
+
+$accept (17)
+    on left: 0
+line (18)
+    on left: 1 2, on right: 0 2
+statement (19)
+    on left: 3 4 5 6 7 8 9 10 11 12, on right: 1 2
+optreal (20)
+    on left: 13 14, on right: 5 8
+optreal2 (21)
+    on left: 15 16, on right: 6
+createface (22)
+    on left: 17 18, on right: 12 18
+indices (23)
+    on left: 19 20, on right: 17 18 20
+
+
+State 0
+
+    0 $accept: . line "end of file"
+
+    POSITION  shift, and go to state 1
+    TEXCOORD  shift, and go to state 2
+    NORMAL    shift, and go to state 3
+    POINT     shift, and go to state 4
+    FACE      shift, and go to state 5
+    OBJECT    shift, and go to state 6
+    S         shift, and go to state 7
+    MTLLIB    shift, and go to state 8
+    USEMTL    shift, and go to state 9
+
+    line       go to state 10
+    statement  go to state 11
+
+
+State 1
+
+    5 statement: POSITION . REAL REAL REAL optreal
+
+    REAL  shift, and go to state 12
+
+
+State 2
+
+    6 statement: TEXCOORD . REAL REAL optreal2
+
+    REAL  shift, and go to state 13
+
+
+State 3
+
+    7 statement: NORMAL . REAL REAL REAL
+
+    REAL  shift, and go to state 14
+
+
+State 4
+
+    8 statement: POINT . REAL REAL optreal
+
+    REAL  shift, and go to state 15
+
+
+State 5
+
+   12 statement: FACE . createface
+
+    INTEGER  shift, and go to state 16
+
+    createface  go to state 17
+    indices     go to state 18
+
+
+State 6
+
+    3 statement: OBJECT . NAME
+
+    NAME  shift, and go to state 19
+
+
+State 7
+
+   10 statement: S . BOOLEAN
+   11          | S . INTEGER
+
+    INTEGER  shift, and go to state 20
+    BOOLEAN  shift, and go to state 21
+
+
+State 8
+
+    4 statement: MTLLIB . NAME
+
+    NAME  shift, and go to state 22
+
+
+State 9
+
+    9 statement: USEMTL . NAME
+
+    NAME  shift, and go to state 23
+
+
+State 10
+
+    0 $accept: line . "end of file"
+    2 line: line . statement
+
+    "end of file"  shift, and go to state 24
+    POSITION       shift, and go to state 1
+    TEXCOORD       shift, and go to state 2
+    NORMAL         shift, and go to state 3
+    POINT          shift, and go to state 4
+    FACE           shift, and go to state 5
+    OBJECT         shift, and go to state 6
+    S              shift, and go to state 7
+    MTLLIB         shift, and go to state 8
+    USEMTL         shift, and go to state 9
+
+    statement  go to state 25
+
+
+State 11
+
+    1 line: statement .
+
+    $default  reduce using rule 1 (line)
+
+
+State 12
+
+    5 statement: POSITION REAL . REAL REAL optreal
+
+    REAL  shift, and go to state 26
+
+
+State 13
+
+    6 statement: TEXCOORD REAL . REAL optreal2
+
+    REAL  shift, and go to state 27
+
+
+State 14
+
+    7 statement: NORMAL REAL . REAL REAL
+
+    REAL  shift, and go to state 28
+
+
+State 15
+
+    8 statement: POINT REAL . REAL optreal
+
+    REAL  shift, and go to state 29
+
+
+State 16
+
+   19 indices: INTEGER .
+
+    $default  reduce using rule 19 (indices)
+
+
+State 17
+
+   12 statement: FACE createface .
+   18 createface: createface . indices
+
+    INTEGER  shift, and go to state 16
+
+    $default  reduce using rule 12 (statement)
+
+    indices  go to state 30
+
+
+State 18
+
+   17 createface: indices .
+   20 indices: indices . SEP INTEGER
+
+    SEP  shift, and go to state 31
+
+    $default  reduce using rule 17 (createface)
+
+
+State 19
+
+    3 statement: OBJECT NAME .
+
+    $default  reduce using rule 3 (statement)
+
+
+State 20
+
+   11 statement: S INTEGER .
+
+    $default  reduce using rule 11 (statement)
+
+
+State 21
+
+   10 statement: S BOOLEAN .
+
+    $default  reduce using rule 10 (statement)
+
+
+State 22
+
+    4 statement: MTLLIB NAME .
+
+    $default  reduce using rule 4 (statement)
+
+
+State 23
+
+    9 statement: USEMTL NAME .
+
+    $default  reduce using rule 9 (statement)
+
+
+State 24
+
+    0 $accept: line "end of file" .
+
+    $default  accept
+
+
+State 25
+
+    2 line: line statement .
+
+    $default  reduce using rule 2 (line)
+
+
+State 26
+
+    5 statement: POSITION REAL REAL . REAL optreal
+
+    REAL  shift, and go to state 32
+
+
+State 27
+
+    6 statement: TEXCOORD REAL REAL . optreal2
+
+    REAL  shift, and go to state 33
+
+    $default  reduce using rule 16 (optreal2)
+
+    optreal2  go to state 34
+
+
+State 28
+
+    7 statement: NORMAL REAL REAL . REAL
+
+    REAL  shift, and go to state 35
+
+
+State 29
+
+    8 statement: POINT REAL REAL . optreal
+
+    REAL  shift, and go to state 36
+
+    $default  reduce using rule 14 (optreal)
+
+    optreal  go to state 37
+
+
+State 30
+
+   18 createface: createface indices .
+   20 indices: indices . SEP INTEGER
+
+    SEP  shift, and go to state 31
+
+    $default  reduce using rule 18 (createface)
+
+
+State 31
+
+   20 indices: indices SEP . INTEGER
+
+    INTEGER  shift, and go to state 38
+
+
+State 32
+
+    5 statement: POSITION REAL REAL REAL . optreal
+
+    REAL  shift, and go to state 36
+
+    $default  reduce using rule 14 (optreal)
+
+    optreal  go to state 39
+
+
+State 33
+
+   15 optreal2: REAL .
+
+    $default  reduce using rule 15 (optreal2)
+
+
+State 34
+
+    6 statement: TEXCOORD REAL REAL optreal2 .
+
+    $default  reduce using rule 6 (statement)
+
+
+State 35
+
+    7 statement: NORMAL REAL REAL REAL .
+
+    $default  reduce using rule 7 (statement)
+
+
+State 36
+
+   13 optreal: REAL .
+
+    $default  reduce using rule 13 (optreal)
+
+
+State 37
+
+    8 statement: POINT REAL REAL optreal .
+
+    $default  reduce using rule 8 (statement)
+
+
+State 38
+
+   20 indices: indices SEP INTEGER .
+
+    $default  reduce using rule 20 (indices)
+
+
+State 39
+
+    5 statement: POSITION REAL REAL REAL optreal .
+
+    $default  reduce using rule 5 (statement)
