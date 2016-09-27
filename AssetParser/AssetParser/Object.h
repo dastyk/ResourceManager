@@ -30,13 +30,13 @@ struct Normal
 struct Indices
 {
 	uint8_t indexCount;
-	uint64_t index[4];// array of size 4.
+	uint64_t index[3];// array of size 4.
 };
 
 struct Face
 {
 	uint8_t indexCount;
-	Indices indices[4]; // Array of size 4.
+	Indices indices[3]; // Array of size 4.
 	Face(vector<vector<uint64_t>>& face) : indexCount(0)
 	{
 		indexCount = face.size();
@@ -55,7 +55,7 @@ struct Face
 
 struct SubMesh
 {
-	char name[100];
+	char name[20];
 	uint64_t faceStart;
 	uint64_t faceCount;
 };
