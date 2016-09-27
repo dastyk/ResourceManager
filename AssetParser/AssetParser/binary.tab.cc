@@ -586,13 +586,13 @@ namespace yy {
 
   case 6:
 #line 48 "binary.yy" // lalr1.cc:847
-    { o.AddPosition(Position(yystack_[3].value.as< float > (),yystack_[2].value.as< float > (),yystack_[1].value.as< float > (),yystack_[0].value.as< float > ())); }
+    { o.AddPosition(Position(yystack_[3].value.as< float > (),yystack_[2].value.as< float > (),yystack_[1].value.as< float > ())); }
 #line 591 "binary.tab.cc" // lalr1.cc:847
     break;
 
   case 7:
 #line 49 "binary.yy" // lalr1.cc:847
-    { o.AddTexCoord(TexCoord(yystack_[2].value.as< float > (),yystack_[1].value.as< float > (),yystack_[0].value.as< float > ()));}
+    { o.AddTexCoord(TexCoord(yystack_[2].value.as< float > (),yystack_[1].value.as< float > ()));}
 #line 597 "binary.tab.cc" // lalr1.cc:847
     break;
 

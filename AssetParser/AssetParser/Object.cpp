@@ -57,7 +57,7 @@ void Object::Alloc(int flag)
 		break;
 	}
 	ndat = _data;
-	ndat.allocated = sizeof(Data) + 
+	ndat.allocated = sizeof(Data) +
 		_data.PosCap * sizeof(Position) +
 		_data.TexCap * sizeof(TexCoord) +
 		_data.NormCap * sizeof(Normal) +
@@ -314,12 +314,12 @@ void Object::Print()
 	cout << "Positions: " << endl;
 	for (uint64_t i = 0; i < _data.NumPos; i++)
 	{
-		cout << "\t" << _datap.positions[i].x << " " << _datap.positions[i].y << " " << _datap.positions[i].z << " " << _datap.positions[i].w << endl;
+		cout << "\t" << _datap.positions[i].x << " " << _datap.positions[i].y << " " << _datap.positions[i].z /*<< " " << _datap.positions[i].w*/ << endl;
 	}
 	cout << "Texcoords: " << endl;
 	for (uint64_t i = 0; i < _data.NumTex; i++)
 	{
-		cout << "\t" << _datap.texCoords[i].u << " " << _datap.texCoords[i].v << " " << _datap.texCoords[i].w << " " << endl;
+		cout << "\t" << _datap.texCoords[i].u << " " << _datap.texCoords[i].v /*<< " " << _datap.texCoords[i].w << " "*/ << endl;
 	}
 	cout << "Normals: " << endl;
 	for (uint64_t i = 0; i < _data.NumNorm; i++)
@@ -375,4 +375,3 @@ void Object::GenerateArf(ofstream & of, int flag)
 	of.write((char*)&_data, sizeof(Data));
 	of.write((char*)_data.buffer, _data.allocated);
 }
-

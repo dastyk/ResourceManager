@@ -1,4 +1,4 @@
-%skeleton "lalr1.cc" 
+%skeleton "lalr1.cc"
 %defines
 %define api.value.type variant
 %define api.token.constructor
@@ -43,30 +43,30 @@ line			: statement									{ }
 				| line statement							{ }
 				;
 
-statement		: OBJECT NAME 								{ o.AddSubMesh($2); }		
+statement		: OBJECT NAME 								{ o.AddSubMesh($2); }
 				| MTLLIB NAME								{ }
-				| POSITION REAL REAL REAL optreal			{ o.AddPosition(Position($2,$3,$4,$5)); }
-				| TEXCOORD REAL REAL optreal2				{ o.AddTexCoord(TexCoord($2,$3,$4));}
+				| POSITION REAL REAL REAL optreal			{ o.AddPosition(Position($2,$3,$4)); }
+				| TEXCOORD REAL REAL optreal2				{ o.AddTexCoord(TexCoord($2,$3));}
 				| NORMAL REAL REAL REAL						{ o.AddNormal(Normal($2,$3,$4)); }
 				| POINT REAL REAL optreal					{ }
 				| USEMTL NAME								{}					
 				| S BOOLEAN									{ }
 				| S INTEGER 								{ }
 				| FACE createface							{ o.AddFace(Face($2)); }
-				;	
-	
+				;
+
 optreal			: REAL										{ $$ = $1; }
 				| /*empty*/									{ $$ = 1.0f; }
 				;
-				
+
 optreal2		: REAL										{ $$ = $1;}
 				| /*empty*/									{ $$ = 0.0f;}
 				;
-				
+
 createface		: indices 									{ $$.push_back($1); }
 				| createface indices						{ $$ = $1; $$.push_back($2);}
 				;
-				
+
 indices			: INTEGER									{ $$.push_back($1); }
-				| indices SEP INTEGER						{ $$ = $1; $$.push_back($3);}		
-				;	
+				| indices SEP INTEGER						{ $$ = $1; $$.push_back($3);}
+				;
