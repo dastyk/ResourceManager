@@ -138,7 +138,10 @@
     <ClInclude Include="DirectXTK\pch.h" />
     <ClInclude Include="DirectXTK\PlatformHelpers.h" />
     <ClInclude Include="DirectXTK\WICTextureLoader.h" />
+    <ClInclude Include="GUID.h" />
     <ClInclude Include="Macros.h" />
+    <ClInclude Include="Observer.h" />
+    <ClInclude Include="Subject.h" />
     <ClInclude Include="Structs.h" />
     <ClInclude Include="Timer.h" />
     <ClInclude Include="Window.h" />
