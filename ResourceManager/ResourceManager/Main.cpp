@@ -4,13 +4,13 @@
 #include <sstream>
 #include <string>
 #include "ResourceManager.h"
-
+#include "MemoryManager.h"
 int main(int argc, char** argv)
 {
 	Core::CreateInstance();
 	Core* core = Core::GetInstance();
 	core->Init(800, 600, false);
-
+	MemoryManager::CreateInstance();
 	ResourceManager::CreateInstance();
 
 	//ResourceManager::GetInstance()->LoadResource("Test/test.obj");

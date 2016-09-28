@@ -15,10 +15,7 @@ class MemoryManager
 	~MemoryManager();
 private:
 	static MemoryManager* _instance;
-	static void CreateInstance();
-	static void DeleteInstance();
 
-	void Init(uint64_t size);
 
 
 	std::mutex _mutexLock;
@@ -47,6 +44,10 @@ private:
 
 
 public:
+	static void CreateInstance();
+	static void DeleteInstance();
+
+	void Init(uint64_t size);
 
 	static PoolAllocator* CreatePoolAllocator(uint32_t sizeOfObject, uint32_t nrOfObjects, uint32_t alignment);
 	static StackAllocator* CreateStackAllocator(uint64_t size);
