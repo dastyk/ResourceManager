@@ -23,6 +23,11 @@ void MemoryManager::DeleteInstance()
 	delete _instance;
 }
 
+MemoryManager * MemoryManager::GetInstance()
+{
+	return _instance;
+}
+
 void MemoryManager::Init(uint64_t size)
 {
 	_free = _memory = new char[size];

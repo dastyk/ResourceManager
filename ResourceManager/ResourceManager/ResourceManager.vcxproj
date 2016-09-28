@@ -143,7 +143,7 @@
     <ClInclude Include="DirectXTK\PlatformHelpers.h" />
     <ClInclude Include="DirectXTK\WICTextureLoader.h" />
     <ClInclude Include="flags.h" />
-    <ClInclude Include="GUID.h" />
+    <ClInclude Include="SM_GUID.h" />
     <ClInclude Include="Macros.h" />
     <ClInclude Include="MemoryManager.h" />
     <ClInclude Include="MeshData.h" />

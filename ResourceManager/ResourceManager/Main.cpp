@@ -11,12 +11,13 @@ int main(int argc, char** argv)
 	Core* core = Core::GetInstance();
 	core->Init(800, 600, false);
 	MemoryManager::CreateInstance();
+	MemoryManager::GetInstance()->Init(512U * 1024U * 1024U);
 	ResourceManager::CreateInstance();
 
 	//ResourceManager::GetInstance()->LoadResource("Test/test.obj");
 
 	ResourceManager::DeleteInstance();
-
+	MemoryManager::DeleteInstance();
 	Core::ShutDown();
 	DebugLogger::GetInstance()->Dump();
 

@@ -1,5 +1,5 @@
-#ifndef GUID_H
-#define GUID_H
+#ifndef SM_GUID_H
+#define SM_GUID_H
 
 #include <stdint.h>
 

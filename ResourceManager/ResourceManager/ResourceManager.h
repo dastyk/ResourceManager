@@ -3,7 +3,7 @@
 
 #include "Resource.h"
 #include <vector>
-#include "flags.h"
+
 
 // Flöjt TODO:
 // Chunked allocation, i.e. make this a pool allocator with doubly linked list of
@@ -21,14 +21,11 @@
 class ResourceManager
 {
 public:
-	CreateFlag(Flags, uint32_t, 2,
-		PERSISTENT = 1 << 0,
-		FUZZY = 1 << 1
-	);
+
 
 	static void CreateInstance();
 	static void DeleteInstance();
-	static Resource& LoadResource(SM_GUID guid, const Flags& flag);
+	static Resource& LoadResource(SM_GUID guid, const Resource::Flag& flag);
 private:
 	ResourceManager();
 	~ResourceManager();

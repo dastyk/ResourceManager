@@ -1,7 +1,7 @@
 #ifndef OBSERVER_H
 #define OBSERVER_H
 
-#include "GUID.h"
+#include "SM_GUID.h"
 
 class Observer
 {

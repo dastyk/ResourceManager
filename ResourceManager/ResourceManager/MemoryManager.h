@@ -46,7 +46,7 @@ private:
 public:
 	static void CreateInstance();
 	static void DeleteInstance();
-
+	static MemoryManager* GetInstance();
 	void Init(uint64_t size);
 
 	static PoolAllocator* CreatePoolAllocator(uint32_t sizeOfObject, uint32_t nrOfObjects, uint32_t alignment);

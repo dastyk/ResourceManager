@@ -27,10 +27,23 @@ void ResourceManager::DeleteInstance()
 }
 
 
-Resource & ResourceManager::LoadResource(SM_GUID guid, const Flags& flag)
+Resource & ResourceManager::LoadResource(SM_GUID guid, const Resource::Flag& flag)
 {
 	// TODO: insert return statement here
 	// rawData = AssetLoader->Load(SM_GUID);
 	// resources.push_back(AssetParser->Parse(rawData))
-	return _instance->_resources.back();
+
+	// Mutex lock
+	// if(loaded)
+	//		Resource& r = _instance->Find(guid);
+	//		r._refCount++;
+	//		return r;
+	// else
+	_instance->_resources.push_back(Resource());
+	Resource& r = _instance->_resources.back();
+	r._refCount++;
+	r.ID = guid;
+	r._flags = flag;
+	// Mutex unlock
+	return r;
 }
