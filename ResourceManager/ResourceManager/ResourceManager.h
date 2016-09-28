@@ -3,6 +3,7 @@
 
 #include "Resource.h"
 #include <stack>
+#include "flags.h"
 
 // Flöjt TODO:
 // Chunked allocation, i.e. make this a pool allocator with doubly linked list of
@@ -10,14 +11,19 @@
 // we can find enough blocks in a row to store a file.
 // Use asset loaders and asset parsers with GUID to load.
 
+CreateFlag(Flags, uint32_t, 2,
+	PERSISTENT = 1 << 0,
+	FUZZY = 1 << 1
+);
+
+
 class ResourceManager
 {
 public:
 	static void CreateInstance();
 	static void DeleteInstance();
 	static ResourceManager* GetInstance();
-
-	Resource& LoadResource(SM_GUID guid);
+	Resource& LoadResource(SM_GUID guid, const Flags& flag);
 private:
 	ResourceManager();
 	~ResourceManager();

@@ -32,7 +32,7 @@ ResourceManager * ResourceManager::GetInstance()
 }
 
 
-Resource & ResourceManager::LoadResource(SM_GUID guid)
+Resource & ResourceManager::LoadResource(SM_GUID guid, const Flags& flag)
 {
 	// TODO: insert return statement here
 	// rawData = AssetLoader->Load(SM_GUID);
