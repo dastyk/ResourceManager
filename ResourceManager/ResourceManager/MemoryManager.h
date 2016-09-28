@@ -11,7 +11,6 @@
 
 class MemoryManager
 {
-public:
 	MemoryManager();
 	~MemoryManager();
 private:
