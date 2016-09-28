@@ -28,8 +28,7 @@ public:
 
 	static void CreateInstance();
 	static void DeleteInstance();
-	static ResourceManager* GetInstance();
-	Resource& LoadResource(SM_GUID guid, const Flags& flag);
+	static Resource& LoadResource(SM_GUID guid, const Flags& flag);
 private:
 	ResourceManager();
 	~ResourceManager();

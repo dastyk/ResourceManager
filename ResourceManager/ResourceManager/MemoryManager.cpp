@@ -2,21 +2,36 @@
 #include <iostream>
 #include <string.h>
 
-MemoryManager::MemoryManager(uint32_t size)
-{
+MemoryManager* MemoryManager::_instance = nullptr;
 
-	_free = _memory = new char[size];
-	memset(_free, 0, size);
-	
-	_remainingMemory = size;
-	_firstFree = (BlockInfo*)_free;
-	_firstFree->size = size;
-	_firstFree->next = nullptr;
+MemoryManager::MemoryManager()
+{
 }
 
 MemoryManager::~MemoryManager()
 {
 	delete[] _memory;
+}
+
+void MemoryManager::CreateInstance()
+{
+	_instance = new MemoryManager;
+}
+
+void MemoryManager::DeleteInstance()
+{
+	delete _instance;
+}
+
+void MemoryManager::Init(uint64_t size)
+{
+	_free = _memory = new char[size];
+	memset(_free, 0, size);
+
+	_remainingMemory = size;
+	_firstFree = (BlockInfo*)_free;
+	_firstFree->size = size;
+	_firstFree->next = nullptr;
 }
 
 void * MemoryManager::_Allocate(const size_t size)
@@ -133,7 +148,7 @@ PoolAllocator * MemoryManager::CreatePoolAllocator(uint32_t sizeOfObject, uint32
 
 	if (alignment)
 	{
-		_mutexLock.lock();
+		_instance->_mutexLock.lock();
 
 		// Use a block size that is the smallest multiple of the desired alignment
 		// greater than or equal to the block size.
@@ -146,63 +161,67 @@ PoolAllocator * MemoryManager::CreatePoolAllocator(uint32_t sizeOfObject, uint32
 		}
 
 		//char* rawAddress = _free + sizeof(PoolAllocator);
-		char* rawAddress = (char*)_Allocate(effectiveBlockSize * (nrOfObjects + 1) + sizeof(PoolAllocator));
+		char* rawAddress = (char*)_instance->_Allocate(effectiveBlockSize * (nrOfObjects + 1) + sizeof(PoolAllocator));
 		uint64_t mask = alignment - 1;
 		uint64_t misalignment = mask & (size_t)(rawAddress + sizeof(PoolAllocator));
 		uint64_t adjustment = alignment - misalignment;
 		uint64_t requirement = effectiveBlockSize * (nrOfObjects + 1) + sizeof(PoolAllocator);
-		if (_remainingMemory < (requirement))
+		if (_instance->_remainingMemory < (requirement))
 		{
 			throw std::runtime_error("Not enough memory");
 		}
-		_remainingMemory -= requirement;
+		_instance->_remainingMemory -= requirement;
 		char* alignedAddress = rawAddress + adjustment + sizeof(PoolAllocator);
 		
 		PoolAllocator* pool = new(rawAddress) PoolAllocator(alignedAddress, effectiveBlockSize, nrOfObjects);
-		_allocatedBlocks[rawAddress] = effectiveBlockSize * (nrOfObjects + 1) + sizeof(PoolAllocator);
+		_instance->_allocatedBlocks[rawAddress] = effectiveBlockSize * (nrOfObjects + 1) + sizeof(PoolAllocator);
 
-		_mutexLock.unlock();
+		_instance->_mutexLock.unlock();
 
 		return pool;
 	}
 	else
 	{
-		_mutexLock.lock();
-		char* rawAdd = (char*)_Allocate(sizeOfObject * nrOfObjects + sizeof(PoolAllocator));
+		_instance->_mutexLock.lock();
+		char* rawAdd = (char*)_instance->_Allocate(sizeOfObject * nrOfObjects + sizeof(PoolAllocator));
 		PoolAllocator* pool = new(rawAdd) PoolAllocator(rawAdd + sizeof(PoolAllocator), sizeOfObject, nrOfObjects);
-		_allocatedBlocks[rawAdd] = sizeof(PoolAllocator) + sizeOfObject * nrOfObjects;
-		_mutexLock.unlock();
+		_instance->_allocatedBlocks[rawAdd] = sizeof(PoolAllocator) + sizeOfObject * nrOfObjects;
+		_instance->_mutexLock.unlock();
 		return pool;
 	}
 }
 
 StackAllocator * MemoryManager::CreateStackAllocator(uint64_t size)
 {
-	_mutexLock.lock();
-	if (_remainingMemory < size + sizeof(StackAllocator))
+	_instance->_mutexLock.lock();
+	if (_instance->_remainingMemory < size + sizeof(StackAllocator))
 	{
 		throw std::runtime_error("Not enough memory");
 	}
-	char* rawAdd = (char*)_Allocate(size + sizeof(StackAllocator));
+	char* rawAdd = (char*)_instance->_Allocate(size + sizeof(StackAllocator));
 	StackAllocator* stack = new(rawAdd) StackAllocator(rawAdd + sizeof(StackAllocator), size);
-	_allocatedBlocks[rawAdd] = sizeof(StackAllocator) + size;
-	_remainingMemory -= sizeof(StackAllocator) + size;
-	_mutexLock.unlock();
+	_instance->_allocatedBlocks[rawAdd] = sizeof(StackAllocator) + size;
+	_instance->_remainingMemory -= sizeof(StackAllocator) + size;
+	_instance->_mutexLock.unlock();
 	return stack;
 }
 
 void MemoryManager::ReleasePoolAllocator(PoolAllocator * object)
 {
-	_Free(object, _allocatedBlocks[(void*)object]);
-	_remainingMemory += _allocatedBlocks[object];
-	_allocatedBlocks.erase(object);
+	_instance->_mutexLock.lock();
+	_instance->_Free(object, _instance->_allocatedBlocks[(void*)object]);
+	_instance->_remainingMemory += _instance->_allocatedBlocks[object];
+	_instance->_allocatedBlocks.erase(object);
+	_instance->_mutexLock.unlock();
 }
 
 void MemoryManager::ReleaseStackAllocator(StackAllocator * object)
 {
-	_Free(object, _allocatedBlocks[(void*)object]);
-	_remainingMemory += _allocatedBlocks[object];
-	_allocatedBlocks.erase(object);
+	_instance->_mutexLock.lock();
+	_instance->_Free(object, _instance->_allocatedBlocks[(void*)object]);
+	_instance->_remainingMemory += _instance->_allocatedBlocks[object];
+	_instance->_allocatedBlocks.erase(object);
+	_instance->_mutexLock.unlock();
 }
 
 void MemoryManager::PrintBlockInfo()

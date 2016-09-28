@@ -12,9 +12,16 @@
 class MemoryManager
 {
 public:
-	MemoryManager(uint32_t size);
+	MemoryManager();
 	~MemoryManager();
 private:
+	static MemoryManager* _instance;
+	static void CreateInstance();
+	static void DeleteInstance();
+
+	void Init(uint64_t size);
+
+
 	std::mutex _mutexLock;
 	char* _memory;
 	char* _free;
@@ -42,11 +49,11 @@ private:
 
 public:
 
-	PoolAllocator* CreatePoolAllocator(uint32_t sizeOfObject, uint32_t nrOfObjects, uint32_t alignment);
-	StackAllocator* CreateStackAllocator(uint64_t size);
+	static PoolAllocator* CreatePoolAllocator(uint32_t sizeOfObject, uint32_t nrOfObjects, uint32_t alignment);
+	static StackAllocator* CreateStackAllocator(uint64_t size);
 
-	void ReleasePoolAllocator(PoolAllocator* object);
-	void ReleaseStackAllocator(StackAllocator* object);
+	static void ReleasePoolAllocator(PoolAllocator* object);
+	static void ReleaseStackAllocator(StackAllocator* object);
 
 	//DEBUG
 	void PrintBlockInfo();
