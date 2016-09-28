@@ -17,13 +17,14 @@ public:
 
 	friend ResourceManager;
 	~Resource() { observers.clear(); }
+
+	// ResourceData* data;
 protected:
 	
 	std::vector<Observer*> observers;
 	SM_GUID ID;
 	Flag _flags;
 	uint16_t _refCount;
-	
 	
 	Resource() : _refCount(0) { };
 	
