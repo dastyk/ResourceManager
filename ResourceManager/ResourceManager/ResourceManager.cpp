@@ -37,5 +37,5 @@ Resource & ResourceManager::LoadResource(SM_GUID guid, const Flags& flag)
 	// TODO: insert return statement here
 	// rawData = AssetLoader->Load(SM_GUID);
 	// resources.push_back(AssetParser->Parse(rawData))
-	return _resources.top();
+	return _resources.back();
 }

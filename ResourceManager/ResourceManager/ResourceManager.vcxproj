@@ -124,7 +124,10 @@
     <ClCompile Include="DirectXTK\DDSTextureLoader.cpp" />
     <ClCompile Include="DirectXTK\WICTextureLoader.cpp" />
     <ClCompile Include="Main.cpp" />
+    <ClCompile Include="MemoryManager.cpp" />
+    <ClCompile Include="PoolAllocator.cpp" />
     <ClCompile Include="ResourceManager.cpp" />
+    <ClCompile Include="StackAllocator.cpp" />
     <ClCompile Include="Timer.cpp" />
     <ClCompile Include="Window.cpp" />
   </ItemGroup>
@@ -142,10 +145,13 @@
     <ClInclude Include="flags.h" />
     <ClInclude Include="GUID.h" />
     <ClInclude Include="Macros.h" />
+    <ClInclude Include="MemoryManager.h" />
     <ClInclude Include="MeshData.h" />
     <ClInclude Include="Observer.h" />
+    <ClInclude Include="PoolAllocator.h" />
     <ClInclude Include="ResourceManager.h" />
     <ClInclude Include="Resource.h" />
+    <ClInclude Include="StackAllocator.h" />
     <ClInclude Include="Structs.h" />
     <ClInclude Include="Timer.h" />
     <ClInclude Include="Window.h" />

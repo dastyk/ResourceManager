@@ -2,7 +2,7 @@
 #define _RESOURCE_MANAGER_H_
 
 #include "Resource.h"
-#include <stack>
+#include <vector>
 #include "flags.h"
 
 // Flöjt TODO:
@@ -38,7 +38,7 @@ private:
 
 private:
 	static ResourceManager* _instance;
-	std::stack<Resource> _resources;
+	std::vector<Resource> _resources;
 };
 
 #endif
