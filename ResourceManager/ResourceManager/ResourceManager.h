@@ -2,6 +2,7 @@
 #define _RESOURCE_MANAGER_H_
 
 #include "Resource.h"
+#include <stack>
 
 // Flöjt TODO:
 // Chunked allocation, i.e. make this a pool allocator with doubly linked list of
@@ -9,20 +10,23 @@
 // we can find enough blocks in a row to store a file.
 // Use asset loaders and asset parsers with GUID to load.
 
-class ResourceManager : public Observer
+class ResourceManager
 {
 public:
+	static void CreateInstance();
+	static void DeleteInstance();
+	static ResourceManager* GetInstance();
+
+	Resource& LoadResource(SM_GUID guid);
+private:
 	ResourceManager();
 	~ResourceManager();
-
-	void Notify(GUID guid);
-
-private:
 	ResourceManager(const ResourceManager& other);
 	ResourceManager& operator=(const ResourceManager& rhs);
 
 private:
-
+	static ResourceManager* _instance;
+	std::stack<Resource> _resources;
 };
 
 #endif

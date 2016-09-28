@@ -3,8 +3,17 @@
 
 #include <stdint.h>
 
-struct GUID
+struct SM_GUID
 {
+	SM_GUID()
+	{
+
+	}
+
+	SM_GUID(const char* c)
+	{
+		// SM_GUID = c.Hash();
+	}
 	uint32_t Data1;
 	uint16_t Data2;
 	uint16_t Data3;

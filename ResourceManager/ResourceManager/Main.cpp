@@ -3,7 +3,7 @@
 #include <SDL_events.h>
 #include <sstream>
 #include <string>
-
+#include "ResourceManager.h"
 
 int main(int argc, char** argv)
 {
@@ -11,9 +11,16 @@ int main(int argc, char** argv)
 	Core* core = Core::GetInstance();
 	core->Init(800, 600, false);
 
+	ResourceManager::CreateInstance();
+
+	//ResourceManager::GetInstance()->LoadResource("Test/test.obj");
+
+	ResourceManager::DeleteInstance();
 
 	Core::ShutDown();
 	DebugLogger::GetInstance()->Dump();
+
+	
 
 	return 0;
 }

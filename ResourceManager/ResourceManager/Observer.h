@@ -9,7 +9,7 @@ public:
 	Observer() {};
 	virtual ~Observer() {};
 	
-	virtual void Notify(GUID guid) = 0;
+	virtual void Notify(SM_GUID guid) = 0;
 };
 
 

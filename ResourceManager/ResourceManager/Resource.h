@@ -8,14 +8,15 @@ class Resource
 {
 protected:
 	std::vector<Observer*> observers;
-	GUID ID;
+	SM_GUID ID;
 
-	void _NotifyObserver() { for (auto &it : observers) { it->Notify(ID); } };
-
-public:
+	
+	
 	Resource() { };
+public:
 	~Resource() { observers.clear(); }
 
+	void _NotifyObserver() { for (auto &it : observers) { it->Notify(ID); } };
 	void registerObserver(Observer* observer) { observers.push_back(observer); }
 	void unregisterObserver(Observer* observer)
 	{ 
@@ -25,8 +26,10 @@ public:
 				observers.erase(it);
 		} 
 	}
-	void SetID(GUID inID) { ID = inID; };
-	GUID GetID() { return ID; };
+	void SetID(SM_GUID inID) { ID = inID; };
+	SM_GUID GetGUID()const { return ID; };
+
+	operator SM_GUID()const { return ID; }
 };
 
 

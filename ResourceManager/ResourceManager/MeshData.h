@@ -1,6 +1,9 @@
 #ifndef __cplusplus
 typedef nullptr NULL;
 #endif
+
+#include <stdint.h>
+
 struct Position
 {
 	float x, y, z;//, w;
