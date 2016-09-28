@@ -11,15 +11,21 @@
 // we can find enough blocks in a row to store a file.
 // Use asset loaders and asset parsers with GUID to load.
 
-CreateFlag(Flags, uint32_t, 2,
-	PERSISTENT = 1 << 0,
-	FUZZY = 1 << 1
-);
+// TODO:
+// The LoadResource function can not return a finished loaded thing, since we are going to multithread
+// stack _toLoad;
+
+
 
 
 class ResourceManager
 {
 public:
+	CreateFlag(Flags, uint32_t, 2,
+		PERSISTENT = 1 << 0,
+		FUZZY = 1 << 1
+	);
+
 	static void CreateInstance();
 	static void DeleteInstance();
 	static ResourceManager* GetInstance();
