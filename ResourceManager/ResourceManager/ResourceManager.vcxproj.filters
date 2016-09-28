@@ -27,6 +27,9 @@
     <ClCompile Include="zipper.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="ZipLoader.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h">
@@ -54,6 +57,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="zlib-1.2.7\zlib.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="IAssetLoader.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ZipLoader.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

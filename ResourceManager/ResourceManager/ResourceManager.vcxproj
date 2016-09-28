@@ -120,12 +120,15 @@
     <ClCompile Include="stdafx.cpp" />
     <ClCompile Include="TestMain.cpp" />
     <ClCompile Include="unzipper.cpp" />
+    <ClCompile Include="ZipLoader.cpp" />
     <ClCompile Include="zipper.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="IAssetLoader.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="targetver.h" />
     <ClInclude Include="unzipper.h" />
+    <ClInclude Include="ZipLoader.h" />
     <ClInclude Include="zipper.h" />
     <ClInclude Include="zlib-1.2.7\ioapi.h" />
     <ClInclude Include="zlib-1.2.7\unzip.h" />
