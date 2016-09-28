@@ -141,7 +141,8 @@
     <ClInclude Include="GUID.h" />
     <ClInclude Include="Macros.h" />
     <ClInclude Include="Observer.h" />
-    <ClInclude Include="Subject.h" />
+    <ClInclude Include="ResourceManager.h" />
+    <ClInclude Include="Resource.h" />
     <ClInclude Include="Structs.h" />
     <ClInclude Include="Timer.h" />
     <ClInclude Include="Window.h" />

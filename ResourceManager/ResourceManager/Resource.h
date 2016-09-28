@@ -1,5 +1,5 @@
-#ifndef SUBJECT_H
-#define SUBJECT_H
+#ifndef RESOURCE_H
+#define RESOURCE_H
 
 #include "Observer.h"
 #include <vector>
@@ -25,6 +25,8 @@ public:
 				observers.erase(it);
 		} 
 	}
+	void SetID(GUID inID) { ID = inID; };
+	GUID GetID() { return ID; };
 };
 
 
