@@ -21,20 +21,34 @@
 class ResourceManager
 {
 public:
-
-
 	static void CreateInstance();
 	static void DeleteInstance();
 	static Resource& LoadResource(SM_GUID guid, const Resource::Flag& flag);
+
+private:
+	struct FreeBlock
+	{
+		int32_t Previous = -1;
+		int32_t Next = -1;
+	};
+
 private:
 	ResourceManager();
 	~ResourceManager();
 	ResourceManager(const ResourceManager& other);
 	ResourceManager& operator=(const ResourceManager& rhs);
 
+	void _SetupFreeBlockList(void);
+
 private:
 	static ResourceManager* _instance;
 	std::vector<Resource> _resources;
+
+	char* _pool;
+	const uint32_t _blockSize = 512 * 1024;
+	uint32_t _numBlocks = 0;
+	
+	int32_t _firstFreeBlock = -1;
 };
 
 #endif
