@@ -3,6 +3,7 @@
 
 #include "Resource.h"
 #include <vector>
+#include <thread>
 #include "AssetParser.h"
 
 // Flöjt TODO:
@@ -25,7 +26,9 @@ public:
 	
 	Resource& LoadResource(SM_GUID guid, const Resource::Flag& flag);
 
-	void PrintOccupancy(void);
+	void PrintOccupancy(void); 
+	
+	void ShutDown();
 
 private:
 	struct FreeBlock
@@ -39,6 +42,7 @@ private:
 	~ResourceManager();
 	ResourceManager(const ResourceManager& other);
 	ResourceManager& operator=(const ResourceManager& rhs);
+	void _Run();
 
 	void _Startup();
 	void _SetupFreeBlockList(void);
@@ -47,11 +51,14 @@ private:
 
 private:
 	std::vector<Resource> _resources;
+	
+
+	bool _running;
 	AssetParser _parser;
 	char* _pool;
 	const uint32_t _blockSize = 512 * 1024;
 	uint32_t _numBlocks = 0;
-	
+	std::thread _runningThread;
 	int32_t _firstFreeBlock = -1;
 };
 
