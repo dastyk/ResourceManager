@@ -67,6 +67,8 @@ void ResourceManager::_SetupFreeBlockList(void)
 	}
 	else
 	{
+		_firstFreeBlock = 0;
+
 		// Iterate through blocks (all are free at first) and set the first bytes
 		// to the pointer of the next block, thereby creating a linked list.
 		for (uint32_t i = 1; i < _numBlocks - 1; ++i)
