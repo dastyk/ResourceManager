@@ -2,22 +2,23 @@
 #define SM_GUID_H
 
 #include <stdint.h>
+#include <string>
 
 struct SM_GUID
 {
+	uint64_t data;
+
 	SM_GUID()
 	{
-
+		data = 0;
 	}
 
 	SM_GUID(const char* c)
 	{
+		data = std::hash<std::string>{} (c);
 		// SM_GUID = c.Hash();
 	}
-	uint32_t Data1;
-	uint16_t Data2;
-	uint16_t Data3;
-	uint64_t Data4;
+
 };
 
 

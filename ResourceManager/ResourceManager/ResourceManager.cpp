@@ -38,6 +38,9 @@ Resource & ResourceManager::LoadResource(SM_GUID guid, const Resource::Flag& fla
 	r._refCount++;
 	r.ID = guid;
 	r._flags = flag;
+	// Start thread
+		// AssetLoader.LoadResource(guid);
+		_parser.ParseResource(r);
 	// Mutex unlock
 	return r;
 }
@@ -72,6 +75,10 @@ void ResourceManager::PrintOccupancy(void)
 	}
 
 	OutputDebugStringA("\n");
+}
+
+void ResourceManager::_Startup()
+{
 }
 
 void ResourceManager::_SetupFreeBlockList(void)

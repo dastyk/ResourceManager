@@ -3,8 +3,8 @@
 
 #include "Resource.h"
 #include <vector>
-#include <stack>
 #include <thread>
+#include "AssetParser.h"
 
 // Flöjt TODO:
 // Chunked allocation, i.e. make this a pool allocator with doubly linked list of
@@ -44,6 +44,7 @@ private:
 	ResourceManager& operator=(const ResourceManager& rhs);
 	void _Run();
 
+	void _Startup();
 	void _SetupFreeBlockList(void);
 	int _Allocate(uint32_t blocks);
 	void _Free(int32_t firstBlock, uint32_t numBlocks);
@@ -53,6 +54,7 @@ private:
 	
 
 	bool _running;
+	AssetParser _parser;
 	char* _pool;
 	const uint32_t _blockSize = 512 * 1024;
 	uint32_t _numBlocks = 0;
