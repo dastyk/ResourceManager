@@ -12,6 +12,7 @@ void yy::parser::error(std::string const&err)
 {
   //std::cout << "It's one of the bad ones... " << err << std::endl;
 	std::cout << err << std::endl;
+	return -2;
 }
 
 int main(int argc, char **argv)

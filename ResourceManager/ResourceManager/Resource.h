@@ -4,8 +4,13 @@
 #include "Observer.h"
 #include <vector>
 #include "flags.h"
+#include "Types.h"
 
 class ResourceManager;
+class AssetParser;
+
+
+
 class Resource
 {
 public:
@@ -16,22 +21,22 @@ public:
 	);
 
 	friend ResourceManager;
+	friend AssetParser;
 	~Resource() { observers.clear(); }
 
 	// ResourceData* data;
-protected:
+private:
 	
 	std::vector<Observer*> observers;
 	SM_GUID ID;
 	Flag _flags;
 	uint16_t _refCount;
-	
+	ObjectType _objectType;
+	FileType _fileType;
 	Resource() : _refCount(0) { };
-	
+	char* _rawData;
 
 	void SetGUID(SM_GUID inID) { ID = inID; };
-
-	
 
 public:
 	void _NotifyObserver() { for (auto &it : observers) { it->Notify(ID); } };
