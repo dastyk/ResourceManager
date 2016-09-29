@@ -5,6 +5,7 @@
 #include <string>
 #include "ResourceManager.h"
 #include "MemoryManager.h"
+
 int main(int argc, char** argv)
 {
 	Core::CreateInstance();
@@ -20,7 +21,8 @@ int main(int argc, char** argv)
 	MemoryManager::DeleteInstance();
 	Core::ShutDown();
 	DebugLogger::GetInstance()->Dump();
-
+	
+	
 	
 
 	return 0;
