@@ -12,13 +12,12 @@ int main(int argc, char** argv)
 	core->Init(800, 600, false);
 	MemoryManager::CreateInstance();
 	MemoryManager::GetInstance()->Init(512U * 1024U * 1024U);
-	ResourceManager::CreateInstance();
+	ResourceManager::Instance(); // Kickstart at our will
 
-	ResourceManager::PrintOccupancy();
+	ResourceManager::Instance().PrintOccupancy();
 
 	//ResourceManager::GetInstance()->LoadResource("Test/test.obj");
 
-	ResourceManager::DeleteInstance();
 	MemoryManager::DeleteInstance();
 	Core::ShutDown();
 	DebugLogger::GetInstance()->Dump();

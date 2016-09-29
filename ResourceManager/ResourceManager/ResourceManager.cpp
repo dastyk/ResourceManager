@@ -5,7 +5,11 @@
 
 using namespace std;
 
-ResourceManager* ResourceManager::_instance = nullptr;
+ResourceManager& ResourceManager::Instance()
+{
+	static ResourceManager instance;
+	return instance;
+}
 
 ResourceManager::ResourceManager()
 {
@@ -21,21 +25,6 @@ ResourceManager::~ResourceManager()
 	delete[] _pool;
 }
 
-void ResourceManager::CreateInstance()
-{
-	if (_instance)
-		DeleteInstance();
-
-	_instance = new ResourceManager();
-
-}
-
-void ResourceManager::DeleteInstance()
-{
-	delete _instance;
-}
-
-
 Resource & ResourceManager::LoadResource(SM_GUID guid, const Resource::Flag& flag)
 {
 	// TODO: finish return statement
@@ -48,8 +37,8 @@ Resource & ResourceManager::LoadResource(SM_GUID guid, const Resource::Flag& fla
 	//		r._refCount++;
 	//		return r;
 	// else
-	_instance->_resources.push_back(Resource());
-	Resource& r = _instance->_resources.back();
+	_resources.push_back(Resource());
+	Resource& r = _resources.back();
 	r._refCount++;
 	r.ID = guid;
 	r._flags = flag;
@@ -61,19 +50,19 @@ Resource & ResourceManager::LoadResource(SM_GUID guid, const Resource::Flag& fla
 // and X indicates occupied.
 void ResourceManager::PrintOccupancy(void)
 {
-	if (_instance->_numBlocks == 0)
+	if (_numBlocks == 0)
 	{
 		return;
 	}
 
 	int32_t walker = 0;
-	int32_t free = _instance->_firstFreeBlock;
+	int32_t free = _firstFreeBlock;
 	
-	while (walker < _instance->_numBlocks)
+	while (walker < _numBlocks)
 	{
 		if (walker == free)
 		{
-			FreeBlock* f = reinterpret_cast<FreeBlock*>(_instance->_pool + free * _instance->_blockSize);
+			FreeBlock* f = reinterpret_cast<FreeBlock*>(_pool + free * _blockSize);
 			free = f->Next;
 
 			OutputDebugStringA("[O]");
@@ -91,10 +80,15 @@ void ResourceManager::PrintOccupancy(void)
 
 void ResourceManager::_SetupFreeBlockList(void)
 {
+	// Iterate through blocks (all are free at first) and reinterpret them
+	// as the FreeBlock struct in order to set their previous and next ref-
+	// erences correctly in order to create a doubly linked list.
+
 	if (_numBlocks == 0)
 	{
 		_firstFreeBlock = -1;
 	}
+	// Special case because both previous and next are non-existant.
 	else if (_numBlocks == 1)
 	{
 		_firstFreeBlock = 0;
@@ -106,8 +100,6 @@ void ResourceManager::_SetupFreeBlockList(void)
 	{
 		_firstFreeBlock = 0;
 
-		// Iterate through blocks (all are free at first) and set the first bytes
-		// to the pointer of the next block, thereby creating a linked list.
 		for (uint32_t i = 1; i < _numBlocks - 1; ++i)
 		{
 			FreeBlock* b = reinterpret_cast<FreeBlock*>(_pool + i * _blockSize);
