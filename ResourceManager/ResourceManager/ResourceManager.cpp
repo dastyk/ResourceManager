@@ -82,6 +82,15 @@ void ResourceManager::PrintOccupancy(void)
 	OutputDebugStringA("\n");
 }
 
+void ResourceManager::TestAlloc(void)
+{
+	PrintOccupancy();
+	_Allocate(3);
+	PrintOccupancy();
+	_Allocate(2);
+	PrintOccupancy();
+}
+
 void ResourceManager::_Startup()
 {
 }
@@ -140,38 +149,48 @@ int ResourceManager::_Allocate(uint32_t blocks)
 	// contiguous blocks is taken care of inside the loop.
 	while (numContiguous < blocks)
 	{
-		FreeBlock* thisFree = reinterpret_cast<FreeBlock*>(_pool + walker * _blockSize);
+		FreeBlock* lastFree = reinterpret_cast<FreeBlock*>(_pool + walker * _blockSize);
 
-		if (thisFree->Next == -1)
+		if (lastFree->Next == -1)
 		{
 			throw runtime_error("Not enough contiguous free blocks to accomodate the allocation!");
 		}
 
 		// Not next contigious block; reset and keep trying
-		if (thisFree->Next != walker + 1)
+		if (lastFree->Next != walker + 1)
 		{
-			allocSlot = walker = thisFree->Next;
+			allocSlot = walker = lastFree->Next;
 			numContiguous = 1;
 		}
 		// Contiguous
 		else
 		{
-			walker = thisFree->Next;
+			walker = lastFree->Next;
 			numContiguous++;
 		}
 	}
 
-	// If we reached here it means we found enough contiguous blocks.
+	// If we reached here it means we found enough contiguous blocks, with walker
+	// being the last one of our range.
 
 	if (allocSlot == _firstFreeBlock)
 	{
-		_firstFreeBlock = walker;
+		_firstFreeBlock = reinterpret_cast<FreeBlock*>(_pool + walker * _blockSize)->Next;
+
+		if (_firstFreeBlock != -1)
+			reinterpret_cast<FreeBlock*>(_pool + _firstFreeBlock * _blockSize)->Previous = -1;
+	}
+	else
+	{
+		FreeBlock* firstToAlloc = reinterpret_cast<FreeBlock*>(_pool + allocSlot * _blockSize);
+		int32_t nextFree = reinterpret_cast<FreeBlock*>(_pool + walker * _blockSize)->Next;
+		reinterpret_cast<FreeBlock*>(_pool + firstToAlloc->Previous * _blockSize)->Next = nextFree;
+
+		if (nextFree != -1)
+			reinterpret_cast<FreeBlock*>(_pool + nextFree * _blockSize)->Previous = firstToAlloc->Previous;
 	}
 
-	// TODO:
-	// Setup the links. We have found a bunch of contigous blocks with the
-	// first one being allocSlot. Take care of the block being considered
-	// being the first or last one in the pool.
+	return allocSlot;
 }
 
 void ResourceManager::_Free(int32_t firstBlock, uint32_t numBlocks)
