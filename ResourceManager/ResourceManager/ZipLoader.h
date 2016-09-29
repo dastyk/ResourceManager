@@ -18,7 +18,7 @@ private:
 public:
 
 	ZipLoader(const std::string &file);
-	RawData LoadResource(std::string fileName);
+	RawData LoadResource(SM_GUID guid);
 
 };
 

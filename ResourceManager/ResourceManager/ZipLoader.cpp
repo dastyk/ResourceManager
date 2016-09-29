@@ -11,9 +11,14 @@ ZipLoader::ZipLoader(const std::string & file)
 
 }
 
-RawData ZipLoader::LoadResource(std::string fileName)
+RawData ZipLoader::LoadResource(SM_GUID guid)
 {
 	RawData returnData;
+	std::string fileName;
+
+	//filename = unhash(guid); måste implementeras på något sätt
+
+	fileName = "temporär shit";
 
 	if (zipFile.openEntry(fileName.c_str()))
 	{
