@@ -11,6 +11,7 @@
 int main(int argc, char** argv)
 {
 	_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
+
 	Core::CreateInstance();
 	Core* core = Core::GetInstance();
 	core->Init(800, 600, false);
@@ -21,9 +22,10 @@ int main(int argc, char** argv)
 	ResourceManager::Instance().PrintOccupancy();
 
 	//Resource& mesh1 = ResourceManager::Instance().LoadResource("Test/test.arf", Resource::Flag::LOAD_RIGHT_THE_FUCK_NOW);
+	ResourceManager::Instance().ShutDown();
 	MemoryManager::DeleteInstance();
 	Core::ShutDown();
+	
 	DebugLogger::GetInstance()->Dump();
-	ResourceManager::Instance().ShutDown();
 	return 0;
 }

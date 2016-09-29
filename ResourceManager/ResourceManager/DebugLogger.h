@@ -7,7 +7,6 @@
 class DebugLogger
 {
 private:
-	static DebugLogger* _instance;
 	std::list<std::string> _errorLog;
 	DebugLogger();
 	~DebugLogger();
