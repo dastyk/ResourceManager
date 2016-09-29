@@ -84,6 +84,7 @@
 int main()
 {
 	//unzip("Test1.txt");
+	//HEJ PÅ DIG!!!
 
 	IAssetLoader* ziploader;
 	ziploader = new ZipLoader("Test.zip");
