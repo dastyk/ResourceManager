@@ -31,15 +31,28 @@ private:
 	SM_GUID ID;
 	Flag _flags;
 	uint16_t _refCount;
+	uint16_t _callCount;
 	ObjectType _objectType;
 	FileType _fileType;
-	Resource() : _refCount(0) { };
+	Resource() : _refCount(0), _callCount(0) { };
 	char* _rawData;
 
 	void SetGUID(SM_GUID inID) { ID = inID; };
+	void _NotifyObserver() { for (auto &it : observers) { it->Notify(ID); } };
 
 public:
-	void _NotifyObserver() { for (auto &it : observers) { it->Notify(ID); } };
+	void UpdateCounter(bool used) {
+		if (used)
+			_callCount+=2;
+		else
+		{
+			if (_callCount != 0)
+			{
+				_callCount--;
+			}
+		}
+	};
+	
 	void registerObserver(Observer* observer) { observers.push_back(observer); }
 	void unregisterObserver(Observer* observer)
 	{

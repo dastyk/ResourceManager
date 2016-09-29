@@ -14,16 +14,11 @@ ResourceManager& ResourceManager::Instance()
 
 ResourceManager::ResourceManager()
 {
-	_numBlocks = 1000;
-	_pool = new char[_numBlocks * _blockSize];
-
-	// Make blocks form a linked list (all of them at startup)
-	_SetupFreeBlockList();
+	_runningThread = thread(&ResourceManager::_Run, this);
 }
 
 ResourceManager::~ResourceManager()
 {
-	delete[] _pool;
 }
 
 Resource & ResourceManager::LoadResource(SM_GUID guid, const Resource::Flag& flag)
@@ -196,4 +191,35 @@ int ResourceManager::_Allocate(uint32_t blocks)
 void ResourceManager::_Free(int32_t firstBlock, uint32_t numBlocks)
 {
 
+}
+
+void ResourceManager::_Run()
+{
+	_numBlocks = 1000;
+	_pool = new char[_numBlocks * _blockSize];
+
+	// Make blocks form a linked list (all of them at startup)
+	_SetupFreeBlockList();
+
+	_running = true;
+	while (_running)
+	{
+		//Loop through all resources, ticking them down
+		for (auto &it : _resources)
+			it._callCount--;
+
+
+		this_thread::sleep_for(std::chrono::milliseconds(20));
+	}
+
+	
+
+	delete[] _pool;
+
+}
+
+void ResourceManager::ShutDown()
+{
+	_running = false;
+	_runningThread.join();
 }

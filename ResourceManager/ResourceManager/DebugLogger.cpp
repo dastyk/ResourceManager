@@ -1,7 +1,6 @@
 #include "DebugLogger.h"
 #include <fstream>
 
-DebugLogger* DebugLogger::_instance = nullptr;
 
 DebugLogger::DebugLogger()
 {
@@ -11,7 +10,7 @@ DebugLogger::DebugLogger()
 DebugLogger::~DebugLogger()
 {
 
-
+	
 }
 
 void DebugLogger::Dump()
@@ -29,9 +28,8 @@ void DebugLogger::Dump()
 
 DebugLogger * DebugLogger::GetInstance()
 {
-	if (!_instance)
-		_instance = new DebugLogger();
-	return _instance;
+	static DebugLogger instance;
+	return &instance;
 }
 
 void DebugLogger::AddMsg(std::string msg)

@@ -4,6 +4,7 @@
 #pragma once
 #include "stdafx.h"
 #include <fstream>
+#include "SM_GUID.h"
 
 struct RawData
 {
@@ -23,7 +24,7 @@ protected:
 
 public:
 
-	virtual RawData LoadResource(std::string fileName)=0;
+	virtual RawData LoadResource(SM_GUID guid)=0;
 
 };
 
