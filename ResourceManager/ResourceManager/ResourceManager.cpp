@@ -1,5 +1,6 @@
 #include "ResourceManager.h"
 
+#include <stdexcept>
 #include <Windows.h> // Because fuck of VS. Start following standards
 #include <iostream>
 
@@ -115,4 +116,58 @@ void ResourceManager::_SetupFreeBlockList(void)
 		last->Previous = _numBlocks - 2; // Zero based and one before this
 		last->Next = -1;
 	}
+}
+
+int ResourceManager::_Allocate(uint32_t blocks)
+{
+	if (_firstFreeBlock == -1)
+	{
+		throw runtime_error("No free blocks remaining!");
+	}
+
+	int32_t allocSlot = _firstFreeBlock;
+	int32_t walker = _firstFreeBlock;
+	uint32_t numContiguous = 1;
+
+	// Keep searching until we found enough blocks. The case of not enough
+	// contiguous blocks is taken care of inside the loop.
+	while (numContiguous < blocks)
+	{
+		FreeBlock* thisFree = reinterpret_cast<FreeBlock*>(_pool + walker * _blockSize);
+
+		if (thisFree->Next == -1)
+		{
+			throw runtime_error("Not enough contiguous free blocks to accomodate the allocation!");
+		}
+
+		// Not next contigious block; reset and keep trying
+		if (thisFree->Next != walker + 1)
+		{
+			allocSlot = walker = thisFree->Next;
+			numContiguous = 1;
+		}
+		// Contiguous
+		else
+		{
+			walker = thisFree->Next;
+			numContiguous++;
+		}
+	}
+
+	// If we reached here it means we found enough contiguous blocks.
+
+	if (allocSlot == _firstFreeBlock)
+	{
+		_firstFreeBlock = walker;
+	}
+
+	// TODO:
+	// Setup the links. We have found a bunch of contigous blocks with the
+	// first one being allocSlot. Take care of the block being considered
+	// being the first or last one in the pool.
+}
+
+void ResourceManager::_Free(int32_t firstBlock, uint32_t numBlocks)
+{
+
 }

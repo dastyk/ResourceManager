@@ -41,6 +41,8 @@ private:
 	ResourceManager& operator=(const ResourceManager& rhs);
 
 	void _SetupFreeBlockList(void);
+	int _Allocate(uint32_t blocks);
+	void _Free(int32_t firstBlock, uint32_t numBlocks);
 
 private:
 	std::vector<Resource> _resources;
