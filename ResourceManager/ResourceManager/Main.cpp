@@ -16,8 +16,7 @@ int main(int argc, char** argv)
 
 	ResourceManager::Instance().PrintOccupancy();
 
-	//ResourceManager::GetInstance()->LoadResource("Test/test.obj");
-
+	//Resource& mesh1 = ResourceManager::Instance().LoadResource("Test/test.arf", Resource::Flag::LOAD_RIGHT_THE_FUCK_NOW);
 	MemoryManager::DeleteInstance();
 	Core::ShutDown();
 	DebugLogger::GetInstance()->Dump();

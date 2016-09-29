@@ -65,5 +65,5 @@ void AssetParser::ParseArf(Resource & r) const
 	_datap.subMesh = (ArfData::SubMesh*)((size_t)r._rawData + data->SubMeshStart);
 
 
-	// TODO: Do something with the data, so it can be rendered.
+	// TODO: Do something with the data, so it can be rendered. // TODO: Interleave data.
 }
