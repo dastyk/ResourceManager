@@ -43,6 +43,8 @@ Resource & ResourceManager::LoadResource(SM_GUID guid, const Resource::Flag& fla
 	r._refCount++;
 	r.ID = guid;
 	r._flags = flag;
+	// AssetLoader.LoadResource(guid);
+	
 	// Mutex unlock
 	return r;
 }
