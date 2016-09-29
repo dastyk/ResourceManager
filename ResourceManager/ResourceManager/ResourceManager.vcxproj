@@ -70,19 +70,19 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <IncludePath>\zlib-1.2.7;$(IncludePath);$(SolutionDir)\ResourceManager\zlib-1.2.7;$(SolutionDir)\SDL2-2.0.4\include;</IncludePath>
-    <LibraryPath>$(SolutionDir)\ResourceManager\zlib-1.2.7;$(LibraryPath)</LibraryPath>
+    <LibraryPath>$(SolutionDir)\ResourceManager\zlib-1.2.7;$(SolutionDir)\SDL2-2.0.4\lib\x86;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <IncludePath>C:\Users\GiS-4\Source\Repos\ResourceManager\ResourceManager\ResourceManager\zlib-1.2.7;$(SolutionDir)\SDL2-2.0.4\include;$(IncludePath);$(SolutionDir)\ResourceManager\zlib-1.2.7;</IncludePath>
-    <LibraryPath>$(SolutionDir)\ResourceManager\zlib-1.2.7;$(LibraryPath)</LibraryPath>
+    <LibraryPath>$(SolutionDir)\ResourceManager\zlib-1.2.7;$(SolutionDir)\SDL2-2.0.4\lib\x86;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <IncludePath>\zlib-1.2.7;$(IncludePath);$(SolutionDir)\ResourceManager\zlib-1.2.7;$(SolutionDir)\SDL2-2.0.4\include;</IncludePath>
-    <LibraryPath>$(SolutionDir)\ResourceManager\zlib-1.2.7;$(LibraryPath)</LibraryPath>
+    <LibraryPath>$(SolutionDir)\ResourceManager\zlib-1.2.7;$(SolutionDir)\SDL2-2.0.4\lib\x64;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <IncludePath>C:\Users\GiS-4\Source\Repos\ResourceManager\ResourceManager\ResourceManager\zlib-1.2.7;$(SolutionDir)\SDL2-2.0.4\include;$(IncludePath);$(SolutionDir)\ResourceManager\zlib-1.2.7;</IncludePath>
-    <LibraryPath>$(SolutionDir)\ResourceManager\zlib-1.2.7;$(LibraryPath)</LibraryPath>
+    <IncludePath>$(SolutionDir)\ResourceManager\zlib-1.2.7;$(SolutionDir)\SDL2-2.0.4\include;$(IncludePath);$(SolutionDir)\ResourceManager\zlib-1.2.7;</IncludePath>
+    <LibraryPath>$(SolutionDir)\ResourceManager\zlib-1.2.7;$(SolutionDir)\SDL2-2.0.4\lib\x64;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -93,6 +93,7 @@
     </ClCompile>
     <Link>
       <AdditionalDependencies>zlibstat.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <SubSystem>Windows</SubSystem>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -104,7 +105,7 @@
     </ClCompile>
     <Link>
       <AdditionalLibraryDirectories>$(SolutionDir)\SDL2-2.0.4\lib\x64;</AdditionalLibraryDirectories>
-      <AdditionalDependencies>kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies);SDL2.lib;SDL2main.lib;</AdditionalDependencies>
+      <AdditionalDependencies>kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies);SDL2.lib;SDL2main.lib;zlibstat.lib;</AdditionalDependencies>
       <SubSystem>Windows</SubSystem>
     </Link>
   </ItemDefinitionGroup>
@@ -121,6 +122,7 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <AdditionalDependencies>zlibstat.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <SubSystem>Windows</SubSystem>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -135,7 +137,8 @@
     <Link>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalDependencies>zlibstat.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>zlibstat.lib;SDL2.lib;SDL2main.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <SubSystem>Windows</SubSystem>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>

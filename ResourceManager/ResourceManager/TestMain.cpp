@@ -81,17 +81,17 @@
 //		//zipFile >> std::cout;
 //}
 
-int main()
-{
-	//unzip("Test1.txt");
-	//HEJ PÅ DIG!!!
-
-	IAssetLoader* ziploader;
-	ziploader = new ZipLoader("Test.zip");
-
-	RawData check = ziploader->LoadResource("Test1.txt");
-
-	getchar();
-	return 0;
-}
+//int main()
+//{
+//	//unzip("Test1.txt");
+//	//HEJ PÅ DIG!!!
+//
+//	IAssetLoader* ziploader;
+//	ziploader = new ZipLoader("Test.zip");
+//
+//	RawData check = ziploader->LoadResource("Test1.txt");
+//
+//	getchar();
+//	return 0;
+//}
 
