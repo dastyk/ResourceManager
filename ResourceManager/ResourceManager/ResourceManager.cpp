@@ -1,5 +1,10 @@
 #include "ResourceManager.h"
 
+#include <Windows.h> // Because fuck of VS. Start following standards
+#include <iostream>
+
+using namespace std;
+
 ResourceManager* ResourceManager::_instance = nullptr;
 
 ResourceManager::ResourceManager()
@@ -50,6 +55,38 @@ Resource & ResourceManager::LoadResource(SM_GUID guid, const Resource::Flag& fla
 	r._flags = flag;
 	// Mutex unlock
 	return r;
+}
+
+// Little debug function that outputs occupancy of blocks where O indicates open
+// and X indicates occupied.
+void ResourceManager::PrintOccupancy(void)
+{
+	if (_instance->_numBlocks == 0)
+	{
+		return;
+	}
+
+	int32_t walker = 0;
+	int32_t free = _instance->_firstFreeBlock;
+	
+	while (walker < _instance->_numBlocks)
+	{
+		if (walker == free)
+		{
+			FreeBlock* f = reinterpret_cast<FreeBlock*>(_instance->_pool + free * _instance->_blockSize);
+			free = f->Next;
+
+			OutputDebugStringA("[O]");
+		}
+		else
+		{
+			OutputDebugStringA("[X]");
+		}
+
+		walker++;
+	}
+
+	OutputDebugStringA("\n");
 }
 
 void ResourceManager::_SetupFreeBlockList(void)

@@ -25,6 +25,8 @@ public:
 	static void DeleteInstance();
 	static Resource& LoadResource(SM_GUID guid, const Resource::Flag& flag);
 
+	static void PrintOccupancy(void);
+
 private:
 	struct FreeBlock
 	{
