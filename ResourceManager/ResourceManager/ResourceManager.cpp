@@ -29,7 +29,7 @@ void ResourceManager::DeleteInstance()
 
 Resource & ResourceManager::LoadResource(SM_GUID guid, const Resource::Flag& flag)
 {
-	// TODO: finish return statement
+	// TODO: insert return statement here
 	// rawData = AssetLoader->Load(SM_GUID);
 	// resources.push_back(AssetParser->Parse(rawData))
 
