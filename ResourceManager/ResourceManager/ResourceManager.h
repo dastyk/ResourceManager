@@ -90,11 +90,11 @@ private:
 	void _Free(int32_t firstBlock, uint32_t numBlocks);
 
 	std::vector<Resource> _resources;
-	IAssetLoader* assetLoader = nullptr;
-	
 	std::priority_queue<Resource*, std::vector<Resource*>, CompareResources> _loadingQueue;
 	std::unordered_map<uint16_t, ThreadControl, KeyHasher> _threadRunningMap;
 	std::unordered_map<uint16_t, std::thread, KeyHasher> _threadIDMap;
+	IAssetLoader* _assetLoader = nullptr;
+	
 
 	bool _running;
 	AssetParser _parser;
