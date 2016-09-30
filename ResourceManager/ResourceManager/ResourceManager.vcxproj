@@ -205,7 +205,19 @@
     <ClInclude Include="Window.h" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="FinalPS.hlsl">
+    <None Include="Shaders\DX11\FinalPS.hlsl">
+      <FileType>Document</FileType>
+    </None>
+    <None Include="Shaders\DX11\FinalVS.hlsl">
+      <FileType>Document</FileType>
+    </None>
+    <None Include="Shaders\DX11\InstancedStaticMeshVS.hlsl">
+      <FileType>Document</FileType>
+    </None>
+    <None Include="Shaders\DX11\StaticMeshPS.hlsl">
+      <FileType>Document</FileType>
+    </None>
+    <None Include="Shaders\DX11\StaticMeshVS.hlsl">
       <FileType>Document</FileType>
     </None>
   </ItemGroup>

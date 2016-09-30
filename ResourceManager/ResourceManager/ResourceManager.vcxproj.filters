@@ -13,6 +13,12 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="Source Files\Shaders">
+      <UniqueIdentifier>{162f2bba-5e88-4df3-90a8-62909a016c29}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Shaders\DX11">
+      <UniqueIdentifier>{90154494-c19a-4631-b93b-1674cf066da6}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Main.cpp">
@@ -190,6 +196,20 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <None Include="FinalPS.hlsl" />
+    <None Include="Shaders\DX11\FinalPS.hlsl">
+      <Filter>Source Files\Shaders\DX11</Filter>
+    </None>
+    <None Include="Shaders\DX11\FinalVS.hlsl">
+      <Filter>Source Files\Shaders\DX11</Filter>
+    </None>
+    <None Include="Shaders\DX11\InstancedStaticMeshVS.hlsl">
+      <Filter>Source Files\Shaders\DX11</Filter>
+    </None>
+    <None Include="Shaders\DX11\StaticMeshPS.hlsl">
+      <Filter>Source Files\Shaders\DX11</Filter>
+    </None>
+    <None Include="Shaders\DX11\StaticMeshVS.hlsl">
+      <Filter>Source Files\Shaders\DX11</Filter>
+    </None>
   </ItemGroup>
 </Project>

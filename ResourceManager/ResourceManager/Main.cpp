@@ -22,6 +22,7 @@ int main(int argc, char** argv)
 	MemoryManager::CreateInstance();
 	MemoryManager::GetInstance()->Init(512U * 1024U * 1024U);
 	ResourceManager& r = ResourceManager::Instance(); // Kickstart at our will
+	
 
 	r.SetAssetLoader(new ZipLoader("Spheres.zip"));
 	r.AddParser("arf",
