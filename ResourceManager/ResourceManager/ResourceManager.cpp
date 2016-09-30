@@ -1,7 +1,7 @@
 #include "ResourceManager.h"
 
 #include <stdexcept>
-#include <Windows.h> // Because fuck of VS. Start following standards
+#include <Windows.h> // Because fuck off VS. Start following standards
 #include <iostream>
 
 using namespace std;
@@ -23,6 +23,13 @@ ResourceManager::~ResourceManager()
 
 Resource & ResourceManager::LoadResource(SM_GUID guid, const Resource::Flag& flag)
 {
+	// Idea of this method:
+	// * If the resource already exists, don't do anything because we're done
+	// * If not, we have to load it, which means that we need to reserve memory.
+	// * We need the size to reserve, which means that we need to consult the asset loader for the file.
+	// * Either we store the compressed size or the parsed data. The latter case involved a trip to the asset parser.
+	// * When we have the final size it's time to allocate. If we find a suitable slot we can use it, otherwise something must be evicted.
+
 	// TODO: finish return statement
 	// rawData = AssetLoader->Load(SM_GUID);
 	// resources.push_back(AssetParser->Parse(rawData))
