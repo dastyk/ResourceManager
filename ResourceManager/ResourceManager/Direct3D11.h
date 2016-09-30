@@ -8,12 +8,14 @@
 #include <d3d11.h>
 #include <d3dcompiler.h>
 #include <vector>
+#include <map>
 #pragma comment (lib, "d3d11.lib")
 #pragma comment (lib, "d3dcompiler.lib")
 
 
 #include "Structs.h"
 #include "IGraphics.h"
+#include "SM_GUID.h"
 
 enum VertexShaders
 {
@@ -43,7 +45,7 @@ enum ComputeShaders
 
 enum InputLayouts
 {
-	IL_STATIC_MESHES,
+	IL_PNT_VERTEX,
 	LAYOUT_COUNT
 };
 
@@ -107,8 +109,10 @@ private:
 	ID3D11Texture2D*          _renderTargetTextures[RenderTargets::RT_COUNT] = { nullptr };
 	
 	std::vector<ID3D11ShaderResourceView*> _textures; //diffuse maps, normal maps, etc.
-	std::vector<ID3D11Buffer*> _vertexBuffers;
-	std::vector<ID3D11Buffer*> _indexBuffers;
+	
+	
+	std::map<uint64_t, ID3D11Buffer*> _vertexBuffers;
+	std::map<uint64_t, ID3D11Buffer*> _indexBuffers;
 	ID3D11Buffer* _constantBuffers[ConstantBuffers::CB_COUNT] = { nullptr };
 	ID3D11InputLayout* _inputLayouts[InputLayouts::LAYOUT_COUNT] = { nullptr };
 	ID3D11SamplerState* _samplerStates[Samplers::SAM_COUNT] = { nullptr };
@@ -122,6 +126,8 @@ private:
 	void _CreateRasterizerState();
 	void _CreateConstantBuffers();
 
+	ID3D11Buffer* _CreateVertexBuffer(PNTVertex* vertexData, unsigned vertexCount);
+	ID3D11Buffer* _CreateIndexBuffer(uint32_t* indexData, uint32_t indexCount);
 
 public:
 	Direct3D11();
@@ -129,8 +135,7 @@ public:
 	ID3D11Device* GetDevice() { return _device; }
 	ID3D11DeviceContext* GetDeviceContext() { return _deviceContext; }
 
-	int CreateVertexBuffer(Vertex* vertexData, unsigned vertexCount);
-	int CreateIndexBuffer(unsigned* indexData, unsigned indexCount);
+	
 	int CreateTexture(const wchar_t* filename);
 
 	//Inherited from graphics interface

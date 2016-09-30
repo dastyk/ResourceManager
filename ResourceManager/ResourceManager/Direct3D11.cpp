@@ -112,11 +112,11 @@ Direct3D11::~Direct3D11()
 	}
 	for (auto &i : _vertexBuffers)
 	{
-		SAFE_RELEASE(i);
+		SAFE_RELEASE(i.second);
 	}
 	for (auto &i : _indexBuffers)
 	{
-		SAFE_RELEASE(i);
+		SAFE_RELEASE(i.second);
 	}
 	for (auto &i : _inputLayouts)
 	{
@@ -158,11 +158,11 @@ Direct3D11::~Direct3D11()
 	}
 }
 
-int Direct3D11::CreateVertexBuffer(Vertex * vertexData, unsigned vertexCount)
+ID3D11Buffer* Direct3D11::_CreateVertexBuffer(PNTVertex * vertexData, unsigned vertexCount)
 {
 	D3D11_BUFFER_DESC bd;
 	bd.BindFlags = D3D11_BIND_VERTEX_BUFFER;
-	bd.ByteWidth = sizeof(Vertex) * vertexCount;
+	bd.ByteWidth = sizeof(PNTVertex) * vertexCount;
 	bd.CPUAccessFlags = 0;
 	bd.MiscFlags = 0;
 	bd.StructureByteStride = 0;
@@ -176,13 +176,12 @@ int Direct3D11::CreateVertexBuffer(Vertex * vertexData, unsigned vertexCount)
 	if (FAILED(hr))
 	{
 		DebugLogger::GetInstance()->AddMsg("Failed to create vertex buffer");
-		return -1;
+		throw std::exception("Failed to create vertex buffer");
 	}
-	_vertexBuffers.push_back(buffer);
-	return _vertexBuffers.size() - 1;
+	return buffer;
 }
 
-int Direct3D11::CreateIndexBuffer(unsigned * indexData, unsigned indexCount)
+ID3D11Buffer* Direct3D11::_CreateIndexBuffer(uint32_t * indexData, uint32_t indexCount)
 {
 	D3D11_BUFFER_DESC bd;
 	bd.BindFlags = D3D11_BIND_INDEX_BUFFER;
@@ -200,11 +199,9 @@ int Direct3D11::CreateIndexBuffer(unsigned * indexData, unsigned indexCount)
 	if (FAILED(hr))
 	{
 		DebugLogger::GetInstance()->AddMsg("Failed to create index buffer");
-		return -1;
+		throw std::exception("Failed to create index buffer");
 	}
-	_indexBuffers.push_back(buffer);
-	
-	return _indexBuffers.size() - 1;
+	return buffer;
 }
 
 /* REWRITE TO CREATE FROM MEMORY */
@@ -256,8 +253,8 @@ void Direct3D11::Draw()
 	ID3D11ShaderResourceView* nullSRVS[RenderTargets::RT_COUNT + 1] = { nullptr };
 	_deviceContext->PSSetShaderResources(0, RenderTargets::RT_COUNT + 1, nullSRVS);
 
-	_deviceContext->IASetInputLayout(_inputLayouts[InputLayouts::IL_STATIC_MESHES]);
-	UINT stride = sizeof(Vertex);
+	_deviceContext->IASetInputLayout(_inputLayouts[InputLayouts::IL_PNT_VERTEX]);
+	UINT stride = sizeof(PNTVertex);
 	UINT offset = 0;
 	_deviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 	_deviceContext->VSSetShader(_vertexShaders[VertexShaders::VS_STATIC_MESHES], nullptr, 0);
@@ -300,7 +297,13 @@ void Direct3D11::Draw()
 
 void Direct3D11::CreateBuffer(Resource * resource)
 {
-	const RawData& rd = resource->GetRawData();
+	if (resource->GetResourceType() == Resource::ResourceType::INDEXED_PNT_MESH)
+	{
+		const PNTMeshData* meshdata = (PNTMeshData*)resource->GetProcessedData();
+		_vertexBuffers[resource->GetGUID().data] = _CreateVertexBuffer(meshdata->vertices, meshdata->vertexCount);
+		_indexBuffers[resource->GetGUID().data] = _CreateIndexBuffer(meshdata->indices, meshdata->indexCount);
+	}
+	
 	
 }
 
@@ -318,10 +321,9 @@ void Direct3D11::_CreateShadersAndInputLayouts()
 	D3D11_INPUT_ELEMENT_DESC id[] = {
 		{"POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT,    0, 0,  D3D11_INPUT_PER_VERTEX_DATA, 0},
 		{"NORMAL",   0, DXGI_FORMAT_R32G32B32_FLOAT,    0, 12, D3D11_INPUT_PER_VERTEX_DATA, 0},
-		{"TANGENT",  0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 24, D3D11_INPUT_PER_VERTEX_DATA, 0},
-		{"TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT,       0, 40, D3D11_INPUT_PER_VERTEX_DATA, 0}
+		{"TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT,       0, 24, D3D11_INPUT_PER_VERTEX_DATA, 0}
 	};
-	_device->CreateInputLayout(id, ARRAYSIZE(id), pVS->GetBufferPointer(), pVS->GetBufferSize(), &_inputLayouts[InputLayouts::IL_STATIC_MESHES]);
+	_device->CreateInputLayout(id, ARRAYSIZE(id), pVS->GetBufferPointer(), pVS->GetBufferSize(), &_inputLayouts[InputLayouts::IL_PNT_VERTEX]);
 	SAFE_RELEASE(pVS);
 	HRESULT hr;
 	D3DCompileFromFile(L"FinalVS.hlsl", nullptr, nullptr, "main", "vs_4_0",

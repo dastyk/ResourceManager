@@ -20,6 +20,10 @@ public:
 		FUZZY = 1 << 1,
 		LOAD_RIGHT_THE_FUCK_NOW = 1 << 2
 	);
+	CreateFlag(ResourceType, uint32_t, 2,
+		INDEXED_PNT_MESH = 1 << 0,
+		TEXTURE = 1 << 1
+	);
 
 	friend ResourceManager;
 	friend AssetParser;
@@ -27,7 +31,6 @@ public:
 
 	// ResourceData* data;
 private:
-	
 	std::vector<Observer*> observers;
 	SM_GUID ID;
 	Flag _flags;
@@ -35,7 +38,8 @@ private:
 	uint16_t _callCount;
 	Resource() : _refCount(0), _callCount(0) { };
 	RawData _rawData;
-
+	ResourceType _resourceType;
+	void* _processedData;
 	void SetGUID(SM_GUID inID) { ID = inID; };
 	void _NotifyObserver() { for (auto &it : observers) { it->Notify(ID); } };
 
@@ -62,7 +66,9 @@ public:
 		}
 	}
 	SM_GUID GetGUID()const { return ID; };
-	const RawData& GetRawData() { return _rawData; };
+	const RawData& GetRawData() const { return _rawData; };
+	const void* GetProcessedData() const { return _processedData; };
+	const ResourceType GetResourceType() const { return _resourceType; };
 
 	operator SM_GUID()const { return ID; }
 };
