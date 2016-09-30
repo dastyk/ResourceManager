@@ -90,12 +90,16 @@ void ResourceManager::PrintOccupancy(void)
 
 void ResourceManager::TestAlloc(void)
 {
+	int32_t allocSlot = -1;
 	PrintOccupancy();
-	_Allocate(3);
+	allocSlot = _FindSuitableAllocationSlot(3);
+	_Allocate(allocSlot, 3);
 	PrintOccupancy();
-	_Allocate(2);
+	allocSlot = _FindSuitableAllocationSlot(2);
+	_Allocate(allocSlot, 2);
 	PrintOccupancy();
-	_Allocate(15);
+	allocSlot = _FindSuitableAllocationSlot(15);
+	_Allocate(allocSlot, 15);
 	PrintOccupancy();
 	_Free(2, 3);
 	PrintOccupancy();
@@ -107,13 +111,15 @@ void ResourceManager::TestAlloc(void)
 	PrintOccupancy();
 	_Free(19, 1);
 	PrintOccupancy();
-	_Allocate(2);
+	allocSlot = _FindSuitableAllocationSlot(2);
+	_Allocate(allocSlot, 2);
 	PrintOccupancy();
 	_Free(9, 3);
 	PrintOccupancy();
 	_Free(14, 3);
 	PrintOccupancy();
-	_Allocate(3);
+	allocSlot = _FindSuitableAllocationSlot(3);
+	_Allocate(allocSlot, 3);
 	PrintOccupancy();
 }
 
@@ -165,11 +171,12 @@ void ResourceManager::_SetupFreeBlockList(void)
 	}
 }
 
-int ResourceManager::_Allocate(uint32_t blocks)
+int ResourceManager::_FindSuitableAllocationSlot(uint32_t blocks)
 {
 	if (_firstFreeBlock == -1)
 	{
-		throw runtime_error("No free blocks remaining!");
+		return -1;
+		//throw runtime_error("No free blocks remaining!");
 	}
 
 	int32_t allocSlot = _firstFreeBlock;
@@ -184,7 +191,8 @@ int ResourceManager::_Allocate(uint32_t blocks)
 
 		if (lastFree->Next == -1)
 		{
-			throw runtime_error("Not enough contiguous free blocks to accomodate the allocation!");
+			return -1;
+			//throw runtime_error("Not enough contiguous free blocks to accomodate the allocation!");
 		}
 
 		// Not next contigious block; reset and keep trying
@@ -201,12 +209,22 @@ int ResourceManager::_Allocate(uint32_t blocks)
 		}
 	}
 
-	// If we reached here it means we found enough contiguous blocks, with walker
-	// being the last one of our range.
+	return allocSlot;
+}
+
+// Given a valid allocation slot and number of blocks -- extract those blocks
+// from the list of free blocks.
+void ResourceManager::_Allocate(int32_t allocSlot, uint32_t blocks)
+{
+	if (allocSlot == -1)
+	{
+		throw runtime_error("Invalid allocation slot!");
+	}
 
 	if (allocSlot == _firstFreeBlock)
 	{
-		_firstFreeBlock = reinterpret_cast<FreeBlock*>(_pool + walker * _blockSize)->Next;
+		// Index of the block after the last one to allocate
+		_firstFreeBlock = reinterpret_cast<FreeBlock*>(_pool + (allocSlot + blocks - 1) * _blockSize)->Next;
 
 		if (_firstFreeBlock != -1)
 			reinterpret_cast<FreeBlock*>(_pool + _firstFreeBlock * _blockSize)->Previous = -1;
@@ -214,14 +232,12 @@ int ResourceManager::_Allocate(uint32_t blocks)
 	else
 	{
 		FreeBlock* firstToAlloc = reinterpret_cast<FreeBlock*>(_pool + allocSlot * _blockSize);
-		int32_t nextFree = reinterpret_cast<FreeBlock*>(_pool + walker * _blockSize)->Next;
+		int32_t nextFree = reinterpret_cast<FreeBlock*>(_pool + (allocSlot + blocks - 1) * _blockSize)->Next;
 		reinterpret_cast<FreeBlock*>(_pool + firstToAlloc->Previous * _blockSize)->Next = nextFree;
 
 		if (nextFree != -1)
 			reinterpret_cast<FreeBlock*>(_pool + nextFree * _blockSize)->Previous = firstToAlloc->Previous;
 	}
-
-	return allocSlot;
 }
 
 // Frees certain blocks by inserting them into the free block list.

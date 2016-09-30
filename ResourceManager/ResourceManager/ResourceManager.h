@@ -49,7 +49,8 @@ private:
 
 	void _Startup();
 	void _SetupFreeBlockList(void);
-	int _Allocate(uint32_t blocks);
+	int _FindSuitableAllocationSlot(uint32_t blocks);
+	void _Allocate(int32_t allocSlot, uint32_t blocks);
 	void _Free(int32_t firstBlock, uint32_t numBlocks);
 
 	std::vector<Resource> _resources;
