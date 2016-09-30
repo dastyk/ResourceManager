@@ -17,8 +17,8 @@ class Resource
 public:
 	CreateFlag(Flag, uint32_t, 3,
 		PERSISTENT = 1 << 0,
-		FUZZY = 1 << 1,
-		LOAD_RIGHT_THE_FUCK_NOW = 1 << 2
+		NOT_URGENT = 1 << 1,
+		NEEDED_NOW = 1 << 2
 	);
 	CreateFlag(ResourceType, uint32_t, 2,
 		INDEXED_PNT_MESH = 1 << 0,
@@ -28,7 +28,7 @@ public:
 	friend ResourceManager;
 	friend AssetParser;
 	~Resource() { observers.clear(); }
-
+	RawData _rawData;
 	// ResourceData* data;
 private:
 	std::vector<Observer*> observers;
@@ -44,8 +44,9 @@ private:
 	void _NotifyObserver() { for (auto &it : observers) { it->Notify(ID); } };
 
 public:
-	void UpdateCounter(bool used) {
-		if (used)
+	void UpdateCounter(bool used = false) 
+	{
+		if (used && _callCount < UINT16_MAX-2)
 			_callCount+=2;
 		else
 		{
@@ -55,7 +56,6 @@ public:
 			}
 		}
 	};
-	
 	void registerObserver(Observer* observer) { observers.push_back(observer); }
 	void unregisterObserver(Observer* observer)
 	{

@@ -3,6 +3,7 @@
 #include <stdexcept>
 #include <Windows.h> // Because fuck off VS. Start following standards
 #include <iostream>
+#include "DebugLogger.h"
 
 using namespace std;
 
@@ -19,8 +20,8 @@ ResourceManager::ResourceManager()
 
 ResourceManager::~ResourceManager()
 {
-	delete assetLoader;
-	assetLoader = nullptr;
+	delete _assetLoader;
+	_assetLoader = nullptr;
 	delete[] _pool;
 	_pool = nullptr;
 }
@@ -34,6 +35,7 @@ Resource & ResourceManager::LoadResource(SM_GUID guid, const Resource::Flag& fla
 	// * Either we store the compressed size or the parsed data. The latter case involved a trip to the asset parser.
 	// * When we have the final size it's time to allocate. If we find a suitable slot we can use it, otherwise something must be evicted.
 
+	_mutexLock.lock();
 	// TODO: finish return statement
 	// rawData = AssetLoader->Load(SM_GUID);
 	// resources.push_back(AssetParser->Parse(rawData))
@@ -49,8 +51,12 @@ Resource & ResourceManager::LoadResource(SM_GUID guid, const Resource::Flag& fla
 	r._refCount++;
 	r.ID = guid;
 	r._flags = flag;
+
+	_loadingQueue.push(&r);
+	_mutexLock.unlock();
+
 	// Start thread
-		r._rawData = assetLoader->LoadResource(guid);
+		r._rawData = _assetLoader->LoadResource(guid);
 		_parser.ParseResource(r);
 	// Mutex unlock
 	return r;
@@ -90,12 +96,18 @@ void ResourceManager::PrintOccupancy(void)
 
 void ResourceManager::TestAlloc(void)
 {
+	int32_t allocSlot = -1;
+	_mutexLock.lock();
+	_mutexLock.unlock();
 	PrintOccupancy();
-	_Allocate(3);
+	allocSlot = _FindSuitableAllocationSlot(3);
+	_Allocate(allocSlot, 3);
 	PrintOccupancy();
-	_Allocate(2);
+	allocSlot = _FindSuitableAllocationSlot(2);
+	_Allocate(allocSlot, 2);
 	PrintOccupancy();
-	_Allocate(15);
+	allocSlot = _FindSuitableAllocationSlot(15);
+	_Allocate(allocSlot, 15);
 	PrintOccupancy();
 	_Free(2, 3);
 	PrintOccupancy();
@@ -107,13 +119,15 @@ void ResourceManager::TestAlloc(void)
 	PrintOccupancy();
 	_Free(19, 1);
 	PrintOccupancy();
-	_Allocate(2);
+	allocSlot = _FindSuitableAllocationSlot(2);
+	_Allocate(allocSlot, 2);
 	PrintOccupancy();
 	_Free(9, 3);
 	PrintOccupancy();
 	_Free(14, 3);
 	PrintOccupancy();
-	_Allocate(3);
+	allocSlot = _FindSuitableAllocationSlot(3);
+	_Allocate(allocSlot, 3);
 	PrintOccupancy();
 }
 
@@ -123,7 +137,15 @@ void ResourceManager::_Startup()
 
 void ResourceManager::SetAssetLoader(IAssetLoader * loader)
 {
-	assetLoader = loader;
+	_assetLoader = loader;
+}
+
+void ResourceManager::AddParser(const std::string& fileend, const std::function<void(Resource& r)>& parseFunction)
+{
+	uint32_t type = std::hash<std::string>{} (fileend);
+	_assetLoader->AddType(type);
+	_parser.AddParser(type, parseFunction);
+	
 }
 
 void ResourceManager::_SetupFreeBlockList(void)
@@ -165,11 +187,15 @@ void ResourceManager::_SetupFreeBlockList(void)
 	}
 }
 
-int ResourceManager::_Allocate(uint32_t blocks)
+int ResourceManager::_FindSuitableAllocationSlot(uint32_t blocks)
 {
+	//FIX LATER
+	_mutexLock.lock();
+	_mutexLock.unlock();
 	if (_firstFreeBlock == -1)
 	{
-		throw runtime_error("No free blocks remaining!");
+		return -1;
+		//throw runtime_error("No free blocks remaining!");
 	}
 
 	int32_t allocSlot = _firstFreeBlock;
@@ -184,7 +210,8 @@ int ResourceManager::_Allocate(uint32_t blocks)
 
 		if (lastFree->Next == -1)
 		{
-			throw runtime_error("Not enough contiguous free blocks to accomodate the allocation!");
+			return -1;
+			//throw runtime_error("Not enough contiguous free blocks to accomodate the allocation!");
 		}
 
 		// Not next contigious block; reset and keep trying
@@ -201,12 +228,22 @@ int ResourceManager::_Allocate(uint32_t blocks)
 		}
 	}
 
-	// If we reached here it means we found enough contiguous blocks, with walker
-	// being the last one of our range.
+	return allocSlot;
+}
+
+// Given a valid allocation slot and number of blocks -- extract those blocks
+// from the list of free blocks.
+void ResourceManager::_Allocate(int32_t allocSlot, uint32_t blocks)
+{
+	if (allocSlot == -1)
+	{
+		throw runtime_error("Invalid allocation slot!");
+	}
 
 	if (allocSlot == _firstFreeBlock)
 	{
-		_firstFreeBlock = reinterpret_cast<FreeBlock*>(_pool + walker * _blockSize)->Next;
+		// Index of the block after the last one to allocate
+		_firstFreeBlock = reinterpret_cast<FreeBlock*>(_pool + (allocSlot + blocks - 1) * _blockSize)->Next;
 
 		if (_firstFreeBlock != -1)
 			reinterpret_cast<FreeBlock*>(_pool + _firstFreeBlock * _blockSize)->Previous = -1;
@@ -214,14 +251,12 @@ int ResourceManager::_Allocate(uint32_t blocks)
 	else
 	{
 		FreeBlock* firstToAlloc = reinterpret_cast<FreeBlock*>(_pool + allocSlot * _blockSize);
-		int32_t nextFree = reinterpret_cast<FreeBlock*>(_pool + walker * _blockSize)->Next;
+		int32_t nextFree = reinterpret_cast<FreeBlock*>(_pool + (allocSlot + blocks - 1) * _blockSize)->Next;
 		reinterpret_cast<FreeBlock*>(_pool + firstToAlloc->Previous * _blockSize)->Next = nextFree;
 
 		if (nextFree != -1)
 			reinterpret_cast<FreeBlock*>(_pool + nextFree * _blockSize)->Previous = firstToAlloc->Previous;
 	}
-
-	return allocSlot;
 }
 
 // Frees certain blocks by inserting them into the free block list.
@@ -323,32 +358,121 @@ void ResourceManager::_Free(int32_t firstBlock, uint32_t numBlocks)
 
 void ResourceManager::_Run()
 {
+	_mutexLock.lock();
 	_numBlocks = 20;
 	_pool = new char[_numBlocks * _blockSize];
 
 	// Make blocks form a linked list (all of them at startup)
 	_SetupFreeBlockList();
 
+	//Create threads and initialize them as "free"
+	for (uint16_t i = 0; i < 4; i++)
+	{
+		_threadIDMap.insert({i, thread()});
+		
+		_threadRunningMap.insert({ i, ThreadControl() });
+	}
+
 	_running = true;
+	_mutexLock.unlock();
 	while (_running)
 	{
 		//Loop through all resources, ticking them down
 		for (auto &it : _resources)
-			it._callCount--;
+		{
+			it.UpdateCounter();
+		}
+		//Gå igenom färdiga trådar, joinar in dem
+		_mutexLock.lock();
 
+		for (auto &it : _threadRunningMap)
+		{
+			if (!it.second.inUse)
+			{
+				if (!it.second.beenJoined)
+				{
+					_threadIDMap.find(it.first)->second.join();
+					it.second.beenJoined = true;
+				}
+			}
+		}
+
+		_mutexLock.unlock();
+
+
+		//Om vi har lediga trådar, släng upp nya jobb som ligger på stacken.
+		_mutexLock.lock();
+
+		
+		for (auto &it : _threadRunningMap)
+		{
+			if (!_loadingQueue.empty())
+			{
+				if (!it.second.inUse && it.second.beenJoined)
+				{
+					it.second.inUse = true;
+					it.second.beenJoined = false;
+					_threadIDMap.find(it.first)->second = thread(&ResourceManager::_Threading, this, it.first, _loadingQueue.top()->GetGUID());
+					_loadingQueue.pop();
+				}
+			}
+		}
+		
+
+		_mutexLock.unlock();
 
 		this_thread::sleep_for(std::chrono::milliseconds(20));
 	}
+	bool allThreadsJoined = false;
+	while (!allThreadsJoined)
+	{
+		allThreadsJoined = true;
+		for (auto &it : _threadRunningMap)
+		{
+			if (it.second.inUse)
+			{
+				allThreadsJoined = false;
+			}
+			else
+			{
+				if (!it.second.beenJoined)
+				{
+					_threadIDMap.find(it.first)->second.join();
+				}
+			}
 
-	
-	delete assetLoader;
-	assetLoader = nullptr;
+		}
+	}
+
+	delete _assetLoader;
+	_assetLoader = nullptr;
 	delete[] _pool;
 	_pool = nullptr;
+
+}
+
+	
+void ResourceManager::_Threading(uint16_t ID, SM_GUID job)
+{
+	//Kallar på AssetLoader
+	
+	//Tittar om den fortfarande skall läsa in resursen
+
+	//Isåfall, parsa resursen
+
+	//Lägg resursen i en vektor (med mutex lock?)
+	_mutexLock.lock();
+
+
+	_threadRunningMap.find(ID)->second.inUse = false;
+	
+	_mutexLock.unlock();
 }
 
 void ResourceManager::ShutDown()
 {
+	_mutexLock.lock();
 	_running = false;
+	_mutexLock.unlock();
 	_runningThread.join();
 }
