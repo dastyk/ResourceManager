@@ -317,7 +317,7 @@ void Direct3D11::Notify(SM_GUID guid)
 void Direct3D11::_CreateShadersAndInputLayouts()
 {
 	ID3DBlob* pVS;
-	D3DCompileFromFile(L"StaticMeshVS.hlsl",nullptr,nullptr,"main","vs_4_0",
+	D3DCompileFromFile(L"Shaders/DX11/StaticMeshVS.hlsl",nullptr,nullptr,"main","vs_4_0",
 		NULL, NULL, &pVS, nullptr);
 	_device->CreateVertexShader(pVS->GetBufferPointer(), pVS->GetBufferSize(), nullptr, &_vertexShaders[VertexShaders::VS_STATIC_MESHES]);
 
@@ -329,22 +329,22 @@ void Direct3D11::_CreateShadersAndInputLayouts()
 	_device->CreateInputLayout(id, ARRAYSIZE(id), pVS->GetBufferPointer(), pVS->GetBufferSize(), &_inputLayouts[InputLayouts::IL_PNT_VERTEX]);
 	SAFE_RELEASE(pVS);
 	HRESULT hr;
-	D3DCompileFromFile(L"FinalVS.hlsl", nullptr, nullptr, "main", "vs_4_0",
+	D3DCompileFromFile(L"Shaders/DX11/FinalVS.hlsl", nullptr, nullptr, "main", "vs_4_0",
 		NULL, NULL, &pVS, nullptr);
 	_device->CreateVertexShader(pVS->GetBufferPointer(), pVS->GetBufferSize(), nullptr, &_vertexShaders[VertexShaders::VS_FULLSCREEN]);
 	SAFE_RELEASE(pVS);
 
-	D3DCompileFromFile(L"StaticMeshPS.hlsl", nullptr, nullptr, "main", "ps_4_0",
+	D3DCompileFromFile(L"Shaders/DX11/StaticMeshPS.hlsl", nullptr, nullptr, "main", "ps_4_0",
 		NULL, NULL, &pVS, nullptr);
 	_device->CreatePixelShader(pVS->GetBufferPointer(), pVS->GetBufferSize(), nullptr, &_pixelShaders[PixelShaders::PS_STATIC_MESHES]);
 	SAFE_RELEASE(pVS);
 
-	D3DCompileFromFile(L"FinalPS.hlsl", nullptr, nullptr, "main", "ps_4_0",
+	D3DCompileFromFile(L"Shaders/DX11/FinalPS.hlsl", nullptr, nullptr, "main", "ps_4_0",
 		NULL, NULL, &pVS, nullptr);
 	_device->CreatePixelShader(pVS->GetBufferPointer(), pVS->GetBufferSize(), nullptr, &_pixelShaders[PixelShaders::PS_FINAL]);
 	SAFE_RELEASE(pVS);
 
-	hr = D3DCompileFromFile(L"InstancedStaticMeshVS.hlsl", nullptr, nullptr, "main", "vs_5_0",
+	hr = D3DCompileFromFile(L"Shaders/DX11/InstancedStaticMeshVS.hlsl", nullptr, nullptr, "main", "vs_5_0",
 		NULL, NULL, &pVS, nullptr);
 	_device->CreateVertexShader(pVS->GetBufferPointer(), pVS->GetBufferSize(), nullptr, &_vertexShaders[VertexShaders::VS_STATIC_MESHES_INSTANCED]);
 	SAFE_RELEASE(pVS);
