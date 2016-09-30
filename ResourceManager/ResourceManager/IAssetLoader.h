@@ -13,26 +13,27 @@ struct RawData
 {
 	uint64_t size;
 	char* data;
-	FileType fType;
+	uint32_t fType;
 };
 
 class IAssetLoader
 {
-private:
-
 protected:
 	IAssetLoader() { compressedFile = "ERROR NO FILE DEFINED"; };
 
 	std::string compressedFile;
 	std::unordered_map<uint64_t, std::string> hashTable;
-
+	std::map<uint32_t,uint32_t> _fileTypes;
 
 public:
 	IAssetLoader(const std::string &file) { compressedFile = file; };
 	virtual ~IAssetLoader() {};
 
 	virtual RawData LoadResource(SM_GUID guid)=0;
-
+	void AddType(uint32_t& type, const std::string& fileend)
+	{
+		_fileTypes[type] = _fileTypes.size();//std::hash<std::string>{} (fileend)] = type;
+	}
 };
 
 #endif

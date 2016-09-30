@@ -54,7 +54,7 @@ private:
 
 	std::vector<Resource> _resources;
 	IAssetLoader* assetLoader = nullptr;
-	
+	void AddParser(const std::string& fileend, std::function<void()>& parseFunction);
 
 	bool _running;
 	AssetParser _parser;
