@@ -300,6 +300,7 @@ void Direct3D11::Draw()
 
 void Direct3D11::CreateBuffer(Resource * resource)
 {
+	const RawData& rd = resource->GetRawData();
 	
 }
 

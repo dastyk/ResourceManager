@@ -62,6 +62,7 @@ public:
 		}
 	}
 	SM_GUID GetGUID()const { return ID; };
+	const RawData& GetRawData() { return _rawData; };
 
 	operator SM_GUID()const { return ID; }
 };
