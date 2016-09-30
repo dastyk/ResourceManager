@@ -25,7 +25,7 @@ int main(int argc, char** argv)
 	//ResourceManager::Instance().PrintOccupancy();
 	ResourceManager::Instance().TestAlloc();
 
-	Resource& mesh1 = ResourceManager::Instance().LoadResource("Sphere0.arf", Resource::Flag::LOAD_RIGHT_THE_FUCK_NOW);
+	Resource& mesh1 = ResourceManager::Instance().LoadResource("Sphere0.arf", Resource::Flag::NEEDED_NOW);
 	ResourceManager::Instance().ShutDown();
 	MemoryManager::DeleteInstance();
 	Core::ShutDown();

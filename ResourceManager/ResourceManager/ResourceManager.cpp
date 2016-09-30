@@ -20,8 +20,8 @@ ResourceManager::ResourceManager()
 
 ResourceManager::~ResourceManager()
 {
-	delete assetLoader;
-	assetLoader = nullptr;
+	delete _assetLoader;
+	_assetLoader = nullptr;
 	delete[] _pool;
 	_pool = nullptr;
 }
@@ -56,7 +56,7 @@ Resource & ResourceManager::LoadResource(SM_GUID guid, const Resource::Flag& fla
 	_mutexLock.unlock();
 
 	// Start thread
-		r._rawData = assetLoader->LoadResource(guid);
+		r._rawData = _assetLoader->LoadResource(guid);
 		_parser.ParseResource(r);
 	// Mutex unlock
 	return r;
@@ -137,7 +137,7 @@ void ResourceManager::_Startup()
 
 void ResourceManager::SetAssetLoader(IAssetLoader * loader)
 {
-	assetLoader = loader;
+	_assetLoader = loader;
 }
 
 void ResourceManager::_SetupFreeBlockList(void)
@@ -436,8 +436,8 @@ void ResourceManager::_Run()
 		}
 	}
 
-	delete assetLoader;
-	assetLoader = nullptr;
+	delete _assetLoader;
+	_assetLoader = nullptr;
 	delete[] _pool;
 	_pool = nullptr;
 
