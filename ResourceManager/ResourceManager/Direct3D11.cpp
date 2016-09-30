@@ -301,12 +301,12 @@ void Direct3D11::CreateBuffer(Resource * resource)
 	else if (type == Resource::ResourceType::TEXTURE_DDS)
 	{
 		const TextureData* texdata = (TextureData*)resource->GetProcessedData();
-		_CreateDDSTexture(texdata->data, texdata->size);
+		_textures[resource->GetGUID()] = _CreateDDSTexture(texdata->data, texdata->size);
 	}
 	else if (type & (Resource::ResourceType::TEXTURE_PNG | Resource::ResourceType::TEXTURE_JPG))
 	{
 		const TextureData* texdata = (TextureData*)resource->GetProcessedData();
-		_CreateWICTexture(texdata->data, texdata->size);
+		_textures[resource->GetGUID()] = _CreateWICTexture(texdata->data, texdata->size);
 	}
 
 	

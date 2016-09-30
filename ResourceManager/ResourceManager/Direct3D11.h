@@ -113,7 +113,7 @@ private:
 	
 	std::map<uint64_t, ID3D11Buffer*> _vertexBuffers;
 	std::map<uint64_t, ID3D11Buffer*> _indexBuffers;
-	std::map<uint32_t, ID3D11Buffer*> _textures;
+	std::map<uint32_t, ID3D11ShaderResourceView*> _textures;
 	ID3D11Buffer* _constantBuffers[ConstantBuffers::CB_COUNT] = { nullptr };
 	ID3D11InputLayout* _inputLayouts[InputLayouts::LAYOUT_COUNT] = { nullptr };
 	ID3D11SamplerState* _samplerStates[Samplers::SAM_COUNT] = { nullptr };
