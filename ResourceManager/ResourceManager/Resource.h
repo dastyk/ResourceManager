@@ -20,10 +20,12 @@ public:
 		NOT_URGENT = 1 << 1,
 		NEEDED_NOW = 1 << 2
 	);
-	CreateFlag(ResourceType, uint32_t, 2,
-		INDEXED_PNT_MESH = 1 << 0,
+
+	enum ResourceType : uint32_t
+	{
+		PNT_MESH = 1 << 0,
 		TEXTURE = 1 << 1
-	);
+	};
 
 	friend ResourceManager;
 	friend AssetParser;

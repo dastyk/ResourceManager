@@ -297,12 +297,15 @@ void Direct3D11::Draw()
 
 void Direct3D11::CreateBuffer(Resource * resource)
 {
-	if (resource->GetResourceType() == Resource::ResourceType::INDEXED_PNT_MESH)
+	const Resource::ResourceType type = resource->GetResourceType();
+	if (type == Resource::ResourceType::PNT_MESH)
 	{
 		const PNTMeshData* meshdata = (PNTMeshData*)resource->GetProcessedData();
 		_vertexBuffers[resource->GetGUID().data] = _CreateVertexBuffer(meshdata->vertices, meshdata->vertexCount);
-		_indexBuffers[resource->GetGUID().data] = _CreateIndexBuffer(meshdata->indices, meshdata->indexCount);
+		if(meshdata->indices != nullptr)
+			_indexBuffers[resource->GetGUID().data] = _CreateIndexBuffer(meshdata->indices, meshdata->indexCount);
 	}
+
 	
 	
 }
