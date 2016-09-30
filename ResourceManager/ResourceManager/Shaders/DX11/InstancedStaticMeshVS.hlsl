@@ -44,6 +44,6 @@ VS_OUT main(VS_IN input)
 	output.posH = mul(float4(input.pos, 1.0f), gPOB[input.instanceID].gWVP);
 	output.posVS = mul(float4(input.pos, 1.0f), gPOB[input.instanceID].gWorldView);
 	output.tex = input.tex;
-	output.normalVS = mul(float4(input.normal,0.0f), gPOB[input.instanceID].gWorldViewInvTrp);
+	output.normalVS = mul(float4(input.nor,0.0f), gPOB[input.instanceID].gWorldViewInvTrp);
 	return output;
 }
