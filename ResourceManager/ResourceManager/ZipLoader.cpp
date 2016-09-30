@@ -64,15 +64,14 @@ RawData ZipLoader::LoadResource(SM_GUID guid)
 		//HÄR BORDE NOG ETT EXCEPTION KASTAS SENARE, ELLER SÅ TAR VI PAJ BAKNING
 	}
 
-	std::string fileType = fileName.substr(fileName.length() - 3, 3);
+	uint32_t fileType = std::hash<std::string>{} (fileName.substr(fileName.length() - 3, 3));
 
-	if (fileType == "arf")
+
+	auto find2 = _fileTypes.find(fileType);
+	if(find2 != _fileTypes.end())
 	{
-		returnData.fType = FileType::arf;
-	}
-	else if (fileType == "obj")
-	{
-		returnData.fType = FileType::obj;
+		returnData.fType = find2->second;
+		// throw "NOW FOUND BITCH";
 	}
 	
 	return returnData;

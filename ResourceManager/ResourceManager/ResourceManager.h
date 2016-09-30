@@ -35,6 +35,7 @@ public:
 	void TestAlloc(void);
 	
 	void SetAssetLoader(IAssetLoader* loader);
+	void AddParser(const std::string& fileend,const std::function<void(Resource& r)>& parseFunction);
 
 	void ShutDown();
 

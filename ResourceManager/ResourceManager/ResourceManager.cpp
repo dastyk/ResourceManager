@@ -140,6 +140,14 @@ void ResourceManager::SetAssetLoader(IAssetLoader * loader)
 	_assetLoader = loader;
 }
 
+void ResourceManager::AddParser(const std::string& fileend, const std::function<void(Resource& r)>& parseFunction)
+{
+	uint32_t type = std::hash<std::string>{} (fileend);
+	assetLoader->AddType(type);
+	_parser.AddParser(type, parseFunction);
+	
+}
+
 void ResourceManager::_SetupFreeBlockList(void)
 {
 	// Iterate through blocks (all are free at first) and reinterpret them

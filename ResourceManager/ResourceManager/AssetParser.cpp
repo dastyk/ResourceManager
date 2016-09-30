@@ -11,19 +11,23 @@ AssetParser::~AssetParser()
 {
 }
 
+void AssetParser::AddParser(uint32_t type,const std::function<void(Resource & r)>& parseFunction)
+{
+	_parsers[type] = std::move(parseFunction);
+}
+
 void AssetParser::ParseResource(Resource & r) const
 {
-	switch (r._rawData.fType)
+
+	auto find = _parsers.find(r._rawData.fType);
+	if(find != _parsers.end())
 	{
-	case FileType::arf:
-	{
-		ParseArf(r);
-		break;
+		find->second(r);
+		return;
 	}
-	default:
-		throw std::runtime_error("Unable to handle object type.");
-		break;
-	}
+
+	throw std::runtime_error("Unable to handle object type.");
+
 }
 
 void AssetParser::ParseTexture(Resource & r) const
