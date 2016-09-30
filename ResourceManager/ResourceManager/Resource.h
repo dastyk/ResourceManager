@@ -23,8 +23,9 @@ public:
 
 	enum ResourceType : uint32_t
 	{
-		PNT_MESH = 1 << 0,
-		TEXTURE = 1 << 1
+		MESH_PNT = 1 << 0,
+		TEXTURE_DDS = 1 << 1,
+		
 	};
 
 	friend ResourceManager;

@@ -298,7 +298,7 @@ void Direct3D11::Draw()
 void Direct3D11::CreateBuffer(Resource * resource)
 {
 	const Resource::ResourceType type = resource->GetResourceType();
-	if (type == Resource::ResourceType::PNT_MESH)
+	if (type == Resource::ResourceType::MESH_PNT)
 	{
 		const PNTMeshData* meshdata = (PNTMeshData*)resource->GetProcessedData();
 		_vertexBuffers[resource->GetGUID().data] = _CreateVertexBuffer(meshdata->vertices, meshdata->vertexCount);

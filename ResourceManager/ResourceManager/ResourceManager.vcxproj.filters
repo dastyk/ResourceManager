@@ -19,6 +19,9 @@
     <Filter Include="Source Files\Shaders\DX11">
       <UniqueIdentifier>{90154494-c19a-4631-b93b-1674cf066da6}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\Graphics">
+      <UniqueIdentifier>{1ec3d2bb-5eba-41af-9348-df825b46f962}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Main.cpp">
@@ -28,9 +31,6 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Core.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Direct3D11.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="DirectXTK\DDSTextureLoader.cpp">
@@ -79,7 +79,10 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="IGraphics.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>Source Files\Graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="Direct3D11.cpp">
+      <Filter>Source Files\Graphics</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
