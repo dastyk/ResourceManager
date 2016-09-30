@@ -1,16 +1,10 @@
 #pragma once
 #include <stdint.h>
-enum ObjectType : uint8_t
-{
-	Mesh,
-	Texture,
-	Sound,
-	Video
-};
 
 enum FileType : uint8_t
 {
 	obj,
+	arf,
 	fbx,
 	wav,
 	ogg,

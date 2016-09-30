@@ -39,7 +39,7 @@ int main(int argc, char **argv)
 		if(!parser.parse())  
 		{
 			cout << "Compiled" << endl;
-			//o.Print();
+			o.Print();
 			ofstream file;
 			if(argc > 2)
 				file.open(argv[2], ios::binary | ios::trunc);

@@ -18,6 +18,8 @@ private:
 public:
 
 	ZipLoader(const std::string &file);
+	virtual ~ZipLoader();
+
 	RawData LoadResource(SM_GUID guid);
 
 };
