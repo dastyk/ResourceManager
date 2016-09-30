@@ -5,6 +5,7 @@
 #include <vector>
 #include <thread>
 #include "AssetParser.h"
+#include "IAssetLoader.h"
 
 // Flöjt TODO:
 // Chunked allocation, i.e. make this a pool allocator with doubly linked list of
@@ -29,6 +30,8 @@ public:
 	void PrintOccupancy(void);
 	void TestAlloc(void);
 	
+	void SetAssetLoader(IAssetLoader* loader);
+
 	void ShutDown();
 
 private:
@@ -38,7 +41,6 @@ private:
 		int32_t Next = -1;
 	};
 
-private:
 	ResourceManager();
 	~ResourceManager();
 	ResourceManager(const ResourceManager& other);
@@ -50,13 +52,13 @@ private:
 	int _Allocate(uint32_t blocks);
 	void _Free(int32_t firstBlock, uint32_t numBlocks);
 
-private:
 	std::vector<Resource> _resources;
+	IAssetLoader* assetLoader = nullptr;
 	
 
 	bool _running;
 	AssetParser _parser;
-	char* _pool;
+	char* _pool = nullptr;
 	const uint32_t _blockSize = 512 * 1024;
 	uint32_t _numBlocks = 0;
 	std::thread _runningThread;

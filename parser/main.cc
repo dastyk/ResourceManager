@@ -12,7 +12,6 @@ void yy::parser::error(std::string const&err)
 {
   //std::cout << "It's one of the bad ones... " << err << std::endl;
 	std::cout << err << std::endl;
-	return -2;
 }
 
 int main(int argc, char **argv)
@@ -39,12 +38,15 @@ int main(int argc, char **argv)
 		if(!parser.parse())  
 		{
 			cout << "Compiled" << endl;
-			//o.Print();
 			ofstream file;
 			if(argc > 2)
 				file.open(argv[2], ios::binary | ios::trunc);
 			else
 				file.open("out.arf", ios::binary | ios::trunc);
+			if (!file.is_open())
+			{
+				cout << "Woah there cowboys." << endl;
+			}
 			o.GenerateArf(file);
 			file.close();
 		}
