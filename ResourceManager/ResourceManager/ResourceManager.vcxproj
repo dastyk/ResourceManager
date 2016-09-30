@@ -142,6 +142,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="IGraphics.cpp" />
     <ClCompile Include="stdafx.cpp" />
     <ClCompile Include="TestMain.cpp" />
     <ClCompile Include="unzipper.cpp" />
@@ -150,6 +151,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="IAssetLoader.h" />
+    <ClInclude Include="IGraphics.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="targetver.h" />
     <ClInclude Include="unzipper.h" />

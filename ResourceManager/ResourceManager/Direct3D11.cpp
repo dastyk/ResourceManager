@@ -298,6 +298,15 @@ void Direct3D11::Draw()
 	_swapChain->Present(0, 0);
 }
 
+void Direct3D11::CreateBuffer(Resource * resource)
+{
+	
+}
+
+void Direct3D11::Notify(SM_GUID guid)
+{
+}
+
 void Direct3D11::_CreateShadersAndInputLayouts()
 {
 	ID3DBlob* pVS;
