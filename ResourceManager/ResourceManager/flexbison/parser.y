@@ -45,8 +45,8 @@ line			: statement									{ }
 
 statement		: OBJECT NAME 								{ o.AddSubMesh($2); }		
 				| MTLLIB NAME								{ }
-				| POSITION REAL REAL REAL optreal			{ o.AddPosition(Position($2,$3,$4,$5)); }
-				| TEXCOORD REAL REAL optreal2				{ o.AddTexCoord(TexCoord($2,$3,$4));}
+				| POSITION REAL REAL REAL optreal			{ o.AddPosition(Position($2,$3,$4)); }
+				| TEXCOORD REAL REAL optreal2				{ o.AddTexCoord(TexCoord($2,$3));}
 				| NORMAL REAL REAL REAL						{ o.AddNormal(Normal($2,$3,$4)); }
 				| POINT REAL REAL optreal					{ }
 				| USEMTL NAME								{}					

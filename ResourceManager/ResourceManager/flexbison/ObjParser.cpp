@@ -9,6 +9,20 @@ void yy::parser::error(std::string const&err)
 	//std::cout << "It's one of the bad ones... " << err << std::endl;
 	std::cout << err << std::endl;
 }
+
+void ParseObj(char* rawData, Data& data, DataPointers& p)
+{
+	fopen_s(&yyin, "temp", "r");
+
+	setbuf(yyin, rawData);
+
+	yy::parser parser;
+	parser.parse();
+
+	fclose(yyin);
+}
+
+
 //int main(int argc, char* argv[])
 //{
 //	argc = 2;

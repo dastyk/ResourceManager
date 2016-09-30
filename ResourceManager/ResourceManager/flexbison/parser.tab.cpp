@@ -586,13 +586,13 @@ namespace yy {
 
   case 6:
 #line 48 "parser.y" // lalr1.cc:846
-    { o.AddPosition(Position(yystack_[3].value.as< float > (),yystack_[2].value.as< float > (),yystack_[1].value.as< float > (),yystack_[0].value.as< float > ())); }
+    { o.AddPosition(Position(yystack_[3].value.as< float > (),yystack_[2].value.as< float > (),yystack_[1].value.as< float > ())); }
 #line 591 "parser.tab.cpp" // lalr1.cc:846
     break;
 
   case 7:
 #line 49 "parser.y" // lalr1.cc:846
-    { o.AddTexCoord(TexCoord(yystack_[2].value.as< float > (),yystack_[1].value.as< float > (),yystack_[0].value.as< float > ()));}
+    { o.AddTexCoord(TexCoord(yystack_[2].value.as< float > (),yystack_[1].value.as< float > ()));}
 #line 597 "parser.tab.cpp" // lalr1.cc:846
     break;
 

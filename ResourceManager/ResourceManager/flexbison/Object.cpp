@@ -1,5 +1,6 @@
 #include "Object.h"
 using namespace std;
+
 void Object::Alloc(int flag)
 {
 	Data ndat;
@@ -314,12 +315,12 @@ void Object::Print()
 	cout << "Positions: " << endl;
 	for (uint64_t i = 0; i < _data.NumPos; i++)
 	{
-		cout << "\t" << _datap.positions[i].x << " " << _datap.positions[i].y << " " << _datap.positions[i].z << " " << _datap.positions[i].w << endl;
+		cout << "\t" << _datap.positions[i].x << " " << _datap.positions[i].y << " " << _datap.positions[i].z/* << " " << _datap.positions[i].w*/ << endl;
 	}
 	cout << "Texcoords: " << endl;
 	for (uint64_t i = 0; i < _data.NumTex; i++)
 	{
-		cout << "\t" << _datap.texCoords[i].u << " " << _datap.texCoords[i].v << " " << _datap.texCoords[i].w << " " << endl;
+		cout << "\t" << _datap.texCoords[i].u << " " << _datap.texCoords[i].v/* << " " << _datap.texCoords[i].w << " "*/ << endl;
 	}
 	cout << "Normals: " << endl;
 	for (uint64_t i = 0; i < _data.NumNorm; i++)
@@ -368,11 +369,16 @@ void Object::Print()
 	}
 }
 
+void Object::Clear()
+{
+	Alloc(ALLOC_ALL);
+}
+
 void Object::GenerateArf(ofstream & of, int flag)
 {
 	if (flag & GENERATE_ARF_FLAG_SHRINK_TO_FIT)
 		ShrinkToFit();
-	of.write((char*)&_data, sizeof(Data));
+	of.write((char*)&_data, sizeof(ArfData::Data));
 	of.write((char*)_data.buffer, _data.allocated);
 }
 

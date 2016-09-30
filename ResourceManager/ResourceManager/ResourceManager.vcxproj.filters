@@ -87,7 +87,7 @@
     <ClCompile Include="flexbison\Object.cpp">
       <Filter>FlexBison</Filter>
     </ClCompile>
-    <ClCompile Include="flexbison\Source.cpp">
+    <ClCompile Include="flexbison\ObjParser.cpp">
       <Filter>FlexBison</Filter>
     </ClCompile>
   </ItemGroup>
@@ -213,6 +213,9 @@
       <Filter>FlexBison</Filter>
     </ClInclude>
     <ClInclude Include="flexbison\Object.h">
+      <Filter>FlexBison</Filter>
+    </ClInclude>
+    <ClInclude Include="ObjParser.h">
       <Filter>FlexBison</Filter>
     </ClInclude>
   </ItemGroup>
