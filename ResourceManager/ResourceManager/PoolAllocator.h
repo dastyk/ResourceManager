@@ -1,5 +1,9 @@
 #ifndef POOL_ALLOCATOR_H
 #define POOL_ALLOCATOR_H
+
+#pragma warning (disable : 4267) //conversion from size_t to uint32_t
+#pragma warning (disable : 4244) //conversion from __int64 to int32_t
+
 #include <memory>
 #include <stdexcept>
 #include <string>

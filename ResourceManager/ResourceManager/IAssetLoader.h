@@ -1,6 +1,6 @@
 #ifndef IASSET_LOADER_H
 #define IASSET_LOADER_H
-
+#pragma warning (disable : 4267)
 #pragma once
 #include "stdafx.h"
 #include <fstream>

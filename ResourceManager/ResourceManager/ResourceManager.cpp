@@ -1,5 +1,6 @@
 #include "ResourceManager.h"
-
+#pragma warning (disable : 4267)
+#pragma warning (disable : 4018) //Signed/unsigned missmatch
 #include <stdexcept>
 #include <Windows.h> // Because fuck off VS. Start following standards
 #include <iostream>
