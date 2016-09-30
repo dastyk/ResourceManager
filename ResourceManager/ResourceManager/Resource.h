@@ -37,7 +37,6 @@ private:
 	uint16_t _refCount;
 	uint16_t _callCount;
 	Resource() : _refCount(0), _callCount(0) { };
-	RawData _rawData;
 	ResourceType _resourceType;
 	void* _processedData;
 	void SetGUID(SM_GUID inID) { ID = inID; };
@@ -67,7 +66,7 @@ public:
 	}
 	SM_GUID GetGUID()const { return ID; };
 	const RawData& GetRawData() const { return _rawData; };
-	const void* GetProcessedData() const { return _processedData; };
+	void* GetProcessedData() const { return _processedData; };
 	const ResourceType GetResourceType() const { return _resourceType; };
 
 	operator SM_GUID()const { return ID; }
