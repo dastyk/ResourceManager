@@ -5,7 +5,6 @@
 #include "DebugLogger.h"
 #include <vector>
 #include <unordered_map>
-#include <SDL_keycode.h>
 
 
 struct PNTVertex
@@ -23,7 +22,11 @@ struct PNTMeshData
 	uint32_t indexCount;
 };
 
-
+struct TextureData
+{
+	void* data;
+	size_t size;
+};
 
 
 struct Material

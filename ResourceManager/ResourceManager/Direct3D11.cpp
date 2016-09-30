@@ -205,35 +205,28 @@ ID3D11Buffer* Direct3D11::_CreateIndexBuffer(uint32_t * indexData, uint32_t inde
 }
 
 /* REWRITE TO CREATE FROM MEMORY */
-int Direct3D11::CreateTexture(const wchar_t * filename)
+ID3D11ShaderResourceView* Direct3D11::_CreateDDSTexture(const void* data, size_t size)
 {
 	ID3D11ShaderResourceView* srv = nullptr;
-	std::wstring ws(filename);
-	if (ws.substr(ws.size() - 4) == L".dds")
+
+	HRESULT hr = CreateDDSTextureFromMemory(_device, (uint8_t*)data, size, nullptr, &srv);
+	if (FAILED(hr))
 	{
-		HRESULT hr = CreateDDSTextureFromFile(_device, filename, nullptr, &srv);
-		if (FAILED(hr))
-		{
-		
-			return -1;
-		}
+		return nullptr;
 	}
-	else if (ws.substr(ws.size() - 4) == L".png")
+	return srv;
+}
+
+ID3D11ShaderResourceView * Direct3D11::_CreateWICTexture(const void * data, size_t size)
+{
+	ID3D11ShaderResourceView* srv = nullptr;
+	HRESULT hr = CreateWICTextureFromMemory(_device, (uint8_t*)data, size, nullptr, &srv);
+	if (FAILED(hr))
 	{
-		HRESULT hr = CreateWICTextureFromFile(_device, filename, nullptr, &srv);
-		if (FAILED(hr))
-		{
-			
-			return -1;
-		}
+		return nullptr;
 	}
-	else
-	{
-		
-		return -1;
-	}
-	_textures.push_back(srv);
-	return _textures.size() - 1;
+	return srv;
+
 }
 
 void Direct3D11::Draw()
@@ -304,6 +297,16 @@ void Direct3D11::CreateBuffer(Resource * resource)
 		_vertexBuffers[resource->GetGUID().data] = _CreateVertexBuffer(meshdata->vertices, meshdata->vertexCount);
 		if(meshdata->indices != nullptr)
 			_indexBuffers[resource->GetGUID().data] = _CreateIndexBuffer(meshdata->indices, meshdata->indexCount);
+	}
+	else if (type == Resource::ResourceType::TEXTURE_DDS)
+	{
+		const TextureData* texdata = (TextureData*)resource->GetProcessedData();
+		_CreateDDSTexture(texdata->data, texdata->size);
+	}
+	else if (type & (Resource::ResourceType::TEXTURE_PNG | Resource::ResourceType::TEXTURE_JPG))
+	{
+		const TextureData* texdata = (TextureData*)resource->GetProcessedData();
+		_CreateWICTexture(texdata->data, texdata->size);
 	}
 
 	

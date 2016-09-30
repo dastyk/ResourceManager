@@ -25,6 +25,8 @@ public:
 	{
 		MESH_PNT = 1 << 0,
 		TEXTURE_DDS = 1 << 1,
+		TEXTURE_PNG = 1 << 2,
+		TEXTURE_JPG = 1 << 3
 		
 	};
 
@@ -32,6 +34,7 @@ public:
 	friend AssetParser;
 	~Resource() { observers.clear(); }
 	RawData _rawData;
+	void* _processedData;
 	// ResourceData* data;
 private:
 	std::vector<Observer*> observers;
@@ -41,7 +44,7 @@ private:
 	uint16_t _callCount;
 	Resource() : _refCount(0), _callCount(0) { };
 	ResourceType _resourceType;
-	void* _processedData;
+	
 	void SetGUID(SM_GUID inID) { ID = inID; };
 	void _NotifyObserver() { for (auto &it : observers) { it->Notify(ID); } };
 

@@ -108,11 +108,12 @@ private:
 	ID3D11ShaderResourceView* _shaderResourceViews[RenderTargets::RT_COUNT] = { nullptr }; //related to deferred
 	ID3D11Texture2D*          _renderTargetTextures[RenderTargets::RT_COUNT] = { nullptr };
 	
-	std::vector<ID3D11ShaderResourceView*> _textures; //diffuse maps, normal maps, etc.
+	
 	
 	
 	std::map<uint64_t, ID3D11Buffer*> _vertexBuffers;
 	std::map<uint64_t, ID3D11Buffer*> _indexBuffers;
+	std::map<uint32_t, ID3D11Buffer*> _textures;
 	ID3D11Buffer* _constantBuffers[ConstantBuffers::CB_COUNT] = { nullptr };
 	ID3D11InputLayout* _inputLayouts[InputLayouts::LAYOUT_COUNT] = { nullptr };
 	ID3D11SamplerState* _samplerStates[Samplers::SAM_COUNT] = { nullptr };
@@ -129,6 +130,10 @@ private:
 	ID3D11Buffer* _CreateVertexBuffer(PNTVertex* vertexData, unsigned vertexCount);
 	ID3D11Buffer* _CreateIndexBuffer(uint32_t* indexData, uint32_t indexCount);
 
+	ID3D11ShaderResourceView* _CreateDDSTexture(const void* data, size_t size);
+	ID3D11ShaderResourceView* _CreateWICTexture(const void* data, size_t size);
+
+
 public:
 	Direct3D11();
 	virtual ~Direct3D11();
@@ -136,7 +141,7 @@ public:
 	ID3D11DeviceContext* GetDeviceContext() { return _deviceContext; }
 
 	
-	int CreateTexture(const wchar_t* filename);
+
 
 	//Inherited from graphics interface
 	virtual void Draw();

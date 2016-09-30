@@ -37,11 +37,7 @@ int main(int argc, char** argv)
 		_datap.faces = (ArfData::Face*)((size_t)pdata + data->FaceStart);
 		_datap.subMesh = (ArfData::SubMesh*)((size_t)pdata + data->SubMeshStart);
 
-		//r.GetProcessedData = new PNTMeshData;
-		//PNTMeshData* pmd = (PNTMeshData*) r.GetProcessedData();
-		//pmd->vertexCount = data->NumFace * 3;
-		//pmd->vertices = new PNTVertex[data->NumFace * 3];
-		//pmd->indexCount = data->NumFace * 3;
+	
 		// TODO: Do something with the data, so it can be rendered. // TODO: Interleave data.
 
 		delete r._rawData.data;
