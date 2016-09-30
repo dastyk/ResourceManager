@@ -136,7 +136,7 @@ Direct3D11::~Direct3D11()
 	}
 	for (auto &i : _textures)
 	{
-		SAFE_RELEASE(i);
+		SAFE_RELEASE(i.second);
 	}
 
 	SAFE_RELEASE(_depth.DSB);
