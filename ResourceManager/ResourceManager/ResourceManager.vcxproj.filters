@@ -13,6 +13,9 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="FlexBison">
+      <UniqueIdentifier>{eb3338b1-64f0-4a46-b93c-67417f7f1cb0}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Main.cpp">
@@ -74,6 +77,18 @@
     </ClCompile>
     <ClCompile Include="IGraphics.cpp">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="flexbison\parser.flex.cpp">
+      <Filter>FlexBison</Filter>
+    </ClCompile>
+    <ClCompile Include="flexbison\parser.tab.cpp">
+      <Filter>FlexBison</Filter>
+    </ClCompile>
+    <ClCompile Include="flexbison\Object.cpp">
+      <Filter>FlexBison</Filter>
+    </ClCompile>
+    <ClCompile Include="flexbison\Source.cpp">
+      <Filter>FlexBison</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -188,8 +203,30 @@
     <ClInclude Include="IGraphics.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="flexbison\FlexLexer.h">
+      <Filter>FlexBison</Filter>
+    </ClInclude>
+    <ClInclude Include="flexbison\parser.tab.h">
+      <Filter>FlexBison</Filter>
+    </ClInclude>
+    <ClInclude Include="flexbison\stack.hh">
+      <Filter>FlexBison</Filter>
+    </ClInclude>
+    <ClInclude Include="flexbison\Object.h">
+      <Filter>FlexBison</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="FinalPS.hlsl" />
+  </ItemGroup>
+  <ItemGroup>
+    <Flex Include="flexbison\parser.l">
+      <Filter>FlexBison</Filter>
+    </Flex>
+  </ItemGroup>
+  <ItemGroup>
+    <Bison Include="flexbison\parser.y">
+      <Filter>FlexBison</Filter>
+    </Bison>
   </ItemGroup>
 </Project>
