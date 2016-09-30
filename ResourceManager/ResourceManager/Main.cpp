@@ -19,10 +19,12 @@ int main(int argc, char** argv)
 	MemoryManager::GetInstance()->Init(512U * 1024U * 1024U);
 	ResourceManager::Instance(); // Kickstart at our will
 
+	Sleep(10);
 	//ResourceManager::Instance().PrintOccupancy();
 	ResourceManager::Instance().TestAlloc();
+	
 
-	//Resource& mesh1 = ResourceManager::Instance().LoadResource("Test/test.arf", Resource::Flag::LOAD_RIGHT_THE_FUCK_NOW);
+
 	ResourceManager::Instance().ShutDown();
 	MemoryManager::DeleteInstance();
 	Core::ShutDown();

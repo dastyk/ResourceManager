@@ -3,6 +3,7 @@
 #include <stdexcept>
 #include <Windows.h> // Because fuck of VS. Start following standards
 #include <iostream>
+#include "DebugLogger.h"
 
 using namespace std;
 
@@ -23,6 +24,7 @@ ResourceManager::~ResourceManager()
 
 Resource & ResourceManager::LoadResource(SM_GUID guid, const Resource::Flag& flag)
 {
+	_mutexLock.lock();
 	// TODO: finish return statement
 	// rawData = AssetLoader->Load(SM_GUID);
 	// resources.push_back(AssetParser->Parse(rawData))
@@ -38,9 +40,10 @@ Resource & ResourceManager::LoadResource(SM_GUID guid, const Resource::Flag& fla
 	r._refCount++;
 	r.ID = guid;
 	r._flags = flag;
-	// Start thread
-		// AssetLoader.LoadResource(guid);
-		_parser.ParseResource(r);
+
+	_loadingQueue.push(&r);
+	_mutexLock.unlock();
+
 	// Mutex unlock
 	return r;
 }
@@ -79,6 +82,8 @@ void ResourceManager::PrintOccupancy(void)
 
 void ResourceManager::TestAlloc(void)
 {
+	_mutexLock.lock();
+	_mutexLock.unlock();
 	PrintOccupancy();
 	_Allocate(3);
 	PrintOccupancy();
@@ -151,6 +156,9 @@ void ResourceManager::_SetupFreeBlockList(void)
 
 int ResourceManager::_Allocate(uint32_t blocks)
 {
+	//FIX LATER
+	_mutexLock.lock();
+	_mutexLock.unlock();
 	if (_firstFreeBlock == -1)
 	{
 		throw runtime_error("No free blocks remaining!");
@@ -307,31 +315,117 @@ void ResourceManager::_Free(int32_t firstBlock, uint32_t numBlocks)
 
 void ResourceManager::_Run()
 {
+	_mutexLock.lock();
 	_numBlocks = 20;
 	_pool = new char[_numBlocks * _blockSize];
 
 	// Make blocks form a linked list (all of them at startup)
 	_SetupFreeBlockList();
 
+	//Create threads and initialize them as "free"
+	for (uint16_t i = 0; i < 4; i++)
+	{
+		_threadIDMap.insert({i, thread()});
+		
+		_threadRunningMap.insert({ i, ThreadControl() });
+	}
+
 	_running = true;
+	_mutexLock.unlock();
 	while (_running)
 	{
 		//Loop through all resources, ticking them down
 		for (auto &it : _resources)
-			it._callCount--;
+		{
+			it.UpdateCounter();
+		}
+		//Gå igenom färdiga trådar, joinar in dem
+		_mutexLock.lock();
 
+		for (auto &it : _threadRunningMap)
+		{
+			if (!it.second.inUse)
+			{
+				if (!it.second.beenJoined)
+				{
+					_threadIDMap.find(it.first)->second.join();
+					it.second.beenJoined = true;
+				}
+			}
+		}
+
+		_mutexLock.unlock();
+
+
+		//Om vi har lediga trådar, släng upp nya jobb som ligger på stacken.
+		_mutexLock.lock();
+
+		
+		for (auto &it : _threadRunningMap)
+		{
+			if (!_loadingQueue.empty())
+			{
+				if (!it.second.inUse && it.second.beenJoined)
+				{
+					it.second.inUse = true;
+					it.second.beenJoined = false;
+					_threadIDMap.find(it.first)->second = thread(&ResourceManager::_Threading, this, it.first, _loadingQueue.top()->GetGUID());
+					_loadingQueue.pop();
+				}
+			}
+		}
+		
+
+		_mutexLock.unlock();
 
 		this_thread::sleep_for(std::chrono::milliseconds(20));
 	}
+	bool allThreadsJoined = false;
+	while (!allThreadsJoined)
+	{
+		allThreadsJoined = true;
+		for (auto &it : _threadRunningMap)
+		{
+			if (it.second.inUse)
+			{
+				allThreadsJoined = false;
+			}
+			else
+			{
+				if (!it.second.beenJoined)
+				{
+					_threadIDMap.find(it.first)->second.join();
+				}
+			}
 
-	
+		}
+	}
 
 	delete[] _pool;
 
 }
 
+void ResourceManager::_Threading(uint16_t ID, SM_GUID job)
+{
+	//Kallar på AssetLoader
+	
+	//Tittar om den fortfarande skall läsa in resursen
+
+	//Isåfall, parsa resursen
+
+	//Lägg resursen i en vektor (med mutex lock?)
+	_mutexLock.lock();
+
+
+	_threadRunningMap.find(ID)->second.inUse = false;
+	
+	_mutexLock.unlock();
+}
+
 void ResourceManager::ShutDown()
 {
+	_mutexLock.lock();
 	_running = false;
+	_mutexLock.unlock();
 	_runningThread.join();
 }

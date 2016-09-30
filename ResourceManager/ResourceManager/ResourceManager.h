@@ -4,6 +4,9 @@
 #include "Resource.h"
 #include <vector>
 #include <thread>
+#include <queue>
+#include <unordered_map>
+#include <mutex>
 #include "AssetParser.h"
 
 // Flöjt TODO:
@@ -26,10 +29,13 @@ public:
 	
 	Resource& LoadResource(SM_GUID guid, const Resource::Flag& flag);
 
+
 	void PrintOccupancy(void);
 	void TestAlloc(void);
 	
 	void ShutDown();
+
+	
 
 private:
 	struct FreeBlock
@@ -38,21 +44,52 @@ private:
 		int32_t Next = -1;
 	};
 
+	struct ThreadControl
+	{
+		bool inUse = false;
+		bool beenJoined = true;
+	};
+
+	class CompareResources
+	{
+	public:
+		bool operator()(Resource *a, Resource *b) const
+		{
+			return false;
+		}
+	};
+
+	
+	struct KeyHasher
+	{
+		std::size_t operator()(const uint16_t &a) const
+		{
+			return (size_t)a;
+		}
+	};
+	
+	
+
 private:
 	ResourceManager();
 	~ResourceManager();
-	ResourceManager(const ResourceManager& other);
-	ResourceManager& operator=(const ResourceManager& rhs);
+	ResourceManager(const ResourceManager& other) = delete;
+	ResourceManager& operator=(const ResourceManager& rhs) = delete;
+	
 	void _Run();
 
+
 	void _Startup();
+	void _Threading(uint16_t ID, SM_GUID job);
 	void _SetupFreeBlockList(void);
 	int _Allocate(uint32_t blocks);
 	void _Free(int32_t firstBlock, uint32_t numBlocks);
 
 private:
 	std::vector<Resource> _resources;
-	
+	std::priority_queue<Resource*, std::vector<Resource*>, CompareResources> _loadingQueue;
+	std::unordered_map<uint16_t, ThreadControl, KeyHasher> _threadRunningMap;
+	std::unordered_map<uint16_t, std::thread, KeyHasher> _threadIDMap;
 
 	bool _running;
 	AssetParser _parser;
@@ -61,6 +98,7 @@ private:
 	uint32_t _numBlocks = 0;
 	std::thread _runningThread;
 	int32_t _firstFreeBlock = -1;
+	std::mutex _mutexLock;
 };
 
 #endif
