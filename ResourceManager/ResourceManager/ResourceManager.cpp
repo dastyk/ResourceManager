@@ -126,10 +126,10 @@ void ResourceManager::SetAssetLoader(IAssetLoader * loader)
 	assetLoader = loader;
 }
 
-void ResourceManager::AddParser(const std::string& fileend, std::function<void()>& parseFunction)
+void ResourceManager::AddParser(const std::string& fileend, const std::function<void(Resource& r)>& parseFunction)
 {
 	uint32_t type = std::hash<std::string>{} (fileend);
-	assetLoader.AddType(type, fileend);
+	assetLoader->AddType(type);
 	_parser.AddParser(type, parseFunction);
 	
 }

@@ -24,7 +24,7 @@ public:
 	friend ResourceManager;
 	friend AssetParser;
 	~Resource() { observers.clear(); }
-
+	RawData _rawData;
 	// ResourceData* data;
 private:
 	
@@ -34,7 +34,7 @@ private:
 	uint16_t _refCount;
 	uint16_t _callCount;
 	Resource() : _refCount(0), _callCount(0) { };
-	RawData _rawData;
+	
 
 	void SetGUID(SM_GUID inID) { ID = inID; };
 	void _NotifyObserver() { for (auto &it : observers) { it->Notify(ID); } };

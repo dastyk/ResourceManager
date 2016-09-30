@@ -9,12 +9,12 @@
 #include "Types.h"
 class AssetParser
 {
-	std::map<uint32_t type, std::function<void(Resource & r)>> _parsers;
+	std::map<uint32_t, std::function<void(Resource & r)>> _parsers;
 public:
 	AssetParser();
 	~AssetParser();
 
-	void AddParser(uint32_t type, std::function<void(Resource & r)>& parseFunction);
+	void AddParser(uint32_t type,const std::function<void(Resource & r)>& parseFunction);
 	void ParseResource(Resource& r)const;
 	void ParseTexture(Resource& r)const;
 	void ParseObj(Resource&r)const;

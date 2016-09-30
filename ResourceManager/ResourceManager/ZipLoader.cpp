@@ -67,10 +67,10 @@ RawData ZipLoader::LoadResource(SM_GUID guid)
 	uint32_t fileType = std::hash<std::string>{} (fileName.substr(fileName.length() - 3, 3));
 
 
-	auto find = _fileTypes.find(fileType);
-	if(find != _fileTypes.end())
+	auto find2 = _fileTypes.find(fileType);
+	if(find2 != _fileTypes.end())
 	{
-		returnData.fType = find.second;
+		returnData.fType = find2->second;
 		// throw "NOW FOUND BITCH";
 	}
 	

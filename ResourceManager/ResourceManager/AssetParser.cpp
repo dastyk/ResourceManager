@@ -11,9 +11,9 @@ AssetParser::~AssetParser()
 {
 }
 
-void AssetParser::AddParser(std::function<void(Resource & r)>& parseFunction)
+void AssetParser::AddParser(uint32_t type,const std::function<void(Resource & r)>& parseFunction)
 {
-	_parsers[type] = parseFunction;
+	_parsers[type] = std::move(parseFunction);
 }
 
 void AssetParser::ParseResource(Resource & r) const
