@@ -13,6 +13,7 @@
 
 
 #include "Structs.h"
+#include "IGraphics.h"
 
 enum VertexShaders
 {
@@ -86,7 +87,7 @@ struct DepthBuffer
 	ID3D11Resource*           Texture     = nullptr;
 };
 
-class Direct3D11
+class Direct3D11 : public IGraphics
 {
 private:
 	ID3D11Device*                       _device = nullptr;
@@ -124,7 +125,7 @@ private:
 
 public:
 	Direct3D11();
-	~Direct3D11();
+	virtual ~Direct3D11();
 	ID3D11Device* GetDevice() { return _device; }
 	ID3D11DeviceContext* GetDeviceContext() { return _deviceContext; }
 
@@ -132,7 +133,11 @@ public:
 	int CreateIndexBuffer(unsigned* indexData, unsigned indexCount);
 	int CreateTexture(const wchar_t* filename);
 
-	void Draw();
+	//Inherited from graphics interface
+	virtual void Draw();
+	virtual void CreateBuffer(Resource* resource);
+	virtual void Notify(SM_GUID guid);
+
 	
 };
 

@@ -8,6 +8,7 @@
 #include <unordered_map>
 #include <mutex>
 #include "AssetParser.h"
+#include "IAssetLoader.h"
 
 // Flöjt TODO:
 // Chunked allocation, i.e. make this a pool allocator with doubly linked list of
@@ -33,6 +34,8 @@ public:
 	void PrintOccupancy(void);
 	void TestAlloc(void);
 	
+	void SetAssetLoader(IAssetLoader* loader);
+
 	void ShutDown();
 
 	
@@ -82,18 +85,20 @@ private:
 	void _Startup();
 	void _Threading(uint16_t ID, SM_GUID job);
 	void _SetupFreeBlockList(void);
-	int _Allocate(uint32_t blocks);
+	int _FindSuitableAllocationSlot(uint32_t blocks);
+	void _Allocate(int32_t allocSlot, uint32_t blocks);
 	void _Free(int32_t firstBlock, uint32_t numBlocks);
 
-private:
 	std::vector<Resource> _resources;
+	IAssetLoader* assetLoader = nullptr;
+	
 	std::priority_queue<Resource*, std::vector<Resource*>, CompareResources> _loadingQueue;
 	std::unordered_map<uint16_t, ThreadControl, KeyHasher> _threadRunningMap;
 	std::unordered_map<uint16_t, std::thread, KeyHasher> _threadIDMap;
 
 	bool _running;
 	AssetParser _parser;
-	char* _pool;
+	char* _pool = nullptr;
 	const uint32_t _blockSize = 512 * 1024;
 	uint32_t _numBlocks = 0;
 	std::thread _runningThread;

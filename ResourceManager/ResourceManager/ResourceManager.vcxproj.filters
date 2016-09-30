@@ -72,6 +72,9 @@
     <ClCompile Include="zipper.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="IGraphics.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Window.h">
@@ -180,6 +183,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="zlib-1.2.7\zlib.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="IGraphics.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

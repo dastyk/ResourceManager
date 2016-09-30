@@ -8,7 +8,7 @@ Core* Core::_instance = nullptr;
 Core::Core()
 {
 	_window = nullptr;
-	_d3d11 = nullptr;
+	_graphics = nullptr;
 	_cameraManager = nullptr;
 	_timer = nullptr;
 }
@@ -30,7 +30,7 @@ Core* Core::GetInstance()
 void Core::ShutDown()
 {
 	SAFE_DELETE(Core::GetInstance()->_window);
-	SAFE_DELETE(Core::GetInstance()->_d3d11);
+	SAFE_DELETE(Core::GetInstance()->_graphics);
 	SAFE_DELETE(Core::GetInstance()->_cameraManager);
 	SAFE_DELETE(Core::GetInstance()->_timer);
 	delete _instance;
@@ -40,7 +40,7 @@ void Core::ShutDown()
 void Core::Init(uint32_t width, uint32_t height, bool fullscreen)
 {
 	_window = new Window();
-	_d3d11 = new Direct3D11();
+	_graphics = new Direct3D11();
 	_cameraManager = new CameraManager();
 	_timer = new Timer();
 
@@ -49,7 +49,7 @@ void Core::Init(uint32_t width, uint32_t height, bool fullscreen)
 void Core::Update()
 {
 	_timer->Update();
-	_d3d11->Draw();
+	_graphics->Draw();
 }
 
 Window * Core::GetWindow() const
@@ -57,9 +57,11 @@ Window * Core::GetWindow() const
 	return _window;
 }
 
-Direct3D11 * Core::GetDirect3D11() const
+
+
+IGraphics * Core::GetGraphics() const
 {
-	return _d3d11;
+	return _graphics;
 }
 
 CameraManager * Core::GetCameraManager() const

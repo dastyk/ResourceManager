@@ -16,7 +16,6 @@ struct SM_GUID
 	SM_GUID(const char* c)
 	{
 		data = std::hash<std::string>{} (c);
-		// SM_GUID = c.Hash();
 	}
 
 };

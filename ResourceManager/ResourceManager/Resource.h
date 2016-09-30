@@ -5,6 +5,7 @@
 #include <vector>
 #include "flags.h"
 #include "Types.h"
+#include "IAssetLoader.h"
 
 class ResourceManager;
 class AssetParser;
@@ -32,10 +33,8 @@ private:
 	Flag _flags;
 	uint16_t _refCount;
 	uint16_t _callCount;
-	ObjectType _objectType;
-	FileType _fileType;
 	Resource() : _refCount(0), _callCount(0) { };
-	char* _rawData;
+	RawData _rawData;
 
 	void SetGUID(SM_GUID inID) { ID = inID; };
 	void _NotifyObserver() { for (auto &it : observers) { it->Notify(ID); } };
@@ -63,6 +62,7 @@ public:
 		}
 	}
 	SM_GUID GetGUID()const { return ID; };
+	const RawData& GetRawData() { return _rawData; };
 
 	operator SM_GUID()const { return ID; }
 };

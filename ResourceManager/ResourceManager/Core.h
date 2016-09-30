@@ -15,7 +15,7 @@ private:
 	~Core();
 	static Core* _instance;
 	Window* _window;
-	Direct3D11* _d3d11;
+	IGraphics* _graphics;
 	CameraManager* _cameraManager;
 
 	Timer* _timer;
@@ -28,7 +28,7 @@ public:
 	void Update();
 
 	Window* GetWindow() const;
-	Direct3D11* GetDirect3D11() const;
+	IGraphics* GetGraphics() const;
 	CameraManager* GetCameraManager() const;
 	Timer* GetTimer() const;
 
