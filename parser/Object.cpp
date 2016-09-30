@@ -181,7 +181,14 @@ void Object::AddSubMesh(const string & name)
 		// Allocate more space.
 		Alloc(ALLOC_SUB_MESH);
 	}
-
+	//std::cout << "Name: "<< name << endl;
+	if (_data.NumSubMesh == 1)
+	{
+		if (string(_datap.subMesh[0].name) == "default")
+		{
+			_data.NumSubMesh--;
+		}
+	}
 	memcpy(_datap.subMesh[_data.NumSubMesh].name, name.c_str(), name.size() + 1);
 	_datap.subMesh[_data.NumSubMesh].faceStart = _data.NumFace;
 	_datap.subMesh[_data.NumSubMesh].faceCount = 0;
@@ -311,6 +318,13 @@ void Object::Triangulate()
 
 void Object::Print()
 {
+	cout << "NUM_POS: " << _data.NumPos << endl;
+	cout << "NUM_TEX: " << _data.NumTex << endl;
+	cout << "NUM_NORM: " << _data.NumNorm << endl;
+	cout << "NUM_FACE: " << _data.NumFace << endl;
+	cout << "NUM_SUB: " << _data.NumSubMesh << endl;
+
+
 	cout << "Positions: " << endl;
 	for (uint64_t i = 0; i < _data.NumPos; i++)
 	{

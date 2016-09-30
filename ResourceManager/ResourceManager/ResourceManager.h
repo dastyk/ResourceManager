@@ -30,7 +30,6 @@ public:
 	void PrintOccupancy(void);
 	void TestAlloc(void);
 	
-	void PrintOccupancy(void); 
 	void SetAssetLoader(IAssetLoader* loader);
 
 	void ShutDown();

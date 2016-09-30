@@ -1,4 +1,6 @@
 #include "ZipLoader.h"
+#include <iostream>
+#include <fstream>
 
 ZipLoader::ZipLoader(const std::string & file)
 {
@@ -62,7 +64,16 @@ RawData ZipLoader::LoadResource(SM_GUID guid)
 		//HÄR BORDE NOG ETT EXCEPTION KASTAS SENARE, ELLER SÅ TAR VI PAJ BAKNING
 	}
 
-	returnData.fType = FileType::arf;
+	std::string fileType = fileName.substr(fileName.length() - 3, 3);
+
+	if (fileType == "arf")
+	{
+		returnData.fType = FileType::arf;
+	}
+	else if (fileType == "obj")
+	{
+		returnData.fType = FileType::obj;
+	}
 	
 	return returnData;
 }
