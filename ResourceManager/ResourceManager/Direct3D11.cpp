@@ -288,34 +288,70 @@ void Direct3D11::Draw()
 	_swapChain->Present(0, 0);
 }
 
-void Direct3D11::CreateBuffer(Resource * resource)
-{
-	resource->registerObserver(this);
-	const Resource::ResourceType type = resource->GetResourceType();
-	if (type == Resource::ResourceType::MESH_PNT)
-	{
-		const PNTMeshData* meshdata = (PNTMeshData*)resource->GetProcessedData();
-		_vertexBuffers[resource->GetGUID().data] = _CreateVertexBuffer(meshdata->vertices, meshdata->vertexCount);
-		if(meshdata->indices != nullptr)
-			_indexBuffers[resource->GetGUID().data] = _CreateIndexBuffer(meshdata->indices, meshdata->indexCount);
-	}
-	else if (type == Resource::ResourceType::TEXTURE_DDS)
-	{
-		const TextureData* texdata = (TextureData*)resource->GetProcessedData();
-		_textures[resource->GetGUID()] = _CreateDDSTexture(texdata->data, texdata->size);
-	}
-	else if (type & (Resource::ResourceType::TEXTURE_PNG | Resource::ResourceType::TEXTURE_JPG))
-	{
-		const TextureData* texdata = (TextureData*)resource->GetProcessedData();
-		_textures[resource->GetGUID()] = _CreateWICTexture(texdata->data, texdata->size);
-	}
+//void Direct3D11::CreateBuffer(Resource * resource)
+//{
+//	resource->registerObserver(this);
+//	const Resource::ResourceType type = resource->GetResourceType();
+//	if (type == Resource::ResourceType::MESH_PNT)
+//	{
+//		const PNTMeshData* meshdata = (PNTMeshData*)resource->GetProcessedData();
+//		_vertexBuffers[resource->GetGUID().data] = _CreateVertexBuffer(meshdata->vertices, meshdata->vertexCount);
+//		if(meshdata->indices != nullptr)
+//			_indexBuffers[resource->GetGUID().data] = _CreateIndexBuffer(meshdata->indices, meshdata->indexCount);
+//	}
+//	else if (type == Resource::ResourceType::TEXTURE_DDS)
+//	{
+//		const TextureData* texdata = (TextureData*)resource->GetProcessedData();
+//		_textures[resource->GetGUID()] = _CreateDDSTexture(texdata->data, texdata->size);
+//	}
+//	else if (type & (Resource::ResourceType::TEXTURE_PNG | Resource::ResourceType::TEXTURE_JPG))
+//	{
+//		const TextureData* texdata = (TextureData*)resource->GetProcessedData();
+//		_textures[resource->GetGUID()] = _CreateWICTexture(texdata->data, texdata->size);
+//	}
+//
+//	
+//	
+//}
 
-	
-	
+void Direct3D11::CreateMeshBuffers(SM_GUID guid, PNTMeshData & meshdata)
+{
+	auto& got = _vertexBuffers.find(guid.data);
+	if (got == _vertexBuffers.end())
+	{
+		_vertexBuffers[guid] = _CreateVertexBuffer(meshdata.vertices, meshdata.vertexCount);
+		_indexBuffers[guid] = _CreateIndexBuffer(meshdata.indices, meshdata.indexCount);
+	}
+	else
+	{
+		DebugLogger::GetInstance()->AddMsg("Tried to create mesh buffers for the same resource while it already existed, GUID: " + guid.data);
+	}
+}
+
+void Direct3D11::CreateShaderResource(Resource * resource)
+{
+	auto& got = _textures.find(resource->GetGUID().data);
+	if (got == _textures.end())
+	{
+		const Resource::ResourceType type = resource->GetResourceType();
+		if (type == Resource::ResourceType::TEXTURE_DDS)
+		{
+			_textures[resource->GetGUID()] = _CreateDDSTexture(resource->GetRawData().data, resource->GetRawData().size);
+		}
+		else if (type & (Resource::ResourceType::TEXTURE_PNG | Resource::ResourceType::TEXTURE_JPG))
+		{
+			_textures[resource->GetGUID()] = _CreateWICTexture(resource->GetRawData().data, resource->GetRawData().size);
+		}
+	}
+	else
+	{
+		DebugLogger::GetInstance()->AddMsg("Tried to create shader resource view while it already existed, GUID: " + resource->GetGUID().data);
+	}
 }
 
 void Direct3D11::Notify(SM_GUID guid)
 {
+
 }
 
 void Direct3D11::_CreateShadersAndInputLayouts()

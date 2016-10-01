@@ -145,7 +145,9 @@ public:
 
 	//Inherited from graphics interface
 	virtual void Draw();
-	virtual void CreateBuffer(Resource* resource);
+//	virtual void CreateBuffer(Resource* resource);
+	virtual void CreateMeshBuffers(SM_GUID guid, PNTMeshData& meshdata);
+	virtual void CreateShaderResource(Resource* resource);
 	virtual void Notify(SM_GUID guid);
 
 	
