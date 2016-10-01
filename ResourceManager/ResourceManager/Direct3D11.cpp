@@ -290,6 +290,7 @@ void Direct3D11::Draw()
 
 void Direct3D11::CreateBuffer(Resource * resource)
 {
+	resource->registerObserver(this);
 	const Resource::ResourceType type = resource->GetResourceType();
 	if (type == Resource::ResourceType::MESH_PNT)
 	{

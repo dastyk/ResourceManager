@@ -14,7 +14,6 @@ public:
 	virtual void Notify(SM_GUID guid) = 0;
 
 	virtual void Draw() = 0;
-	//Concrete class must call this.
 	virtual void CreateBuffer(Resource* resource) = 0;
 
 };
