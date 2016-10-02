@@ -50,7 +50,7 @@ RawData ZipLoader::LoadResource(SM_GUID guid)
 		// THROW EXCEPTIONS EVERYONE, IT'S PARTY TIME
 	}
 
-	//filename = unhash(guid); måste implementeras på något sätt
+	//filename = unhash(guid); måste implementeras pEnågot sätt
 
 	//fileName = "temporär shit";
 
