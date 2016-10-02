@@ -40,7 +40,7 @@ private:
 	ResourceType _resourceType;
 	void* _processedData;
 	void SetGUID(SM_GUID inID) { ID = inID; };
-	void _NotifyObserver() { for (auto &it : observers) { it->Notify(ID); } };
+	void _NotifyDelete() { for (auto &it : observers) { it->Notify(ID); } };
 
 public:
 	void UpdateCounter(bool used = false) 
