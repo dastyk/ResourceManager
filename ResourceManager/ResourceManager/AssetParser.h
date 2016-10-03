@@ -16,9 +16,6 @@ public:
 
 	void AddParser(uint32_t type,const std::function<void(Resource & r)>& parseFunction);
 	void ParseResource(Resource& r)const;
-	void ParseTexture(Resource& r)const;
-	void ParseObj(Resource&r)const;
-	void ParseArf(Resource&r)const;
 };
 
 #endif

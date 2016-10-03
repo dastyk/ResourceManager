@@ -3,13 +3,14 @@
 
 #include "SM_GUID.h"
 
+class Resource;
 class Observer
 {
 public:
 	Observer() {};
 	virtual ~Observer() {};
 	
-	virtual void Notify(SM_GUID guid) = 0;
+	virtual void NotifyDelete(Resource& r) = 0;
 };
 
 

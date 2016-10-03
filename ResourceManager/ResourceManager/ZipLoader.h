@@ -20,7 +20,7 @@ public:
 	ZipLoader(const std::string &file);
 	virtual ~ZipLoader();
 
-	RawData LoadResource(SM_GUID guid);
+	void* LoadResource(SM_GUID guid);
 
 };
 

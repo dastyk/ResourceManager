@@ -34,9 +34,10 @@ ZipLoader::~ZipLoader()
 	// nothing to do here
 }
 
-RawData ZipLoader::LoadResource(SM_GUID guid)
+void* ZipLoader::LoadResource(SM_GUID guid)
 {
-	RawData returnData;
+	RawData* preturnData = new RawData;
+	RawData& returnData = *preturnData;
 	std::string fileName;
 
 	auto find = hashTable.find(guid.data);
@@ -74,5 +75,5 @@ RawData ZipLoader::LoadResource(SM_GUID guid)
 		// throw "NOW FOUND BITCH";
 	}
 	
-	return returnData;
+	return preturnData;
 }

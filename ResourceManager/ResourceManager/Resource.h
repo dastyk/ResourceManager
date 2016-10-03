@@ -23,19 +23,15 @@ public:
 
 	enum ResourceType : uint32_t
 	{
-		MESH_PNT = 1 << 0,
-		TEXTURE_DDS = 1 << 1,
-		TEXTURE_PNG = 1 << 2,
-		TEXTURE_JPG = 1 << 3
+		MESH,
+		TEXTURE
 		
 	};
 
 	friend ResourceManager;
 	friend AssetParser;
-	~Resource() { observers.clear(); }
-	RawData _rawData;
-	void* _processedData;
-	// ResourceData* data;
+	~Resource() { _NotifyObserver();  observers.clear(); }
+	
 private:
 	std::vector<Observer*> observers;
 	SM_GUID ID;
@@ -44,9 +40,9 @@ private:
 	uint16_t _callCount;
 	Resource() : _refCount(0), _callCount(0) { };
 	ResourceType _resourceType;
-	
+	void* _data;
 	void SetGUID(SM_GUID inID) { ID = inID; };
-	void _NotifyObserver() { for (auto &it : observers) { it->Notify(ID); } };
+	void _NotifyObserver() { for (auto &it : observers) { it->NotifyDelete(*this); } };
 
 public:
 	void UpdateCounter(bool used = false) 
@@ -71,8 +67,8 @@ public:
 		}
 	}
 	SM_GUID GetGUID()const { return ID; };
-	const RawData& GetRawData() const { return _rawData; };
-	void* GetProcessedData() const { return _processedData; };
+	void* GetData() const { return _data; };
+	void SetData(void* data) { _data = data; };
 	const ResourceType GetResourceType() const { return _resourceType; };
 
 	operator SM_GUID()const { return ID; }
