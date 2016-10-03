@@ -21,8 +21,9 @@
     </Filter>
     <Filter Include="Source Files\Graphics">
       <UniqueIdentifier>{1ec3d2bb-5eba-41af-9348-df825b46f962}</UniqueIdentifier>
-    <Filter Include="FlexBison">
-      <UniqueIdentifier>{eb3338b1-64f0-4a46-b93c-67417f7f1cb0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="OBJParser">
+      <UniqueIdentifier>{670f2060-ab13-489f-a583-552ff546deda}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -86,17 +87,17 @@
     <ClCompile Include="Direct3D11.cpp">
       <Filter>Source Files\Graphics</Filter>
     </ClCompile>
-    <ClCompile Include="flexbison\parser.flex.cpp">
-      <Filter>FlexBison</Filter>
-    </ClCompile>
-    <ClCompile Include="flexbison\parser.tab.cpp">
-      <Filter>FlexBison</Filter>
-    </ClCompile>
     <ClCompile Include="flexbison\Object.cpp">
-      <Filter>FlexBison</Filter>
+      <Filter>OBJParser</Filter>
     </ClCompile>
     <ClCompile Include="flexbison\ObjParser.cpp">
-      <Filter>FlexBison</Filter>
+      <Filter>OBJParser</Filter>
+    </ClCompile>
+    <ClCompile Include="flexbison\parser.flex.cpp">
+      <Filter>OBJParser</Filter>
+    </ClCompile>
+    <ClCompile Include="flexbison\parser.tab.cpp">
+      <Filter>OBJParser</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -213,20 +214,21 @@
     </ClInclude>
     <ClInclude Include="MeshData.h">
       <Filter>Header Files</Filter>
-    <ClInclude Include="flexbison\FlexLexer.h">
-      <Filter>FlexBison</Filter>
-    </ClInclude>
-    <ClInclude Include="flexbison\parser.tab.h">
-      <Filter>FlexBison</Filter>
     </ClInclude>
     <ClInclude Include="flexbison\stack.hh">
-      <Filter>FlexBison</Filter>
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="flexbison\FlexLexer.h">
+      <Filter>OBJParser</Filter>
     </ClInclude>
     <ClInclude Include="flexbison\Object.h">
-      <Filter>FlexBison</Filter>
+      <Filter>OBJParser</Filter>
     </ClInclude>
-    <ClInclude Include="ObjParser.h">
-      <Filter>FlexBison</Filter>
+    <ClInclude Include="flexbison\parser.tab.h">
+      <Filter>OBJParser</Filter>
+    </ClInclude>
+    <ClInclude Include="flexbison\ObjParser.h">
+      <Filter>OBJParser</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -248,12 +250,12 @@
   </ItemGroup>
   <ItemGroup>
     <Flex Include="flexbison\parser.l">
-      <Filter>FlexBison</Filter>
+      <Filter>OBJParser</Filter>
     </Flex>
   </ItemGroup>
   <ItemGroup>
     <Bison Include="flexbison\parser.y">
-      <Filter>FlexBison</Filter>
+      <Filter>OBJParser</Filter>
     </Bison>
   </ItemGroup>
 </Project>

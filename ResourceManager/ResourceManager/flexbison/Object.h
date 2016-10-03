@@ -39,5 +39,7 @@ public:
 	void Triangulate();
 	void Print();
 	void Clear();
+	Data& GetData();
+	DataPointers& GetDataP();
 	void GenerateArf(ofstream& of, int flag = GENERATE_ARF_FLAG_SHRINK_TO_FIT);
 };

@@ -2,6 +2,8 @@
 #include <iostream>
 
 #include "parser.tab.h"
+#include "ObjParser.h"
+
 extern Object o;
 extern FILE * yyin;
 void yy::parser::error(std::string const&err)
@@ -10,14 +12,55 @@ void yy::parser::error(std::string const&err)
 	std::cout << err << std::endl;
 }
 
-void ParseObj(char* rawData, Data& data, DataPointers& p)
+void ParseObj(char* rawData, MeshData::MeshData& mdata)
 {
+	o.Clear();
 	fopen_s(&yyin, "temp", "r");
 
 	setbuf(yyin, rawData);
 
 	yy::parser parser;
-	parser.parse();
+	if (parser.parse())
+		throw std::runtime_error("Could not parse obj");
+
+	// Setup pointers
+	ArfData::Data& data = o.GetData();
+	ArfData::DataPointers& datap = o.GetDataP();
+
+	// Interleave data
+	mdata.NumVertices = data.NumFace * 3;
+	mdata.vertices = new MeshData::Vertex[mdata.NumVertices];
+	uint32_t index = 0;
+	for (uint32_t i = 0; i < data.NumSubMesh; i++)
+	{
+		for (uint32_t j = datap.subMesh[i].faceStart; j < datap.subMesh[i].faceCount; j++)
+		{
+			auto& face = datap.faces[j];
+
+			for (uint8_t r = 0; r < face.indexCount; r++)
+			{
+
+				auto& ind = face.indices[r];
+				// Positions
+				memcpy(&mdata.vertices[index].pos, &datap.positions[ind.index[0]], sizeof(MeshData::Position));
+				// Normals
+				memcpy(&mdata.vertices[index].norm, &datap.normals[ind.index[2]], sizeof(MeshData::Normal));
+				// TexCoords
+				memcpy(&mdata.vertices[index].tex, &datap.texCoords[ind.index[1]], sizeof(MeshData::TexCoord));
+
+				index++;
+			}
+
+		}
+	}
+
+	mdata.IndexCount = data.NumFace * 3;
+	mdata.Indices = new uint32_t[mdata.IndexCount];
+	for (uint32_t i = 0; i < mdata.IndexCount; i++)
+	{
+		mdata.Indices[i] = i;
+	}
+
 
 	fclose(yyin);
 }

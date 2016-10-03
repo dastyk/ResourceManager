@@ -374,6 +374,16 @@ void Object::Clear()
 	Alloc(ALLOC_ALL);
 }
 
+Data & Object::GetData()
+{
+	return _data;
+}
+
+DataPointers & Object::GetDataP()
+{
+	return _datap;
+}
+
 void Object::GenerateArf(ofstream & of, int flag)
 {
 	if (flag & GENERATE_ARF_FLAG_SHRINK_TO_FIT)

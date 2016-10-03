@@ -9,8 +9,8 @@
 #include "ZipLoader.h"
 
 #include "MeshData.h"
-#include "ObjParser.h"
-
+#include "flexbison\ObjParser.h"
+#include "ArfData.h"
 
 
 int main(int argc, char** argv)
@@ -91,15 +91,23 @@ int main(int argc, char** argv)
 
 	r.AddParser("obj", [](Resource& r)
 	{
-		ArfData::Data data;
-		ArfData::DataPointers datap;
-		//ParseObj(r._rawData.data, data, datap);
+		MeshData::MeshData* pdata = new MeshData::MeshData;
+		RawData* rdata = (RawData*)r.GetData();
+		ParseObj(rdata->data, *pdata);
+
+		// Save parsed data.
+		operator delete(rdata->data);
+		delete rdata;
+		r.SetData(pdata);
+
+
+		Core::GetInstance()->GetGraphics()->CreateMeshBuffers(r);
 	});
 
 	Sleep(10);
 	//ResourceManager::Instance().PrintOccupancy();
 	ResourceManager::Instance().TestAlloc();
-	//Resource& mesh2 = ResourceManager::Instance().LoadResource("test.obj", Resource::Flag::NEEDED_NOW);
+	Resource& mesh2 = ResourceManager::Instance().LoadResource("test.obj", Resource::Flag::NEEDED_NOW);
 	Resource& mesh1 = ResourceManager::Instance().LoadResource("Sphere0.arf", Resource::Flag::NEEDED_NOW);
 	ResourceManager::Instance().ShutDown();
 	MemoryManager::DeleteInstance();
