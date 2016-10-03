@@ -109,11 +109,25 @@ private:
 	ID3D11ShaderResourceView* _shaderResourceViews[RenderTargets::RT_COUNT] = { nullptr }; //related to deferred
 	ID3D11Texture2D*          _renderTargetTextures[RenderTargets::RT_COUNT] = { nullptr };
 	
+	struct BufferInfo
+	{
+		BufferInfo()
+		{
+			buffer = nullptr;
+			count = 0;
+		}
+		BufferInfo(ID3D11Buffer* buf, size_t size)
+		{
+			buffer = buf;
+			count = size;
+		}
+		ID3D11Buffer* buffer;
+		size_t count;
+	};
 	
 	
-	
-	std::map<uint64_t, ID3D11Buffer*> _vertexBuffers;
-	std::map<uint64_t, ID3D11Buffer*> _indexBuffers;
+	std::map<uint64_t, BufferInfo> _vertexBuffers;
+	std::map<uint64_t, BufferInfo> _indexBuffers;
 	std::map<uint32_t, ID3D11ShaderResourceView*> _textures;
 	ID3D11Buffer* _constantBuffers[ConstantBuffers::CB_COUNT] = { nullptr };
 	ID3D11InputLayout* _inputLayouts[InputLayouts::LAYOUT_COUNT] = { nullptr };
