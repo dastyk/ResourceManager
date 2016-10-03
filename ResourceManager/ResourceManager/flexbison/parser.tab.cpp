@@ -52,7 +52,7 @@
 #line 10 "parser.y" // lalr1.cc:407
 
   #define YY_DECL yy::parser::symbol_type yylex()
-   Object o;
+   Object* o;
   YY_DECL;
 
 #line 59 "parser.tab.cpp" // lalr1.cc:407
@@ -574,7 +574,7 @@ namespace yy {
 
   case 4:
 #line 46 "parser.y" // lalr1.cc:846
-    { o.AddSubMesh(yystack_[0].value.as< std::string > ()); }
+    { o->AddSubMesh(yystack_[0].value.as< std::string > ()); }
 #line 579 "parser.tab.cpp" // lalr1.cc:846
     break;
 
@@ -586,19 +586,19 @@ namespace yy {
 
   case 6:
 #line 48 "parser.y" // lalr1.cc:846
-    { o.AddPosition(Position(yystack_[3].value.as< float > (),yystack_[2].value.as< float > (),yystack_[1].value.as< float > ())); }
+    { o->AddPosition(Position(yystack_[3].value.as< float > (),yystack_[2].value.as< float > (),yystack_[1].value.as< float > ())); }
 #line 591 "parser.tab.cpp" // lalr1.cc:846
     break;
 
   case 7:
 #line 49 "parser.y" // lalr1.cc:846
-    { o.AddTexCoord(TexCoord(yystack_[2].value.as< float > (),yystack_[1].value.as< float > ()));}
+    { o->AddTexCoord(TexCoord(yystack_[2].value.as< float > (),yystack_[1].value.as< float > ()));}
 #line 597 "parser.tab.cpp" // lalr1.cc:846
     break;
 
   case 8:
 #line 50 "parser.y" // lalr1.cc:846
-    { o.AddNormal(Normal(yystack_[2].value.as< float > (),yystack_[1].value.as< float > (),yystack_[0].value.as< float > ())); }
+    { o->AddNormal(Normal(yystack_[2].value.as< float > (),yystack_[1].value.as< float > (),yystack_[0].value.as< float > ())); }
 #line 603 "parser.tab.cpp" // lalr1.cc:846
     break;
 
@@ -628,7 +628,7 @@ namespace yy {
 
   case 13:
 #line 55 "parser.y" // lalr1.cc:846
-    { o.AddFace(Face(yystack_[0].value.as< std::vector<std::vector<uint64_t>> > ())); }
+    { o->AddFace(Face(yystack_[0].value.as< std::vector<std::vector<uint64_t>> > ())); }
 #line 633 "parser.tab.cpp" // lalr1.cc:846
     break;
 

@@ -9,7 +9,7 @@
 }
 %code{
   #define YY_DECL yy::parser::symbol_type yylex()
-   Object o;
+   Object* o;
   YY_DECL;
 }
 
@@ -43,16 +43,16 @@ line			: statement									{ }
 				| line statement							{ }
 				;
 
-statement		: OBJECT NAME 								{ o.AddSubMesh($2); }		
+statement		: OBJECT NAME 								{ o->AddSubMesh($2); }		
 				| MTLLIB NAME								{ }
-				| POSITION REAL REAL REAL optreal			{ o.AddPosition(Position($2,$3,$4)); }
-				| TEXCOORD REAL REAL optreal2				{ o.AddTexCoord(TexCoord($2,$3));}
-				| NORMAL REAL REAL REAL						{ o.AddNormal(Normal($2,$3,$4)); }
+				| POSITION REAL REAL REAL optreal			{ o->AddPosition(Position($2,$3,$4)); }
+				| TEXCOORD REAL REAL optreal2				{ o->AddTexCoord(TexCoord($2,$3));}
+				| NORMAL REAL REAL REAL						{ o->AddNormal(Normal($2,$3,$4)); }
 				| POINT REAL REAL optreal					{ }
 				| USEMTL NAME								{}					
 				| S BOOLEAN									{ }
 				| S INTEGER 								{ }
-				| FACE createface							{ o.AddFace(Face($2)); }
+				| FACE createface							{ o->AddFace(Face($2)); }
 				;	
 	
 optreal			: REAL										{ $$ = $1; }

@@ -4,7 +4,7 @@
 #include "parser.tab.h"
 #include "ObjParser.h"
 
-extern Object o;
+extern Object* o;
 extern FILE * yyin;
 void yy::parser::error(std::string const&err)
 {
@@ -14,7 +14,7 @@ void yy::parser::error(std::string const&err)
 
 void ParseObj(char* rawData, MeshData::MeshData& mdata)
 {
-	o.Clear();
+	o = new Object;
 	fopen_s(&yyin, "temp", "r");
 
 	setbuf(yyin, rawData);
@@ -24,8 +24,8 @@ void ParseObj(char* rawData, MeshData::MeshData& mdata)
 		throw std::runtime_error("Could not parse obj");
 
 	// Setup pointers
-	ArfData::Data& data = o.GetData();
-	ArfData::DataPointers& datap = o.GetDataP();
+	ArfData::Data& data = o->GetData();
+	ArfData::DataPointers& datap = o->GetDataP();
 
 	// Interleave data
 	mdata.NumVertices = data.NumFace * 3;
@@ -63,6 +63,7 @@ void ParseObj(char* rawData, MeshData::MeshData& mdata)
 
 
 	fclose(yyin);
+	delete o;
 }
 
 

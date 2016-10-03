@@ -371,6 +371,7 @@ void Object::Print()
 
 void Object::Clear()
 {
+	operator delete(_data.buffer);
 	Alloc(ALLOC_ALL);
 }
 
