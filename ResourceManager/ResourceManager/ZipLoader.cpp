@@ -65,8 +65,8 @@ void* ZipLoader::LoadResource(SM_GUID guid)
 	{
 		//HÄR BORDE NOG ETT EXCEPTION KASTAS SENARE, ELLER SÅ TAR VI PAJ BAKNING
 	}
-
-	uint32_t fileType = std::hash<std::string>{} (fileName.substr(fileName.length() - 3, 3));
+	std::string end = fileName.substr(fileName.length() - 3, 3);
+	uint32_t fileType = std::hash<std::string>{} (end);
 
 
 	auto find2 = _fileTypes.find(fileType);

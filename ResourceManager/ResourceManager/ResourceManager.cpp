@@ -22,7 +22,7 @@ ResourceManager::ResourceManager()
 
 ResourceManager::~ResourceManager()
 {
-	MemoryManager::ReleasePoolAllocator(_resourcePool);
+
 	delete _assetLoader;
 	_assetLoader = nullptr;
 	delete[] _pool;
@@ -58,13 +58,15 @@ Resource & ResourceManager::LoadResource(SM_GUID guid, const Resource::Flag& fla
 	}
 		
 
-	_resources[guid.data] = (Resource*)_resourcePool->Malloc();
+	auto temp = (Resource*)_resourcePool->Malloc();
+	temp->observers = new std::vector<Observer*>;
+	_resources[guid.data] = temp;
 	Resource& r = *_resources[guid.data];
 	r._refCount = 1;
 	r.ID = guid;
 	r._flags = flag;
 
-	_loadingQueue.push(&r);
+	//_loadingQueue.push(&r);
 	_mutexLock.unlock();
 
 	// Start thread
@@ -390,11 +392,10 @@ void ResourceManager::_Run()
 	//Create threads and initialize them as "free"
 	for (uint16_t i = 0; i < 4; i++)
 	{
-		_threadIDMap.insert({i, thread()});
-		
+		_threadIDMap.insert({ i, thread() });
+
 		_threadRunningMap.insert({ i, ThreadControl() });
 	}
-
 	_running = true;
 	_mutexLock.unlock();
 	while (_running)
@@ -466,10 +467,7 @@ void ResourceManager::_Run()
 		}
 	}
 
-	delete _assetLoader;
-	_assetLoader = nullptr;
-	delete[] _pool;
-	_pool = nullptr;
+
 
 }
 
@@ -493,9 +491,21 @@ void ResourceManager::_Threading(uint16_t ID, SM_GUID job)
 
 void ResourceManager::ShutDown()
 {
+
+
 	_mutexLock.lock();
 	_running = false;
 	_mutexLock.unlock();
 	_runningThread.join();
+	delete _assetLoader;
+	_assetLoader = nullptr;
+	delete[] _pool;
+	_pool = nullptr;
+	for (auto& r : _resources)
+	{		
+		r.second->_NotifyObserver();
+		delete r.second->observers;
+	}
 	_resources.clear();
+	
 }
