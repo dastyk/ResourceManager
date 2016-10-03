@@ -110,14 +110,13 @@ int main(int argc, char** argv)
 
 
 	//Jag är inte hundra på om felet ligger i ResourceManagern. Tittar igenom på måndag igen.
-	Resource& mesh2 = ResourceManager::Instance().LoadResource("test.obj", Resource::Flag::NEEDED_NOW);
+	//Resource& mesh2 = ResourceManager::Instance().LoadResource("test.obj", Resource::Flag::NEEDED_NOW);
 	Resource& mesh1 = ResourceManager::Instance().LoadResource("Sphere0.arf", Resource::Flag::NEEDED_NOW);
 	for (uint32_t i = 0; i < 2; i++)
 	{
 		mesh1 = ResourceManager::Instance().LoadResource("Sphere0.arf", Resource::Flag::NEEDED_NOW);
 	}
 
-	Sleep(20000);
 	ResourceManager::Instance().ShutDown();
 	MemoryManager::DeleteInstance();
 	Core::ShutDown();

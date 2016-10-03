@@ -55,6 +55,7 @@ Resource & ResourceManager::LoadResource(SM_GUID guid, const Resource::Flag& fla
 	if (find)
 	{
 		find->_refCount++;
+		_mutexLock.unlock();
 		return *find;
 	}
 		
@@ -477,7 +478,7 @@ void ResourceManager::_Threading(uint16_t ID, SM_GUID job)
 	DebugLogger::GetInstance()->AddMsg("Started Job: " + dataStream.str());
 
 	//Call asset loader to load the data we want
-	RawData temp = _assetLoader->LoadResource(job);
+	void* temp = _assetLoader->LoadResource(job);
 
 	_mutexLock.unlock();
 
@@ -487,10 +488,10 @@ void ResourceManager::_Threading(uint16_t ID, SM_GUID job)
 	Resource* workingResource = nullptr;
 	for (auto &it : _resources)
 	{
-		if (it.GetGUID() == job)
+		if (it.second->GetGUID() == job)
 		{
-			workingResource = &it;
-			it._rawData = temp;
+			workingResource = it.second;
+			it.second->_data = temp;
 			break;
 		}
 	}
