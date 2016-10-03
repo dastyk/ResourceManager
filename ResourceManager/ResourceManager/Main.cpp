@@ -32,7 +32,7 @@ int main(int argc, char** argv)
 		RawData* rdata = (RawData*)r.GetData();
 		ArfData::Data* data = (ArfData::Data*)rdata->data;
 		ArfData::DataPointers _datap;
-		void* pdata = data + sizeof(ArfData::Data);
+		void* pdata = (void*)((size_t)data + sizeof(ArfData::Data));
 		_datap.positions = (ArfData::Position*)((size_t)pdata + data->PosStart);
 		_datap.texCoords = (ArfData::TexCoord*)((size_t)pdata + data->TexStart);
 		_datap.normals = (ArfData::Normal*)((size_t)pdata + data->NormStart);
