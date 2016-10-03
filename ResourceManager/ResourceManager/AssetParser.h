@@ -3,7 +3,6 @@
 
 #pragma once
 #include "Resource.h"
-#include "ArfData.h"
 #include <functional>
 #include <map>
 #include "Types.h"

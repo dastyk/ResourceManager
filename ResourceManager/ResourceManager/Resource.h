@@ -30,19 +30,22 @@ public:
 
 	friend ResourceManager;
 	friend AssetParser;
-	~Resource() { _NotifyObserver();  observers.clear(); }
+	~Resource() { _NotifyObserver();  observers->clear(); }
 	
 private:
-	std::vector<Observer*> observers;
+	std::vector<Observer*>* observers;
 	SM_GUID ID;
 	Flag _flags;
 	uint16_t _refCount;
 	uint16_t _callCount;
-	Resource() : _refCount(0), _callCount(0) { };
+	Resource() : _refCount(0), _callCount(0)
+	{
+
+	};
 	ResourceType _resourceType;
 	void* _data;
 	void SetGUID(SM_GUID inID) { ID = inID; };
-	void _NotifyObserver() { for (auto &it : observers) { it->NotifyDelete(*this); } };
+	void _NotifyObserver() { for (auto &it : (*observers)) { it->NotifyDelete(*this); } };
 
 public:
 	void UpdateCounter(bool used = false) 
@@ -57,13 +60,16 @@ public:
 			}
 		}
 	};
-	void registerObserver(Observer* observer) { observers.push_back(observer); }
+	void registerObserver(Observer* observer) 
+	{ 
+		observers->push_back(observer);
+	}
 	void unregisterObserver(Observer* observer)
 	{
-		for (auto it = observers.begin(); it != observers.end(); ++it)
+		for (auto it = observers->begin(); it != observers->end(); ++it)
 		{
 			if (*it == observer)
-				observers.erase(it);
+				observers->erase(it);
 		}
 	}
 	SM_GUID GetGUID()const { return ID; };

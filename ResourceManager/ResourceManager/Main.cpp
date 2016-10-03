@@ -7,16 +7,19 @@
 #include "MemoryManager.h"
 #include <crtdbg.h>
 #include "ZipLoader.h"
+
 #include "MeshData.h"
 #include "TextureData.h"
-
+#include "flexbison\ObjParser.h"
+#include "ArfData.h"
 
 
 int main(int argc, char** argv)
 {
 
 	_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
-
+	// Flex/Bison causes 3 memory leaks per run time, does not increase during runtime.
+	//_crtBreakAlloc = 288;
 	Core::CreateInstance();
 	Core* core = Core::GetInstance();
 	core->Init(800, 600, false);
@@ -102,7 +105,21 @@ int main(int argc, char** argv)
 
 	});
 
-	Sleep(10);
+	r.AddParser("obj", [](Resource& r)
+	{
+		MeshData::MeshData* pdata = new MeshData::MeshData;
+		RawData* rdata = (RawData*)r.GetData();
+		ParseObj(rdata->data, *pdata);
+
+
+		//// Save parsed data.
+		operator delete(rdata->data);
+		delete rdata;
+		r.SetData(pdata);
+		
+		Core::GetInstance()->GetGraphics()->CreateMeshBuffers(r);
+	});
+
 	//ResourceManager::Instance().PrintOccupancy();
 	ResourceManager::Instance().TestAlloc();
 
