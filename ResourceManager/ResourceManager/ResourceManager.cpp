@@ -16,11 +16,13 @@ ResourceManager& ResourceManager::Instance()
 
 ResourceManager::ResourceManager()
 {
+	_resourcePool = MemoryManager::CreatePoolAllocator(sizeof(Resource), 1337, 0);
 	_runningThread = thread(&ResourceManager::_Run, this);
 }
 
 ResourceManager::~ResourceManager()
 {
+	MemoryManager::ReleasePoolAllocator(_resourcePool);
 	delete _assetLoader;
 	_assetLoader = nullptr;
 	delete[] _pool;
@@ -47,9 +49,18 @@ Resource & ResourceManager::LoadResource(SM_GUID guid, const Resource::Flag& fla
 	//		r._refCount++;
 	//		return r;
 	// else
-	_resources.push_back(Resource());
-	Resource& r = _resources.back();
-	r._refCount++;
+
+	auto find = _FindResource(guid);
+	if (find)
+	{
+		find->_refCount++;
+		return *find;
+	}
+		
+
+	_resources[guid.data] = (Resource*)_resourcePool->Malloc();
+	Resource& r = *_resources[guid.data];
+	r._refCount = 1;
 	r.ID = guid;
 	r._flags = flag;
 
@@ -357,6 +368,16 @@ void ResourceManager::_Free(int32_t firstBlock, uint32_t numBlocks)
 	}
 }
 
+Resource* ResourceManager::_FindResource(SM_GUID guid) const
+{
+	auto& find = _resources.find(guid.data);
+	if (find != _resources.end())
+	{
+		return find->second;
+	}
+	return nullptr;
+}
+
 void ResourceManager::_Run()
 {
 	_mutexLock.lock();
@@ -381,7 +402,7 @@ void ResourceManager::_Run()
 		//Loop through all resources, ticking them down
 		for (auto &it : _resources)
 		{
-			it.UpdateCounter();
+			it.second->UpdateCounter();
 		}
 		//GEigenom färdiga trådar, joinar in dem
 		_mutexLock.lock();

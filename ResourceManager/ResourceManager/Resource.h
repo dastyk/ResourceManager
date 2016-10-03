@@ -38,7 +38,10 @@ private:
 	Flag _flags;
 	uint16_t _refCount;
 	uint16_t _callCount;
-	Resource() : _refCount(0), _callCount(0) { };
+	Resource() : _refCount(0), _callCount(0), observers(std::vector<Observer*>()) 
+	{
+		observers.push_back(nullptr);
+	};
 	ResourceType _resourceType;
 	void* _data;
 	void SetGUID(SM_GUID inID) { ID = inID; };
@@ -57,7 +60,10 @@ public:
 			}
 		}
 	};
-	void registerObserver(Observer* observer) { observers.push_back(observer); }
+	void registerObserver(Observer* observer) 
+	{ 
+		observers.push_back(observer); 
+	}
 	void unregisterObserver(Observer* observer)
 	{
 		for (auto it = observers.begin(); it != observers.end(); ++it)
