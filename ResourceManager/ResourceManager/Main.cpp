@@ -17,6 +17,7 @@ int main(int argc, char** argv)
 {
 
 	_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
+	// Flex/Bison causes 3 memory leaks per run time, does not increase during runtime.
 //	_crtBreakAlloc = 307;
 	Core::CreateInstance();
 	Core* core = Core::GetInstance();
