@@ -93,7 +93,7 @@ int main(int argc, char** argv)
 	{
 		ArfData::Data data;
 		ArfData::DataPointers datap;
-		ParseObj(r._rawData.data, data, datap);
+		//ParseObj(r._rawData.data, data, datap);
 	});
 
 	Sleep(10);
