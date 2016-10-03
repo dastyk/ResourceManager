@@ -197,6 +197,9 @@
     <ClInclude Include="IGraphics.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="MeshData.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="Shaders\DX11\FinalPS.hlsl">

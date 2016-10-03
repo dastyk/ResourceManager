@@ -16,6 +16,7 @@
 #include "Structs.h"
 #include "IGraphics.h"
 #include "SM_GUID.h"
+#include "MeshData.h"
 
 enum VertexShaders
 {
@@ -127,7 +128,7 @@ private:
 	void _CreateRasterizerState();
 	void _CreateConstantBuffers();
 
-	ID3D11Buffer* _CreateVertexBuffer(PNTVertex* vertexData, unsigned vertexCount);
+	ID3D11Buffer* _CreateVertexBuffer(MeshData::Vertex* vertexData, uint32_t vertexCount);
 	ID3D11Buffer* _CreateIndexBuffer(uint32_t* indexData, uint32_t indexCount);
 
 	ID3D11ShaderResourceView* _CreateDDSTexture(const void* data, size_t size);
@@ -146,9 +147,9 @@ public:
 	//Inherited from graphics interface
 	virtual void Draw();
 //	virtual void CreateBuffer(Resource* resource);
-	virtual void CreateMeshBuffers(SM_GUID guid, PNTMeshData& meshdata);
-	virtual void CreateShaderResource(Resource* resource);
-	virtual void Notify(SM_GUID guid);
+	virtual void CreateMeshBuffers(Resource& r);
+	virtual void CreateShaderResource(Resource& resource);
+	virtual void NotifyDelete(Resource& r);
 
 	
 };

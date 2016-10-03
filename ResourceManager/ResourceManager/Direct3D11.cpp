@@ -158,7 +158,7 @@ Direct3D11::~Direct3D11()
 	}
 }
 
-ID3D11Buffer* Direct3D11::_CreateVertexBuffer(PNTVertex * vertexData, unsigned vertexCount)
+ID3D11Buffer* Direct3D11::_CreateVertexBuffer(MeshData::Vertex* vertexData, uint32_t vertexCount)
 {
 	D3D11_BUFFER_DESC bd;
 	bd.BindFlags = D3D11_BIND_VERTEX_BUFFER;
@@ -314,23 +314,26 @@ void Direct3D11::Draw()
 //	
 //}
 
-void Direct3D11::CreateMeshBuffers(SM_GUID guid, PNTMeshData & meshdata)
+void Direct3D11::CreateMeshBuffers(Resource& r)
 {
-	auto& got = _vertexBuffers.find(guid.data);
+	MeshData::MeshData* pdata = (MeshData::MeshData*)r.GetData();
+	uint64_t guid = r.GetGUID().data;
+	auto& got = _vertexBuffers.find(guid);
 	if (got == _vertexBuffers.end())
 	{
-		_vertexBuffers[guid] = _CreateVertexBuffer(meshdata.vertices, meshdata.vertexCount);
-		_indexBuffers[guid] = _CreateIndexBuffer(meshdata.indices, meshdata.indexCount);
+		_vertexBuffers[guid] = _CreateVertexBuffer(pdata->vertices, pdata->NumVertices);
+		_indexBuffers[guid] = _CreateIndexBuffer(pdata->Indices, pdata->IndexCount);
+		r.registerObserver(this);
 	}
 	else
 	{
-		DebugLogger::GetInstance()->AddMsg("Tried to create mesh buffers for the same resource while it already existed, GUID: " + guid.data);
+		DebugLogger::GetInstance()->AddMsg("Tried to create mesh buffers for the same resource while it already existed, GUID: " + guid);
 	}
 }
 
-void Direct3D11::CreateShaderResource(Resource * resource)
+void Direct3D11::CreateShaderResource(Resource& resource)
 {
-	auto& got = _textures.find(resource->GetGUID().data);
+	/*auto& got = _textures.find(resource->GetGUID().data);
 	if (got == _textures.end())
 	{
 		const Resource::ResourceType type = resource->GetResourceType();
@@ -346,12 +349,21 @@ void Direct3D11::CreateShaderResource(Resource * resource)
 	else
 	{
 		DebugLogger::GetInstance()->AddMsg("Tried to create shader resource view while it already existed, GUID: " + resource->GetGUID().data);
-	}
+	}*/
 }
 
-void Direct3D11::Notify(SM_GUID guid)
+void Direct3D11::NotifyDelete(Resource& r)
 {
-
+	auto& find = _vertexBuffers.find(r.GetGUID());
+	if (find != _vertexBuffers.end())
+	{
+		SAFE_RELEASE(find->second);
+		_vertexBuffers.erase(r.GetGUID());
+		MeshData::MeshData* pdata = (MeshData::MeshData*)r.GetData();
+		delete[] pdata->vertices;
+		delete[] pdata->Indices;
+		delete pdata;
+	}
 }
 
 void Direct3D11::_CreateShadersAndInputLayouts()

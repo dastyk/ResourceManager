@@ -57,7 +57,7 @@ Resource & ResourceManager::LoadResource(SM_GUID guid, const Resource::Flag& fla
 	_mutexLock.unlock();
 
 	// Start thread
-		r._rawData = _assetLoader->LoadResource(guid);
+		r._data = _assetLoader->LoadResource(guid);
 		_parser.ParseResource(r);
 	// Mutex unlock
 	return r;
@@ -476,4 +476,5 @@ void ResourceManager::ShutDown()
 	_running = false;
 	_mutexLock.unlock();
 	_runningThread.join();
+	_resources.clear();
 }
