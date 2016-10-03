@@ -4,6 +4,7 @@
 #include <Windows.h> // Because fuck off VS. Start following standards
 #include <iostream>
 #include "DebugLogger.h"
+#include <sstream>
 
 using namespace std;
 
@@ -45,20 +46,17 @@ Resource & ResourceManager::LoadResource(SM_GUID guid, const Resource::Flag& fla
 	//		Resource& r = _instance->Find(guid);
 	//		r._refCount++;
 	//		return r;
-	// else
-	_resources.push_back(Resource());
-	Resource& r = _resources.back();
-	r._refCount++;
+	//// else
+	Resource temp = Resource();
+	_resources.push_back(temp);
+	Resource& r = temp;
+	r._refCount = 1000;
 	r.ID = guid;
 	r._flags = flag;
 
-	_loadingQueue.push(&r);
+	_loadingQueue.push(&temp);
 	_mutexLock.unlock();
 
-	// Start thread
-		r._rawData = _assetLoader->LoadResource(guid);
-		_parser.ParseResource(r);
-	// Mutex unlock
 	return r;
 }
 
@@ -358,7 +356,7 @@ void ResourceManager::_Run()
 	_SetupFreeBlockList();
 
 	//Create threads and initialize them as "free"
-	for (uint16_t i = 0; i < 4; i++)
+	for (uint16_t i = 0; i < 1; i++)
 	{
 		_threadIDMap.insert({i, thread()});
 		
@@ -409,7 +407,6 @@ void ResourceManager::_Run()
 				}
 			}
 		}
-		
 
 		_mutexLock.unlock();
 
@@ -446,17 +443,43 @@ void ResourceManager::_Run()
 	
 void ResourceManager::_Threading(uint16_t ID, SM_GUID job)
 {
-	//Kallar på AssetLoader
+	ostringstream dataStream;
+	dataStream << job.data;
+
+	_mutexLock.lock();
+	DebugLogger::GetInstance()->AddMsg("Started Job: " + dataStream.str());
+
+	//Call asset loader to load the data we want
+	RawData temp = _assetLoader->LoadResource(job);
+
+	_mutexLock.unlock();
+
+	//Lock so we can insert the data to the resources
+	_mutexLock.lock();
 	
-	//Tittar om den fortfarande skall läsa in resursen
+	Resource* workingResource = nullptr;
+	for (auto &it : _resources)
+	{
+		if (it.GetGUID() == job)
+		{
+			workingResource = &it;
+			it._rawData = temp;
+			break;
+		}
+	}
 
-	//Isåfall, parsa resursen
+	_mutexLock.unlock();
 
-	//Lägg resursen i en vektor (med mutex lock?)
+	//Let the parser make their magic. Should implement a "dummy" GUID at this point in time, that we "use as resource" for the frame that the parser might work
+	if(workingResource != nullptr)
+		_parser.ParseResource(*workingResource);
+
+
 	_mutexLock.lock();
 
-
+	DebugLogger::GetInstance()->AddMsg("Finished Job: " + dataStream.str());
 	_threadRunningMap.find(ID)->second.inUse = false;
+	_threadRunningMap.find(ID)->second.beenJoined = false;
 	
 	_mutexLock.unlock();
 }

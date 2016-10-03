@@ -18,6 +18,11 @@ struct SM_GUID
 		data = std::hash<std::string>{} (c);
 	}
 
+	bool operator==(const SM_GUID &other)
+	{
+		return !(this->data - other.data);
+	}
+
 };
 
 
