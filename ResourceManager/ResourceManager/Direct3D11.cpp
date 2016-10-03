@@ -232,7 +232,7 @@ ID3D11ShaderResourceView * Direct3D11::_CreateWICTexture(const void * data, size
 void Direct3D11::Draw()
 {
 	const Core* core = Core::GetInstance();
-	float clearColor[] = { 0.0f,0.0f,0.0f,0.0f };
+	float clearColor[] = { 0.0f,1.0f,0.0f,0.0f };
 
 
 	for (auto &rtv : _renderTargetViews)
@@ -264,12 +264,36 @@ void Direct3D11::Draw()
 	
 	XMMATRIX view = core->GetCameraManager()->GetView();
 	XMMATRIX proj = core->GetCameraManager()->GetProj();
-	unsigned apicalls = 0;
-	
 
-	/* CODE FOR RENDERING HERE */
+	for (auto &meshes : _renderBatches.meshes)
+	{
+		_deviceContext->IASetVertexBuffers(0, 1, &_vertexBuffers[meshes.mesh].buffer, &stride, &offset);
+		_deviceContext->IASetIndexBuffer(_indexBuffers[meshes.mesh].buffer, DXGI_FORMAT_R32_UINT, 0);
+		for (auto &textures : meshes.textures)
+		{
+			_deviceContext->PSSetShaderResources(0, 1, &_textures[textures.texture.data]);
+			PerObjectBuffer pob;
+			for (auto &transforms : textures.transforms)
+			{
+				XMMATRIX world = XMLoadFloat4x4(&transforms);
+				XMStoreFloat4x4(&pob.World, XMMatrixTranspose(world));
+				XMStoreFloat4x4(&pob.WorldView, XMMatrixTranspose(world * view));
+				XMStoreFloat4x4(&pob.WorldViewInvTrp, XMMatrixInverse(nullptr,world * view));
+				XMStoreFloat4x4(&pob.WVP, XMMatrixTranspose(world * view * proj));
 
-	/***************************/
+				D3D11_MAPPED_SUBRESOURCE msr;
+				_deviceContext->Map(_constantBuffers[ConstantBuffers::CB_PER_OBJECT], 0, D3D11_MAP_WRITE_DISCARD, 0, &msr);
+				memcpy(msr.pData, &pob, sizeof(PerObjectBuffer));
+				_deviceContext->Unmap(_constantBuffers[ConstantBuffers::CB_PER_OBJECT], 0);
+				_deviceContext->VSSetConstantBuffers(1, 1, &_constantBuffers[ConstantBuffers::CB_PER_OBJECT]);
+
+				//_deviceContext->Draw(_vertexBuffers[meshes.mesh].count, 0);
+				_deviceContext->DrawIndexed(_indexBuffers[meshes.mesh].count, 0, 0);
+			}
+
+		}
+
+	}
 
 	_deviceContext->IASetInputLayout(nullptr);
 	_deviceContext->VSSetShader(_vertexShaders[VertexShaders::VS_FULLSCREEN], nullptr, 0);
@@ -286,6 +310,7 @@ void Direct3D11::Draw()
 	
 
 	_swapChain->Present(0, 0);
+	_renderBatches.Clear();
 }
 
 //void Direct3D11::CreateBuffer(Resource * resource)
@@ -333,23 +358,17 @@ void Direct3D11::CreateMeshBuffers(Resource& r)
 
 void Direct3D11::CreateShaderResource(Resource& resource)
 {
-	/*auto& got = _textures.find(resource->GetGUID().data);
+	auto& got = _textures.find(resource.GetGUID().data);
 	if (got == _textures.end())
 	{
-		const Resource::ResourceType type = resource->GetResourceType();
-		if (type == Resource::ResourceType::TEXTURE_DDS)
-		{
-			_textures[resource->GetGUID()] = _CreateDDSTexture(resource->GetRawData().data, resource->GetRawData().size);
-		}
-		else if (type & (Resource::ResourceType::TEXTURE_PNG | Resource::ResourceType::TEXTURE_JPG))
-		{
-			_textures[resource->GetGUID()] = _CreateWICTexture(resource->GetRawData().data, resource->GetRawData().size);
-		}
+		TextureData* td = (TextureData*)resource.GetData();
+		_textures[resource.GetGUID().data] = _CreateWICTexture(td->data, td->size);
+
 	}
 	else
 	{
-		DebugLogger::GetInstance()->AddMsg("Tried to create shader resource view while it already existed, GUID: " + resource->GetGUID().data);
-	}*/
+		DebugLogger::GetInstance()->AddMsg("Tried to create shader resource view while it already existed, GUID: " + resource.GetGUID().data);
+	}
 }
 
 void Direct3D11::NotifyDelete(Resource& r)
@@ -368,6 +387,47 @@ void Direct3D11::NotifyDelete(Resource& r)
 		delete pdata;
 	}
 }
+
+void Direct3D11::AddToRenderQueue(const GameObject & gameObject)
+{
+	int32_t meshIndex = -1;
+	for (uint32_t i = 0; i < _renderBatches.meshes.size(); i++)
+	{
+		if (gameObject.mesh == _renderBatches.meshes[i].mesh)
+		{
+			meshIndex = i;
+			break;
+		}
+	}
+	int32_t textureIndex = -1;
+	if (meshIndex >= 0)
+	{
+		for (uint32_t i = 0; i < _renderBatches.meshes[meshIndex].textures.size(); i++)
+		{
+			if (gameObject.texture == _renderBatches.meshes[meshIndex].textures[i].texture)
+			{
+				textureIndex = i;
+				break;
+			}
+		}
+	}
+	else
+	{
+		_renderBatches.meshes.push_back(RenderBatches::MeshBatch(gameObject.mesh));
+		meshIndex = _renderBatches.meshes.size() - 1;
+	}
+
+	if (textureIndex >= 0)
+	{
+		_renderBatches.meshes[meshIndex].textures[textureIndex].transforms.push_back(gameObject.transform);
+	}
+	else
+	{
+		_renderBatches.meshes[meshIndex].textures.push_back(RenderBatches::MeshBatch::TextureBatch(gameObject.texture));
+		_renderBatches.meshes[meshIndex].textures.back().transforms.push_back(gameObject.transform);
+	}
+}
+
 
 void Direct3D11::_CreateShadersAndInputLayouts()
 {

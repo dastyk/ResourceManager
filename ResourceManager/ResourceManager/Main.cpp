@@ -8,6 +8,7 @@
 #include <crtdbg.h>
 #include "ZipLoader.h"
 #include "MeshData.h"
+#include "TextureData.h"
 
 
 
@@ -25,6 +26,20 @@ int main(int argc, char** argv)
 	
 
 	r.SetAssetLoader(new ZipLoader("Spheres.zip"));
+
+	r.AddParser("jpg",
+		[](Resource& r)
+	{
+		void* temp = r.GetData();
+		TextureData* texd = new TextureData;
+		texd->size = static_cast<RawData*>(temp)->size;
+		texd->data = static_cast<RawData*>(temp)->data;
+		delete temp;
+		r.SetData(texd);
+
+		Core::GetInstance()->GetGraphics()->CreateShaderResource(r);
+	});
+
 	r.AddParser("arf",
 		[](Resource& r) 
 	{
@@ -32,7 +47,7 @@ int main(int argc, char** argv)
 		RawData* rdata = (RawData*)r.GetData();
 		ArfData::Data* data = (ArfData::Data*)rdata->data;
 		ArfData::DataPointers _datap;
-		void* pdata = (void*)((size_t)data + sizeof(ArfData::Data));
+		void* pdata = (void*)((size_t)data + sizeof(ArfData::Data)); // HEST: size_t cast?
 		_datap.positions = (ArfData::Position*)((size_t)pdata + data->PosStart);
 		_datap.texCoords = (ArfData::TexCoord*)((size_t)pdata + data->TexStart);
 		_datap.normals = (ArfData::Normal*)((size_t)pdata + data->NormStart);
@@ -57,11 +72,11 @@ int main(int argc, char** argv)
 					
 					auto& ind = face.indices[r];
 					// Positions
-					memcpy(&mdata.vertices[index].pos, &_datap.positions[ind.index[0]], sizeof(MeshData::Position));
+					memcpy(&mdata.vertices[index].pos, &_datap.positions[ind.index[0]-1], sizeof(MeshData::Position));
 					// Normals
-					memcpy(&mdata.vertices[index].norm, &_datap.normals[ind.index[2]], sizeof(MeshData::Normal));
+					memcpy(&mdata.vertices[index].norm, &_datap.normals[ind.index[2]-1], sizeof(MeshData::Normal));
 					// TexCoords
-					memcpy(&mdata.vertices[index].tex, &_datap.texCoords[ind.index[1]], sizeof(MeshData::TexCoord));
+					memcpy(&mdata.vertices[index].tex, &_datap.texCoords[ind.index[1]-1], sizeof(MeshData::TexCoord));
 					
 					index++;
 				}
@@ -91,7 +106,23 @@ int main(int argc, char** argv)
 	//ResourceManager::Instance().PrintOccupancy();
 	ResourceManager::Instance().TestAlloc();
 
-	Resource& mesh1 = ResourceManager::Instance().LoadResource("Sphere0.arf", Resource::Flag::NEEDED_NOW);
+	Resource& tex1 = ResourceManager::Instance().LoadResource("gold.jpg", Resource::Flag::NEEDED_NOW);
+	Resource& mesh1 = ResourceManager::Instance().LoadResource("Sphere3.arf", Resource::Flag::NEEDED_NOW);
+	
+	GameObject gg;
+	gg.mesh = mesh1.GetGUID();
+	gg.texture = tex1.GetGUID();
+	DirectX::XMStoreFloat4x4(&gg.transform, DirectX::XMMatrixScaling(0.6,0.6,0.6) * DirectX::XMMatrixTranslation(0.0f, 0.0f, 10.0f));
+
+	
+
+	for (int i = 0; i < 10000; i++)
+	{
+		core->GetGraphics()->AddToRenderQueue(gg);
+		core->Update();
+	}
+
+
 	ResourceManager::Instance().ShutDown();
 	MemoryManager::DeleteInstance();
 	Core::ShutDown();

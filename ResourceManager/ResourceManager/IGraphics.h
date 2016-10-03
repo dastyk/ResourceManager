@@ -20,6 +20,7 @@ public:
 //	virtual void CreateBuffer(Resource* resource) = 0;
 	virtual void CreateMeshBuffers(Resource& r) = 0;
 	virtual void CreateShaderResource(Resource& resource) = 0;
+	virtual void AddToRenderQueue(const GameObject& gameObject) = 0;
 
 };
 

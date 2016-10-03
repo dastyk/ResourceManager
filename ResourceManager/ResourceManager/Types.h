@@ -9,5 +9,7 @@ enum FileType : uint8_t
 	wav,
 	ogg,
 	mp3,
-	mp4
+	mp4,
+	jpg,
+	png
 };
