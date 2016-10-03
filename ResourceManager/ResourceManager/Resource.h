@@ -18,7 +18,8 @@ public:
 	CreateFlag(Flag, uint32_t, 3,
 		PERSISTENT = 1 << 0,
 		NOT_URGENT = 1 << 1,
-		NEEDED_NOW = 1 << 2
+		NEEDED_NOW = 1 << 2,
+		LOAD_AND_WAIT = 1 << 3
 	);
 
 	enum ResourceType : uint32_t

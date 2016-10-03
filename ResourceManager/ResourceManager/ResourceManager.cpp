@@ -68,7 +68,14 @@ Resource & ResourceManager::LoadResource(SM_GUID guid, const Resource::Flag& fla
 	r.ID = guid;
 	r._flags = flag;
 
-	_loadingQueue.push(&r);
+	if (flag & Resource::Flag::LOAD_AND_WAIT)
+	{
+		r._data = _assetLoader->LoadResource(guid);
+		_parser.ParseResource(r);
+	}
+	else
+		_loadingQueue.push(&r);
+	
 	_mutexLock.unlock();
 
 	return r;
