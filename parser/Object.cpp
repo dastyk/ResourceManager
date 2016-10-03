@@ -57,7 +57,7 @@ void Object::Alloc(int flag)
 		break;
 	}
 	ndat = _data;
-	ndat.allocated = sizeof(Data) +
+	ndat.allocated = sizeof(Data) + 
 		_data.PosCap * sizeof(Position) +
 		_data.TexCap * sizeof(TexCoord) +
 		_data.NormCap * sizeof(Normal) +
@@ -97,6 +97,7 @@ void Object::Alloc(int flag)
 Object::Object()
 {
 	Alloc(ALLOC_ALL);
+	AddSubMesh("default");
 }
 Object::Object(ifstream & file)
 {
@@ -181,12 +182,13 @@ void Object::AddSubMesh(const string & name)
 		// Allocate more space.
 		Alloc(ALLOC_SUB_MESH);
 	}
-	//std::cout << "Name: "<< name << endl;
+
 	if (_data.NumSubMesh == 1)
 	{
 		if (string(_datap.subMesh[0].name) == "default")
 		{
-			_data.NumSubMesh--;
+			memcpy(_datap.subMesh[0].name, name.c_str(), name.size() + 1);
+			return;
 		}
 	}
 	memcpy(_datap.subMesh[_data.NumSubMesh].name, name.c_str(), name.size() + 1);
@@ -318,22 +320,19 @@ void Object::Triangulate()
 
 void Object::Print()
 {
-	cout << "NUM_POS: " << _data.NumPos << endl;
-	cout << "NUM_TEX: " << _data.NumTex << endl;
-	cout << "NUM_NORM: " << _data.NumNorm << endl;
-	cout << "NUM_FACE: " << _data.NumFace << endl;
-	cout << "NUM_SUB: " << _data.NumSubMesh << endl;
-
-
-	cout << "Positions: " << endl;
+	cout << "NumPostion: " << _data.NumPos << endl;
+	cout << "NumTex: " << _data.NumTex << endl;
+	cout << "NumNormal: " << _data.NumNorm << endl;
+	cout << "NumFace: " << _data.NumFace << endl;
+	cout << "NumSubMesh: " << _data.NumSubMesh << endl;
 	for (uint64_t i = 0; i < _data.NumPos; i++)
 	{
-		cout << "\t" << _datap.positions[i].x << " " << _datap.positions[i].y << " " << _datap.positions[i].z /*<< " " << _datap.positions[i].w*/ << endl;
+		cout << "\t" << _datap.positions[i].x << " " << _datap.positions[i].y << " " << _datap.positions[i].z << endl;
 	}
 	cout << "Texcoords: " << endl;
 	for (uint64_t i = 0; i < _data.NumTex; i++)
 	{
-		cout << "\t" << _datap.texCoords[i].u << " " << _datap.texCoords[i].v /*<< " " << _datap.texCoords[i].w << " "*/ << endl;
+		cout << "\t" << _datap.texCoords[i].u << " " << _datap.texCoords[i].v << endl;
 	}
 	cout << "Normals: " << endl;
 	for (uint64_t i = 0; i < _data.NumNorm; i++)
@@ -389,3 +388,4 @@ void Object::GenerateArf(ofstream & of, int flag)
 	of.write((char*)&_data, sizeof(Data));
 	of.write((char*)_data.buffer, _data.allocated);
 }
+
