@@ -6,6 +6,7 @@
 #include "flags.h"
 #include "Types.h"
 #include "IAssetLoader.h"
+#include <functional>
 
 class ResourceManager;
 class AssetParser;
@@ -31,22 +32,28 @@ public:
 
 	friend ResourceManager;
 	friend AssetParser;
-	~Resource() { _NotifyObserver();  observers->clear(); }
+	~Resource() 
+	{
+		_NotifyObserver(); 
+		if (_destroyFunction)
+			_destroyFunction(_data);
+	}
 	
 private:
-	std::vector<Observer*>* observers;
+	std::vector<Observer*> observers;
+	std::function<void(void*data)> _destroyFunction;
 	SM_GUID ID;
 	Flag _flags;
 	uint16_t _refCount;
 	uint16_t _callCount;
-	Resource() : _refCount(0), _callCount(0)
+	Resource() : _refCount(0), _callCount(0), observers(std::vector<Observer*>())
 	{
 
 	};
 	ResourceType _resourceType;
 	void* _data;
 	void SetGUID(SM_GUID inID) { ID = inID; };
-	void _NotifyObserver() { for (auto &it : (*observers)) { it->NotifyDelete(*this); } };
+	void _NotifyObserver() { for (auto &it : (observers)) { it->NotifyDelete(*this); } };
 
 public:
 	void UpdateCounter(bool used = false) 
@@ -63,19 +70,20 @@ public:
 	};
 	void registerObserver(Observer* observer) 
 	{ 
-		observers->push_back(observer);
+		observers.push_back(observer);
 	}
 	void unregisterObserver(Observer* observer)
 	{
-		for (auto it = observers->begin(); it != observers->end(); ++it)
+		for (auto it = observers.begin(); it != observers.end(); ++it)
 		{
 			if (*it == observer)
-				observers->erase(it);
+				observers.erase(it);
 		}
 	}
 	SM_GUID GetGUID()const { return ID; };
 	void* GetData() const { return _data; };
-	void SetData(void* data) { _data = data; };
+	void Destroy() { if (_destroyFunction) _destroyFunction(_data); };
+	void SetData(void* data, const std::function<void(void*)>& dfunc) { _data = data; _destroyFunction = dfunc; };
 	const ResourceType GetResourceType() const { return _resourceType; };
 
 	operator SM_GUID()const { return ID; }

@@ -363,7 +363,7 @@ void Direct3D11::CreateShaderResource(Resource& resource)
 	{
 		TextureData* td = (TextureData*)resource.GetData();
 		_textures[resource.GetGUID().data] = _CreateWICTexture(td->data, td->size);
-
+		resource.registerObserver(this);
 	}
 	else
 	{
@@ -381,10 +381,12 @@ void Direct3D11::NotifyDelete(Resource& r)
 			SAFE_RELEASE(findIndexBuffer->second.buffer);
 		SAFE_RELEASE(find->second.buffer);
 		_vertexBuffers.erase(r.GetGUID());
-		MeshData::MeshData* pdata = (MeshData::MeshData*)r.GetData();
-		delete[] pdata->vertices;
-		delete[] pdata->Indices;
-		delete pdata;
+	}
+	auto& got = _textures.find(r.GetGUID().data);
+	if (got != _textures.end())
+	{
+		SAFE_RELEASE(got->second);
+		_textures.erase(r.GetGUID());
 	}
 }
 

@@ -19,7 +19,7 @@ int main(int argc, char** argv)
 
 	_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
 	// Flex/Bison causes 3 memory leaks per run time, does not increase during runtime.
-	//_crtBreakAlloc = 288;
+	//_crtBreakAlloc = 312;
 	Core::CreateInstance();
 	Core* core = Core::GetInstance();
 	core->Init(800, 600, false);
@@ -33,12 +33,17 @@ int main(int argc, char** argv)
 	r.AddParser("jpg",
 		[](Resource& r)
 	{
-		void* temp = r.GetData();
+		RawData* temp = (RawData*)r.GetData();
 		TextureData* texd = new TextureData;
-		texd->size = static_cast<RawData*>(temp)->size;
-		texd->data = static_cast<RawData*>(temp)->data;
+		texd->size = temp->size;
+		texd->data = temp->data;
+
 		delete temp;
-		r.SetData(texd);
+		r.SetData(texd, [](void* data) 
+		{
+			delete ((TextureData*)data)->data;
+			delete data;
+		});
 
 		Core::GetInstance()->GetGraphics()->CreateShaderResource(r);
 	});
@@ -50,7 +55,7 @@ int main(int argc, char** argv)
 		RawData* rdata = (RawData*)r.GetData();
 		ArfData::Data* data = (ArfData::Data*)rdata->data;
 		ArfData::DataPointers _datap;
-		void* pdata = (void*)((size_t)data + sizeof(ArfData::Data)); // HEST: size_t cast?
+		void* pdata = (void*)((size_t)data + sizeof(ArfData::Data)); 
 		_datap.positions = (ArfData::Position*)((size_t)pdata + data->PosStart);
 		_datap.texCoords = (ArfData::TexCoord*)((size_t)pdata + data->TexStart);
 		_datap.normals = (ArfData::Normal*)((size_t)pdata + data->NormStart);
@@ -96,9 +101,14 @@ int main(int argc, char** argv)
 
 
 		// Save parsed data.
-		operator delete(rdata->data);
-		delete rdata;
-		r.SetData(pmdata);
+		r.Destroy();
+		r.SetData(pmdata, [](void* data) 
+		{
+			MeshData::MeshData* pmdata = (MeshData::MeshData*)data;
+			delete[] pmdata->vertices;
+			delete[] pmdata->Indices;
+			delete data;
+		});
 
 
 		Core::GetInstance()->GetGraphics()->CreateMeshBuffers(r);
@@ -113,9 +123,14 @@ int main(int argc, char** argv)
 
 
 		//// Save parsed data.
-		operator delete(rdata->data);
-		delete rdata;
-		r.SetData(pdata);
+		r.Destroy();
+		r.SetData(pdata, [](void* data)
+		{
+			MeshData::MeshData* pmdata = (MeshData::MeshData*)data;
+			delete[] pmdata->vertices;
+			delete[] pmdata->Indices;
+			delete data;
+		});
 		
 		Core::GetInstance()->GetGraphics()->CreateMeshBuffers(r);
 	});
@@ -123,10 +138,10 @@ int main(int argc, char** argv)
 	//ResourceManager::Instance().PrintOccupancy();
 	ResourceManager::Instance().TestAlloc();
 
-	Resource& tex1 = ResourceManager::Instance().LoadResource("gold.jpg", Resource::Flag::LOAD_AND_WAIT);
+	//Resource& tex1 = ResourceManager::Instance().LoadResource("gold.jpg", Resource::Flag::LOAD_AND_WAIT);
 	Resource& mesh1 = ResourceManager::Instance().LoadResource("Sphere0.arf", Resource::Flag::LOAD_AND_WAIT);
 	
-	GameObject gg;
+	/*GameObject gg;
 	gg.mesh = mesh1.GetGUID();
 	gg.texture = tex1.GetGUID();
 	DirectX::XMStoreFloat4x4(&gg.transform, DirectX::XMMatrixScaling(0.6,0.6,0.6) * DirectX::XMMatrixTranslation(0.0f, 0.0f, 10.0f));
@@ -137,7 +152,7 @@ int main(int argc, char** argv)
 	{
 		core->GetGraphics()->AddToRenderQueue(gg);
 		core->Update();
-	}
+	}*/
 
 
 	ResourceManager::Instance().ShutDown();

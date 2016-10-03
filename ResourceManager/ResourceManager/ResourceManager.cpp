@@ -61,16 +61,20 @@ Resource & ResourceManager::LoadResource(SM_GUID guid, const Resource::Flag& fla
 		
 
 	auto temp = (Resource*)_resourcePool->Malloc();
-	temp->observers = new std::vector<Observer*>;
+	new (temp) Resource();
 	_resources[guid.data] = temp;
-	Resource& r = *_resources[guid.data];
+	Resource& r = *temp;
 	r._refCount = 1;
 	r.ID = guid;
 	r._flags = flag;
 
 	if (flag & Resource::Flag::LOAD_AND_WAIT)
 	{
-		r._data = _assetLoader->LoadResource(guid);
+		r.SetData(_assetLoader->LoadResource(guid), [](void* data) 
+		{
+			operator delete(((RawData*)data)->data);
+			delete data;
+		});
 		_parser.ParseResource(r);
 	}
 	else
@@ -498,7 +502,11 @@ void ResourceManager::_Threading(uint16_t ID, SM_GUID job)
 		if (it.second->GetGUID() == job)
 		{
 			workingResource = it.second;
-			it.second->_data = temp;
+			it.second->SetData(temp, [](void* data)
+			{
+				operator delete(((RawData*)data)->data);
+				delete data;
+			});
 			break;
 		}
 	}
@@ -533,8 +541,7 @@ void ResourceManager::ShutDown()
 	_pool = nullptr;
 	for (auto& r : _resources)
 	{		
-		r.second->_NotifyObserver();
-		delete r.second->observers;
+		r.second->~Resource();
 	}
 	_resources.clear();
 	
