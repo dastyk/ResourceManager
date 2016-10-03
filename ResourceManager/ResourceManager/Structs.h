@@ -5,6 +5,7 @@
 #include "DebugLogger.h"
 #include <vector>
 #include <unordered_map>
+#include "SM_GUID.h"
 
 
 struct PNTVertex
@@ -66,6 +67,12 @@ struct PerObjectBuffer
 	DirectX::XMFLOAT4X4 WorldView;
 };
 
+struct GameObject
+{
+	SM_GUID mesh;
+	SM_GUID texture;
+	DirectX::XMFLOAT4X4 WorldPos;
+};
 
 
 enum Components
@@ -78,7 +85,6 @@ enum Components
 	LIGHTSOURCE,
 	COMPONENT_COUNT
 };
-
 
 
 
