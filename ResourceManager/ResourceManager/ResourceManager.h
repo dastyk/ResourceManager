@@ -9,7 +9,8 @@
 #include <mutex>
 #include "AssetParser.h"
 #include "IAssetLoader.h"
-
+#include "MemoryManager.h"
+#include <map>
 // Flöjt TODO:
 // Chunked allocation, i.e. make this a pool allocator with doubly linked list of
 // free blocks. Allocation is a matter if going to first empty (ordered) and see if
@@ -89,8 +90,10 @@ private:
 	int _FindSuitableAllocationSlot(uint32_t blocks);
 	void _Allocate(int32_t allocSlot, uint32_t blocks);
 	void _Free(int32_t firstBlock, uint32_t numBlocks);
-
-	std::vector<Resource> _resources;
+	Resource* _FindResource(SM_GUID guid)const;
+	
+	PoolAllocator* _resourcePool;
+	std::map<uint64_t, Resource*> _resources;
 	std::priority_queue<Resource*, std::vector<Resource*>, CompareResources> _loadingQueue;
 	std::unordered_map<uint16_t, ThreadControl, KeyHasher> _threadRunningMap;
 	std::unordered_map<uint16_t, std::thread, KeyHasher> _threadIDMap;

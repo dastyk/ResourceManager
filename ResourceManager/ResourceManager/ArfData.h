@@ -3,20 +3,22 @@ typedef nullptr NULL;
 #endif
 
 #include <stdint.h>
+#include <vector>
+#include <stdint.h>
 
 namespace ArfData
 {
 	struct Position
 	{
-		float x, y, z;//, w;
-		Position(float x, float y, float z) : x(x), y(y), z(z)//, float w) : x(x), y(y), z(z), w(w)
+		float x, y, z;
+		Position(float x, float y, float z) : x(x), y(y), z(z)
 		{}
 	};
 
 	struct TexCoord
 	{
-		float u, v;//, w;
-		TexCoord(float u, float v) : u(u), v(v)//, float w) : u(u), v(v), w(w)
+		float u, v;
+		TexCoord(float u, float v) : u(u), v(v)
 		{}
 	};
 
@@ -36,12 +38,26 @@ namespace ArfData
 	struct Face
 	{
 		uint8_t indexCount;
-		Indices indices[4]; // Array of size 4.
+		Indices indices[3]; // Array of size 4.
+		Face(std::vector<std::vector<uint64_t>>& face) : indexCount(0)
+		{
+			indexCount = face.size();
+
+			for (uint8_t i = 0; i < face.size(); i++)
+			{
+				indices[i].indexCount = face[i].size();
+				for (uint8_t j = 0; j < face[i].size(); j++)
+				{
+					indices[i].index[j] = face[i][j];
+				}
+			}
+		}
+
 	};
 
 	struct SubMesh
 	{
-		char name[100];
+		char name[20];
 		uint64_t faceStart;
 		uint64_t faceCount;
 	};

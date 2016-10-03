@@ -21,6 +21,11 @@ struct SM_GUID
 		return data;
 	}
 
+	bool operator==(const SM_GUID& rhs) const
+	{
+		return rhs.data == this->data;
+	}
+
 };
 
 

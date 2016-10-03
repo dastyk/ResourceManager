@@ -5,6 +5,8 @@
 #include "DebugLogger.h"
 #include <vector>
 #include <unordered_map>
+#include "SM_GUID.h"
+#include "TextureData.h"
 
 
 struct PNTVertex
@@ -20,12 +22,6 @@ struct PNTMeshData
 	uint32_t vertexCount;
 	uint32_t* indices;
 	uint32_t indexCount;
-};
-
-struct TextureData
-{
-	void* data;
-	size_t size;
 };
 
 
@@ -66,6 +62,12 @@ struct PerObjectBuffer
 	DirectX::XMFLOAT4X4 WorldView;
 };
 
+struct GameObject
+{
+	SM_GUID mesh;
+	SM_GUID texture;
+	DirectX::XMFLOAT4X4 transform;
+};
 
 
 enum Components
@@ -78,7 +80,6 @@ enum Components
 	LIGHTSOURCE,
 	COMPONENT_COUNT
 };
-
 
 
 
