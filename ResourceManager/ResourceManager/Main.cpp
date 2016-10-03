@@ -56,7 +56,7 @@ int main(int argc, char** argv)
 	Sleep(10);
 	//ResourceManager::Instance().PrintOccupancy();
 	ResourceManager::Instance().TestAlloc();
-	Resource& mesh2 = ResourceManager::Instance().LoadResource("test.obj", Resource::Flag::NEEDED_NOW);
+	//Resource& mesh2 = ResourceManager::Instance().LoadResource("test.obj", Resource::Flag::NEEDED_NOW);
 	Resource& mesh1 = ResourceManager::Instance().LoadResource("Sphere0.arf", Resource::Flag::NEEDED_NOW);
 	ResourceManager::Instance().ShutDown();
 	MemoryManager::DeleteInstance();
