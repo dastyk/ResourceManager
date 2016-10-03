@@ -112,7 +112,6 @@ int main(int argc, char** argv)
 
 
 		Core::GetInstance()->GetGraphics()->CreateMeshBuffers(r);
-
 	});
 
 	r.AddParser("obj", [](Resource& r)
@@ -138,27 +137,54 @@ int main(int argc, char** argv)
 	//ResourceManager::Instance().PrintOccupancy();
 	ResourceManager::Instance().TestAlloc();
 
+
+	if (!AllocConsole()) throw std::runtime_error("Failed to alloc console.");
+	freopen("conin$", "r", stdin);
+	freopen("conout$", "w", stdout);
+	freopen("conout$", "w", stderr);
+
+	printf("<----||Console Initialized||---->\n\n");
+
+
+
+
+
 	Resource& tex1 = ResourceManager::Instance().LoadResource("gold.jpg", Resource::Flag::LOAD_AND_WAIT);
 	Resource& mesh1 = ResourceManager::Instance().LoadResource("Sphere0.arf", Resource::Flag::LOAD_AND_WAIT);
-	
+
+
+
+
+
+
 	GameObject gg;
 	gg.mesh = mesh1.GetGUID();
 	gg.texture = tex1.GetGUID();
 	DirectX::XMStoreFloat4x4(&gg.transform, DirectX::XMMatrixScaling(0.6,0.6,0.6) * DirectX::XMMatrixTranslation(0.0f, 0.0f, 10.0f));
 
-	///Sleep(20000);
+	///Sleep(20000); //TODO:Graphics need to know if what it is trying to render exists or not, and if not render some placeholder.
+
+	printf("<----||Starting Game loop||---->\n\n");
 
 	for (int i = 0; i < 10000; i++)
 	{
 		core->GetGraphics()->AddToRenderQueue(gg);
 		core->Update();
+
+		ResourceManager::Instance().LoadResource("Sphere1.arf", Resource::Flag::NEEDED_NOW);
+		ResourceManager::Instance().LoadResource("Sphere2.arf", Resource::Flag::NEEDED_NOW);
+		ResourceManager::Instance().LoadResource("Sphere3.arf", Resource::Flag::NEEDED_NOW);
+		ResourceManager::Instance().LoadResource("Sphere4.arf", Resource::Flag::NEEDED_NOW);
 	}
+
+	printf("<----||Game loop ended||---->\n\n");
 
 
 	ResourceManager::Instance().ShutDown();
 	MemoryManager::DeleteInstance();
 	Core::ShutDown();
 	
+	getchar();
 	DebugLogger::GetInstance()->Dump();
 	return 0;
 }

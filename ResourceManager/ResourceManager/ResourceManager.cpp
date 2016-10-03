@@ -70,6 +70,7 @@ Resource & ResourceManager::LoadResource(SM_GUID guid, const Resource::Flag& fla
 
 	if (flag & Resource::Flag::LOAD_AND_WAIT)
 	{
+		printf("Resource loading. GUID: %llu\n", r.GetGUID().data);
 		r.SetData(_assetLoader->LoadResource(guid), [](void* data) 
 		{
 			operator delete(((RawData*)data)->data);
@@ -78,8 +79,10 @@ Resource & ResourceManager::LoadResource(SM_GUID guid, const Resource::Flag& fla
 		_parser.ParseResource(r);
 	}
 	else
+	{
+		printf("Adding resource to toLoad stack. GUID: %llu\n", r.GetGUID().data);
 		_loadingQueue.push(&r);
-	
+	}
 	_mutexLock.unlock();
 
 	return r;
@@ -486,6 +489,7 @@ void ResourceManager::_Threading(uint16_t ID, SM_GUID job)
 	dataStream << job.data;
 
 	_mutexLock.lock();
+	printf("Started loading resource. GUID: %llu\n", job.data);
 	DebugLogger::GetInstance()->AddMsg("Started Job: " + dataStream.str());
 
 	//Call asset loader to load the data we want
@@ -520,6 +524,7 @@ void ResourceManager::_Threading(uint16_t ID, SM_GUID job)
 
 	_mutexLock.lock();
 
+	printf("Finished loading resource. GUID: %llu\n", job.data);
 	DebugLogger::GetInstance()->AddMsg("Finished Job: " + dataStream.str());
 	_threadRunningMap.find(ID)->second.inUse = false;
 	_threadRunningMap.find(ID)->second.beenJoined = false;
