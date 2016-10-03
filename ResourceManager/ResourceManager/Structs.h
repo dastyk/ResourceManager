@@ -5,6 +5,7 @@
 #include "DebugLogger.h"
 #include <vector>
 #include <unordered_map>
+#include "SM_GUID.h"
 
 
 struct PNTVertex
