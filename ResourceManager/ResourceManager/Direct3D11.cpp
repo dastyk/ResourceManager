@@ -112,11 +112,11 @@ Direct3D11::~Direct3D11()
 	}
 	for (auto &i : _vertexBuffers)
 	{
-		SAFE_RELEASE(i.second);
+		SAFE_RELEASE(i.second.buffer);
 	}
 	for (auto &i : _indexBuffers)
 	{
-		SAFE_RELEASE(i.second);
+		SAFE_RELEASE(i.second.buffer);
 	}
 	for (auto &i : _inputLayouts)
 	{
@@ -321,8 +321,8 @@ void Direct3D11::CreateMeshBuffers(Resource& r)
 	auto& got = _vertexBuffers.find(guid);
 	if (got == _vertexBuffers.end())
 	{
-		_vertexBuffers[guid] = _CreateVertexBuffer(pdata->vertices, pdata->NumVertices);
-		_indexBuffers[guid] = _CreateIndexBuffer(pdata->Indices, pdata->IndexCount);
+		_vertexBuffers[guid] = BufferInfo(_CreateVertexBuffer(pdata->vertices, pdata->NumVertices), pdata->NumVertices);
+		_indexBuffers[guid] = BufferInfo(_CreateIndexBuffer(pdata->Indices, pdata->IndexCount), pdata->IndexCount);
 		r.registerObserver(this);
 	}
 	else
@@ -357,7 +357,10 @@ void Direct3D11::NotifyDelete(Resource& r)
 	auto& find = _vertexBuffers.find(r.GetGUID());
 	if (find != _vertexBuffers.end())
 	{
-		SAFE_RELEASE(find->second);
+		auto& findIndexBuffer = _indexBuffers.find(r.GetGUID());
+		if (findIndexBuffer != _indexBuffers.end())
+			SAFE_RELEASE(findIndexBuffer->second.buffer);
+		SAFE_RELEASE(find->second.buffer);
 		_vertexBuffers.erase(r.GetGUID());
 		MeshData::MeshData* pdata = (MeshData::MeshData*)r.GetData();
 		delete[] pdata->vertices;
