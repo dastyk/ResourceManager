@@ -383,7 +383,7 @@ void ResourceManager::_Run()
 		{
 			it.UpdateCounter();
 		}
-		//Gå igenom färdiga trådar, joinar in dem
+		//GEigenom färdiga trådar, joinar in dem
 		_mutexLock.lock();
 
 		for (auto &it : _threadRunningMap)
@@ -401,7 +401,7 @@ void ResourceManager::_Run()
 		_mutexLock.unlock();
 
 
-		//Om vi har lediga trådar, släng upp nya jobb som ligger på stacken.
+		//Om vi har lediga trådar, släng upp nya jobb som ligger pEstacken.
 		_mutexLock.lock();
 
 		
@@ -455,7 +455,7 @@ void ResourceManager::_Run()
 	
 void ResourceManager::_Threading(uint16_t ID, SM_GUID job)
 {
-	//Kallar på AssetLoader
+	//Kallar pEAssetLoader
 	
 	//Tittar om den fortfarande skall läsa in resursen
 
