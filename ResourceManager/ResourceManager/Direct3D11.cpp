@@ -112,11 +112,11 @@ Direct3D11::~Direct3D11()
 	}
 	for (auto &i : _vertexBuffers)
 	{
-		SAFE_RELEASE(i);
+		SAFE_RELEASE(i.second.buffer);
 	}
 	for (auto &i : _indexBuffers)
 	{
-		SAFE_RELEASE(i);
+		SAFE_RELEASE(i.second.buffer);
 	}
 	for (auto &i : _inputLayouts)
 	{
@@ -136,7 +136,7 @@ Direct3D11::~Direct3D11()
 	}
 	for (auto &i : _textures)
 	{
-		SAFE_RELEASE(i);
+		SAFE_RELEASE(i.second);
 	}
 
 	SAFE_RELEASE(_depth.DSB);
@@ -158,11 +158,11 @@ Direct3D11::~Direct3D11()
 	}
 }
 
-int Direct3D11::CreateVertexBuffer(Vertex * vertexData, unsigned vertexCount)
+ID3D11Buffer* Direct3D11::_CreateVertexBuffer(MeshData::Vertex* vertexData, uint32_t vertexCount)
 {
 	D3D11_BUFFER_DESC bd;
 	bd.BindFlags = D3D11_BIND_VERTEX_BUFFER;
-	bd.ByteWidth = sizeof(Vertex) * vertexCount;
+	bd.ByteWidth = sizeof(PNTVertex) * vertexCount;
 	bd.CPUAccessFlags = 0;
 	bd.MiscFlags = 0;
 	bd.StructureByteStride = 0;
@@ -176,13 +176,12 @@ int Direct3D11::CreateVertexBuffer(Vertex * vertexData, unsigned vertexCount)
 	if (FAILED(hr))
 	{
 		DebugLogger::GetInstance()->AddMsg("Failed to create vertex buffer");
-		return -1;
+		throw std::exception("Failed to create vertex buffer");
 	}
-	_vertexBuffers.push_back(buffer);
-	return _vertexBuffers.size() - 1;
+	return buffer;
 }
 
-int Direct3D11::CreateIndexBuffer(unsigned * indexData, unsigned indexCount)
+ID3D11Buffer* Direct3D11::_CreateIndexBuffer(uint32_t * indexData, uint32_t indexCount)
 {
 	D3D11_BUFFER_DESC bd;
 	bd.BindFlags = D3D11_BIND_INDEX_BUFFER;
@@ -200,43 +199,34 @@ int Direct3D11::CreateIndexBuffer(unsigned * indexData, unsigned indexCount)
 	if (FAILED(hr))
 	{
 		DebugLogger::GetInstance()->AddMsg("Failed to create index buffer");
-		return -1;
+		throw std::exception("Failed to create index buffer");
 	}
-	_indexBuffers.push_back(buffer);
-	
-	return _indexBuffers.size() - 1;
+	return buffer;
 }
 
 /* REWRITE TO CREATE FROM MEMORY */
-int Direct3D11::CreateTexture(const wchar_t * filename)
+ID3D11ShaderResourceView* Direct3D11::_CreateDDSTexture(const void* data, size_t size)
 {
 	ID3D11ShaderResourceView* srv = nullptr;
-	std::wstring ws(filename);
-	if (ws.substr(ws.size() - 4) == L".dds")
+
+	HRESULT hr = CreateDDSTextureFromMemory(_device, (uint8_t*)data, size, nullptr, &srv);
+	if (FAILED(hr))
 	{
-		HRESULT hr = CreateDDSTextureFromFile(_device, filename, nullptr, &srv);
-		if (FAILED(hr))
-		{
-		
-			return -1;
-		}
+		return nullptr;
 	}
-	else if (ws.substr(ws.size() - 4) == L".png")
+	return srv;
+}
+
+ID3D11ShaderResourceView * Direct3D11::_CreateWICTexture(const void * data, size_t size)
+{
+	ID3D11ShaderResourceView* srv = nullptr;
+	HRESULT hr = CreateWICTextureFromMemory(_device, (uint8_t*)data, size, nullptr, &srv);
+	if (FAILED(hr))
 	{
-		HRESULT hr = CreateWICTextureFromFile(_device, filename, nullptr, &srv);
-		if (FAILED(hr))
-		{
-			
-			return -1;
-		}
+		return nullptr;
 	}
-	else
-	{
-		
-		return -1;
-	}
-	_textures.push_back(srv);
-	return _textures.size() - 1;
+	return srv;
+
 }
 
 void Direct3D11::Draw()
@@ -256,8 +246,8 @@ void Direct3D11::Draw()
 	ID3D11ShaderResourceView* nullSRVS[RenderTargets::RT_COUNT + 1] = { nullptr };
 	_deviceContext->PSSetShaderResources(0, RenderTargets::RT_COUNT + 1, nullSRVS);
 
-	_deviceContext->IASetInputLayout(_inputLayouts[InputLayouts::IL_STATIC_MESHES]);
-	UINT stride = sizeof(Vertex);
+	_deviceContext->IASetInputLayout(_inputLayouts[InputLayouts::IL_PNT_VERTEX]);
+	UINT stride = sizeof(PNTVertex);
 	UINT offset = 0;
 	_deviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 	_deviceContext->VSSetShader(_vertexShaders[VertexShaders::VS_STATIC_MESHES], nullptr, 0);
@@ -298,48 +288,118 @@ void Direct3D11::Draw()
 	_swapChain->Present(0, 0);
 }
 
-void Direct3D11::CreateBuffer(Resource * resource)
+//void Direct3D11::CreateBuffer(Resource * resource)
+//{
+//	resource->registerObserver(this);
+//	const Resource::ResourceType type = resource->GetResourceType();
+//	if (type == Resource::ResourceType::MESH_PNT)
+//	{
+//		const PNTMeshData* meshdata = (PNTMeshData*)resource->GetProcessedData();
+//		_vertexBuffers[resource->GetGUID().data] = _CreateVertexBuffer(meshdata->vertices, meshdata->vertexCount);
+//		if(meshdata->indices != nullptr)
+//			_indexBuffers[resource->GetGUID().data] = _CreateIndexBuffer(meshdata->indices, meshdata->indexCount);
+//	}
+//	else if (type == Resource::ResourceType::TEXTURE_DDS)
+//	{
+//		const TextureData* texdata = (TextureData*)resource->GetProcessedData();
+//		_textures[resource->GetGUID()] = _CreateDDSTexture(texdata->data, texdata->size);
+//	}
+//	else if (type & (Resource::ResourceType::TEXTURE_PNG | Resource::ResourceType::TEXTURE_JPG))
+//	{
+//		const TextureData* texdata = (TextureData*)resource->GetProcessedData();
+//		_textures[resource->GetGUID()] = _CreateWICTexture(texdata->data, texdata->size);
+//	}
+//
+//	
+//	
+//}
+
+void Direct3D11::CreateMeshBuffers(Resource& r)
 {
-	const RawData& rd = resource->GetRawData();
-	
+	MeshData::MeshData* pdata = (MeshData::MeshData*)r.GetData();
+	uint64_t guid = r.GetGUID().data;
+	auto& got = _vertexBuffers.find(guid);
+	if (got == _vertexBuffers.end())
+	{
+		_vertexBuffers[guid] = BufferInfo(_CreateVertexBuffer(pdata->vertices, pdata->NumVertices), pdata->NumVertices);
+		_indexBuffers[guid] = BufferInfo(_CreateIndexBuffer(pdata->Indices, pdata->IndexCount), pdata->IndexCount);
+		r.registerObserver(this);
+	}
+	else
+	{
+		DebugLogger::GetInstance()->AddMsg("Tried to create mesh buffers for the same resource while it already existed, GUID: " + guid);
+	}
 }
 
-void Direct3D11::Notify(SM_GUID guid)
+void Direct3D11::CreateShaderResource(Resource& resource)
 {
+	/*auto& got = _textures.find(resource->GetGUID().data);
+	if (got == _textures.end())
+	{
+		const Resource::ResourceType type = resource->GetResourceType();
+		if (type == Resource::ResourceType::TEXTURE_DDS)
+		{
+			_textures[resource->GetGUID()] = _CreateDDSTexture(resource->GetRawData().data, resource->GetRawData().size);
+		}
+		else if (type & (Resource::ResourceType::TEXTURE_PNG | Resource::ResourceType::TEXTURE_JPG))
+		{
+			_textures[resource->GetGUID()] = _CreateWICTexture(resource->GetRawData().data, resource->GetRawData().size);
+		}
+	}
+	else
+	{
+		DebugLogger::GetInstance()->AddMsg("Tried to create shader resource view while it already existed, GUID: " + resource->GetGUID().data);
+	}*/
+}
+
+void Direct3D11::NotifyDelete(Resource& r)
+{
+	auto& find = _vertexBuffers.find(r.GetGUID());
+	if (find != _vertexBuffers.end())
+	{
+		auto& findIndexBuffer = _indexBuffers.find(r.GetGUID());
+		if (findIndexBuffer != _indexBuffers.end())
+			SAFE_RELEASE(findIndexBuffer->second.buffer);
+		SAFE_RELEASE(find->second.buffer);
+		_vertexBuffers.erase(r.GetGUID());
+		MeshData::MeshData* pdata = (MeshData::MeshData*)r.GetData();
+		delete[] pdata->vertices;
+		delete[] pdata->Indices;
+		delete pdata;
+	}
 }
 
 void Direct3D11::_CreateShadersAndInputLayouts()
 {
 	ID3DBlob* pVS;
-	D3DCompileFromFile(L"StaticMeshVS.hlsl",nullptr,nullptr,"main","vs_4_0",
+	D3DCompileFromFile(L"Shaders/DX11/StaticMeshVS.hlsl",nullptr,nullptr,"main","vs_4_0",
 		NULL, NULL, &pVS, nullptr);
 	_device->CreateVertexShader(pVS->GetBufferPointer(), pVS->GetBufferSize(), nullptr, &_vertexShaders[VertexShaders::VS_STATIC_MESHES]);
 
 	D3D11_INPUT_ELEMENT_DESC id[] = {
 		{"POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT,    0, 0,  D3D11_INPUT_PER_VERTEX_DATA, 0},
 		{"NORMAL",   0, DXGI_FORMAT_R32G32B32_FLOAT,    0, 12, D3D11_INPUT_PER_VERTEX_DATA, 0},
-		{"TANGENT",  0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 24, D3D11_INPUT_PER_VERTEX_DATA, 0},
-		{"TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT,       0, 40, D3D11_INPUT_PER_VERTEX_DATA, 0}
+		{"TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT,       0, 24, D3D11_INPUT_PER_VERTEX_DATA, 0}
 	};
-	_device->CreateInputLayout(id, ARRAYSIZE(id), pVS->GetBufferPointer(), pVS->GetBufferSize(), &_inputLayouts[InputLayouts::IL_STATIC_MESHES]);
+	_device->CreateInputLayout(id, ARRAYSIZE(id), pVS->GetBufferPointer(), pVS->GetBufferSize(), &_inputLayouts[InputLayouts::IL_PNT_VERTEX]);
 	SAFE_RELEASE(pVS);
 	HRESULT hr;
-	D3DCompileFromFile(L"FinalVS.hlsl", nullptr, nullptr, "main", "vs_4_0",
+	D3DCompileFromFile(L"Shaders/DX11/FinalVS.hlsl", nullptr, nullptr, "main", "vs_4_0",
 		NULL, NULL, &pVS, nullptr);
 	_device->CreateVertexShader(pVS->GetBufferPointer(), pVS->GetBufferSize(), nullptr, &_vertexShaders[VertexShaders::VS_FULLSCREEN]);
 	SAFE_RELEASE(pVS);
 
-	D3DCompileFromFile(L"StaticMeshPS.hlsl", nullptr, nullptr, "main", "ps_4_0",
+	D3DCompileFromFile(L"Shaders/DX11/StaticMeshPS.hlsl", nullptr, nullptr, "main", "ps_4_0",
 		NULL, NULL, &pVS, nullptr);
 	_device->CreatePixelShader(pVS->GetBufferPointer(), pVS->GetBufferSize(), nullptr, &_pixelShaders[PixelShaders::PS_STATIC_MESHES]);
 	SAFE_RELEASE(pVS);
 
-	D3DCompileFromFile(L"FinalPS.hlsl", nullptr, nullptr, "main", "ps_4_0",
+	D3DCompileFromFile(L"Shaders/DX11/FinalPS.hlsl", nullptr, nullptr, "main", "ps_4_0",
 		NULL, NULL, &pVS, nullptr);
 	_device->CreatePixelShader(pVS->GetBufferPointer(), pVS->GetBufferSize(), nullptr, &_pixelShaders[PixelShaders::PS_FINAL]);
 	SAFE_RELEASE(pVS);
 
-	hr = D3DCompileFromFile(L"InstancedStaticMeshVS.hlsl", nullptr, nullptr, "main", "vs_5_0",
+	hr = D3DCompileFromFile(L"Shaders/DX11/InstancedStaticMeshVS.hlsl", nullptr, nullptr, "main", "vs_5_0",
 		NULL, NULL, &pVS, nullptr);
 	_device->CreateVertexShader(pVS->GetBufferPointer(), pVS->GetBufferSize(), nullptr, &_vertexShaders[VertexShaders::VS_STATIC_MESHES_INSTANCED]);
 	SAFE_RELEASE(pVS);

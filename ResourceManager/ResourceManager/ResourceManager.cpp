@@ -1,5 +1,6 @@
 #include "ResourceManager.h"
-
+#pragma warning (disable : 4267)
+#pragma warning (disable : 4018) //Signed/unsigned missmatch
 #include <stdexcept>
 #include <Windows.h> // Because fuck off VS. Start following standards
 #include <iostream>
@@ -16,11 +17,13 @@ ResourceManager& ResourceManager::Instance()
 
 ResourceManager::ResourceManager()
 {
+	_resourcePool = MemoryManager::CreatePoolAllocator(sizeof(Resource), 1337, 0);
 	_runningThread = thread(&ResourceManager::_Run, this);
 }
 
 ResourceManager::~ResourceManager()
 {
+
 	delete _assetLoader;
 	_assetLoader = nullptr;
 	delete[] _pool;
@@ -46,15 +49,25 @@ Resource & ResourceManager::LoadResource(SM_GUID guid, const Resource::Flag& fla
 	//		Resource& r = _instance->Find(guid);
 	//		r._refCount++;
 	//		return r;
-	//// else
-	Resource temp = Resource();
-	_resources.push_back(temp);
-	Resource& r = temp;
-	r._refCount = 1000;
+	// else
+
+	auto find = _FindResource(guid);
+	if (find)
+	{
+		find->_refCount++;
+		return *find;
+	}
+		
+
+	auto temp = (Resource*)_resourcePool->Malloc();
+	temp->observers = new std::vector<Observer*>;
+	_resources[guid.data] = temp;
+	Resource& r = *_resources[guid.data];
+	r._refCount = 1;
 	r.ID = guid;
 	r._flags = flag;
 
-	_loadingQueue.push(&temp);
+	_loadingQueue.push(&r);
 	_mutexLock.unlock();
 
 	return r;
@@ -136,6 +149,14 @@ void ResourceManager::_Startup()
 void ResourceManager::SetAssetLoader(IAssetLoader * loader)
 {
 	_assetLoader = loader;
+}
+
+void ResourceManager::AddParser(const std::string& fileend, const std::function<void(Resource& r)>& parseFunction)
+{
+	uint32_t type = std::hash<std::string>{} (fileend);
+	_assetLoader->AddType(type);
+	_parser.AddParser(type, parseFunction);
+	
 }
 
 void ResourceManager::_SetupFreeBlockList(void)
@@ -346,6 +367,16 @@ void ResourceManager::_Free(int32_t firstBlock, uint32_t numBlocks)
 	}
 }
 
+Resource* ResourceManager::_FindResource(SM_GUID guid) const
+{
+	auto& find = _resources.find(guid.data);
+	if (find != _resources.end())
+	{
+		return find->second;
+	}
+	return nullptr;
+}
+
 void ResourceManager::_Run()
 {
 	_mutexLock.lock();
@@ -358,11 +389,10 @@ void ResourceManager::_Run()
 	//Create threads and initialize them as "free"
 	for (uint16_t i = 0; i < 1; i++)
 	{
-		_threadIDMap.insert({i, thread()});
-		
+		_threadIDMap.insert({ i, thread() });
+
 		_threadRunningMap.insert({ i, ThreadControl() });
 	}
-
 	_running = true;
 	_mutexLock.unlock();
 	while (_running)
@@ -370,9 +400,9 @@ void ResourceManager::_Run()
 		//Loop through all resources, ticking them down
 		for (auto &it : _resources)
 		{
-			it.UpdateCounter();
+			it.second->UpdateCounter();
 		}
-		//Gå igenom färdiga trådar, joinar in dem
+		//GEigenom färdiga trådar, joinar in dem
 		_mutexLock.lock();
 
 		for (auto &it : _threadRunningMap)
@@ -390,7 +420,7 @@ void ResourceManager::_Run()
 		_mutexLock.unlock();
 
 
-		//Om vi har lediga trådar, släng upp nya jobb som ligger på stacken.
+		//Om vi har lediga trådar, släng upp nya jobb som ligger pEstacken.
 		_mutexLock.lock();
 
 		
@@ -433,10 +463,7 @@ void ResourceManager::_Run()
 		}
 	}
 
-	delete _assetLoader;
-	_assetLoader = nullptr;
-	delete[] _pool;
-	_pool = nullptr;
+
 
 }
 
@@ -486,8 +513,21 @@ void ResourceManager::_Threading(uint16_t ID, SM_GUID job)
 
 void ResourceManager::ShutDown()
 {
+
+
 	_mutexLock.lock();
 	_running = false;
 	_mutexLock.unlock();
 	_runningThread.join();
+	delete _assetLoader;
+	_assetLoader = nullptr;
+	delete[] _pool;
+	_pool = nullptr;
+	for (auto& r : _resources)
+	{		
+		r.second->_NotifyObserver();
+		delete r.second->observers;
+	}
+	_resources.clear();
+	
 }

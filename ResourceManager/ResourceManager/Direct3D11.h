@@ -8,12 +8,15 @@
 #include <d3d11.h>
 #include <d3dcompiler.h>
 #include <vector>
+#include <map>
 #pragma comment (lib, "d3d11.lib")
 #pragma comment (lib, "d3dcompiler.lib")
 
 
 #include "Structs.h"
 #include "IGraphics.h"
+#include "SM_GUID.h"
+#include "MeshData.h"
 
 enum VertexShaders
 {
@@ -43,7 +46,7 @@ enum ComputeShaders
 
 enum InputLayouts
 {
-	IL_STATIC_MESHES,
+	IL_PNT_VERTEX,
 	LAYOUT_COUNT
 };
 
@@ -106,9 +109,26 @@ private:
 	ID3D11ShaderResourceView* _shaderResourceViews[RenderTargets::RT_COUNT] = { nullptr }; //related to deferred
 	ID3D11Texture2D*          _renderTargetTextures[RenderTargets::RT_COUNT] = { nullptr };
 	
-	std::vector<ID3D11ShaderResourceView*> _textures; //diffuse maps, normal maps, etc.
-	std::vector<ID3D11Buffer*> _vertexBuffers;
-	std::vector<ID3D11Buffer*> _indexBuffers;
+	struct BufferInfo
+	{
+		BufferInfo()
+		{
+			buffer = nullptr;
+			count = 0;
+		}
+		BufferInfo(ID3D11Buffer* buf, size_t size)
+		{
+			buffer = buf;
+			count = size;
+		}
+		ID3D11Buffer* buffer;
+		size_t count;
+	};
+	
+	
+	std::map<uint64_t, BufferInfo> _vertexBuffers;
+	std::map<uint64_t, BufferInfo> _indexBuffers;
+	std::map<uint32_t, ID3D11ShaderResourceView*> _textures;
 	ID3D11Buffer* _constantBuffers[ConstantBuffers::CB_COUNT] = { nullptr };
 	ID3D11InputLayout* _inputLayouts[InputLayouts::LAYOUT_COUNT] = { nullptr };
 	ID3D11SamplerState* _samplerStates[Samplers::SAM_COUNT] = { nullptr };
@@ -122,6 +142,12 @@ private:
 	void _CreateRasterizerState();
 	void _CreateConstantBuffers();
 
+	ID3D11Buffer* _CreateVertexBuffer(MeshData::Vertex* vertexData, uint32_t vertexCount);
+	ID3D11Buffer* _CreateIndexBuffer(uint32_t* indexData, uint32_t indexCount);
+
+	ID3D11ShaderResourceView* _CreateDDSTexture(const void* data, size_t size);
+	ID3D11ShaderResourceView* _CreateWICTexture(const void* data, size_t size);
+
 
 public:
 	Direct3D11();
@@ -129,14 +155,15 @@ public:
 	ID3D11Device* GetDevice() { return _device; }
 	ID3D11DeviceContext* GetDeviceContext() { return _deviceContext; }
 
-	int CreateVertexBuffer(Vertex* vertexData, unsigned vertexCount);
-	int CreateIndexBuffer(unsigned* indexData, unsigned indexCount);
-	int CreateTexture(const wchar_t* filename);
+	
+
 
 	//Inherited from graphics interface
 	virtual void Draw();
-	virtual void CreateBuffer(Resource* resource);
-	virtual void Notify(SM_GUID guid);
+//	virtual void CreateBuffer(Resource* resource);
+	virtual void CreateMeshBuffers(Resource& r);
+	virtual void CreateShaderResource(Resource& resource);
+	virtual void NotifyDelete(Resource& r);
 
 	
 };

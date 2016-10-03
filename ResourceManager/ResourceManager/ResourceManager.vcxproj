@@ -52,6 +52,7 @@
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
+    <Import Project="flexbison\custom_build_rules\win_flex_bison_custom_build.props" />
   </ImportGroup>
   <ImportGroup Label="Shared">
   </ImportGroup>
@@ -142,6 +143,10 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="flexbison\Object.cpp" />
+    <ClCompile Include="flexbison\ObjParser.cpp" />
+    <ClCompile Include="flexbison\parser.flex.cpp" />
+    <ClCompile Include="flexbison\parser.tab.cpp" />
     <ClCompile Include="IGraphics.cpp" />
     <ClCompile Include="stdafx.cpp" />
     <ClCompile Include="TestMain.cpp" />
@@ -150,8 +155,15 @@
     <ClCompile Include="zipper.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="flexbison\FlexLexer.h" />
+    <ClInclude Include="flexbison\Object.h" />
+    <ClInclude Include="flexbison\ObjParser.h" />
+    <ClInclude Include="flexbison\parser.tab.h" />
+    <ClInclude Include="flexbison\stack.hh" />
     <ClInclude Include="IAssetLoader.h" />
     <ClInclude Include="IGraphics.h" />
+    <ClInclude Include="MeshData.h" />
+    <ClInclude Include="Resource.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="targetver.h" />
     <ClInclude Include="unzipper.h" />
@@ -197,7 +209,6 @@
     <ClInclude Include="Observer.h" />
     <ClInclude Include="PoolAllocator.h" />
     <ClInclude Include="ResourceManager.h" />
-    <ClInclude Include="Resource.h" />
     <ClInclude Include="StackAllocator.h" />
     <ClInclude Include="Structs.h" />
     <ClInclude Include="Timer.h" />
@@ -205,11 +216,30 @@
     <ClInclude Include="Window.h" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="FinalPS.hlsl">
+    <None Include="Shaders\DX11\FinalPS.hlsl">
+      <FileType>Document</FileType>
+    </None>
+    <None Include="Shaders\DX11\FinalVS.hlsl">
+      <FileType>Document</FileType>
+    </None>
+    <None Include="Shaders\DX11\InstancedStaticMeshVS.hlsl">
+      <FileType>Document</FileType>
+    </None>
+    <None Include="Shaders\DX11\StaticMeshPS.hlsl">
+      <FileType>Document</FileType>
+    </None>
+    <None Include="Shaders\DX11\StaticMeshVS.hlsl">
       <FileType>Document</FileType>
     </None>
   </ItemGroup>
+  <ItemGroup>
+    <Flex Include="flexbison\parser.l" />
+  </ItemGroup>
+  <ItemGroup>
+    <Bison Include="flexbison\parser.y" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
+    <Import Project="flexbison\custom_build_rules\win_flex_bison_custom_build.targets" />
   </ImportGroup>
 </Project>

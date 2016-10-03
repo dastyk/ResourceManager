@@ -17,6 +17,9 @@ struct SM_GUID
 	{
 		data = std::hash<std::string>{} (c);
 	}
+	operator uint64_t() {
+		return data;
+	}
 
 	bool operator==(const SM_GUID &other)
 	{
@@ -24,6 +27,7 @@ struct SM_GUID
 	}
 
 };
+
 
 
 #endif
