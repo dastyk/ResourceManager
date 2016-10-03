@@ -138,10 +138,10 @@ int main(int argc, char** argv)
 	//ResourceManager::Instance().PrintOccupancy();
 	ResourceManager::Instance().TestAlloc();
 
-	//Resource& tex1 = ResourceManager::Instance().LoadResource("gold.jpg", Resource::Flag::LOAD_AND_WAIT);
+	Resource& tex1 = ResourceManager::Instance().LoadResource("gold.jpg", Resource::Flag::LOAD_AND_WAIT);
 	Resource& mesh1 = ResourceManager::Instance().LoadResource("Sphere0.arf", Resource::Flag::LOAD_AND_WAIT);
 	
-	/*GameObject gg;
+	GameObject gg;
 	gg.mesh = mesh1.GetGUID();
 	gg.texture = tex1.GetGUID();
 	DirectX::XMStoreFloat4x4(&gg.transform, DirectX::XMMatrixScaling(0.6,0.6,0.6) * DirectX::XMMatrixTranslation(0.0f, 0.0f, 10.0f));
@@ -152,7 +152,7 @@ int main(int argc, char** argv)
 	{
 		core->GetGraphics()->AddToRenderQueue(gg);
 		core->Update();
-	}*/
+	}
 
 
 	ResourceManager::Instance().ShutDown();
