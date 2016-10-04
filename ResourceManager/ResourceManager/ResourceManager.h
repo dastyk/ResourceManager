@@ -31,7 +31,6 @@ public:
 	
 	Resource& LoadResource(SM_GUID guid, const Resource::Flag& flag);
 
-
 	void PrintOccupancy(void);
 	void TestAlloc(void);
 	
