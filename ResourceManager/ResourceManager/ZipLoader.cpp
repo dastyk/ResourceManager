@@ -51,10 +51,6 @@ void* ZipLoader::LoadResource(SM_GUID guid)
 		// THROW EXCEPTIONS EVERYONE, IT'S PARTY TIME
 	}
 
-	//filename = unhash(guid); måste implementeras på något sätt
-
-	//fileName = "temporär shit";
-
 	if (zipFile.openEntry(fileName.c_str()))
 	{
 		returnData.size = zipFile.getEntrySize();
