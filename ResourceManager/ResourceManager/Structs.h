@@ -7,6 +7,7 @@
 #include <unordered_map>
 #include "SM_GUID.h"
 #include "TextureData.h"
+#include "Resource.h"
 
 
 struct PNTVertex
@@ -68,8 +69,8 @@ struct GameObject
 	SM_GUID texture;
 	DirectX::XMFLOAT4X4 transform;
 
-	Resource meshResource;
-	Resource textureResource;
+	Resource* meshResource;
+	Resource* textureResource;
 	float radius;
 };
 

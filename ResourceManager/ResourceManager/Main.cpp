@@ -161,8 +161,8 @@ int main(int argc, char** argv)
 	gg.mesh = mesh1.GetGUID();
 	gg.texture = tex1.GetGUID();
 	DirectX::XMStoreFloat4x4(&gg.transform, DirectX::XMMatrixScaling(0.6,0.6,0.6) * DirectX::XMMatrixTranslation(0.0f, 0.0f, 10.0f));
-	gg.meshResource = mesh1;
-	gg.textureResource = tex1;
+	//gg.meshResource = mesh1;
+	//gg.textureResource = tex1;
 	gg.radius = 0.8f;
 
 	///Sleep(20000); //TODO:Graphics need to know if what it is trying to render exists or not, and if not render some placeholder.
@@ -175,6 +175,7 @@ int main(int argc, char** argv)
 		//Check event to handle input
 		if (input->WasKeyPressed(SDLK_k))
 			printf("K was pressed");
+
 		core->GetGraphics()->AddToRenderQueue(gg);
 		core->Update();
 
