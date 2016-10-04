@@ -58,7 +58,7 @@ private:
 	std::mutex CounterLock;
 	std::mutex UnRefLock;
 public:
-	void UnRef()
+	void Unload()
 	{
 		UnRefLock.lock();
 		_refCount = (_refCount == 0) ? 0 : _refCount - 1;
