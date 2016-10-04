@@ -161,14 +161,21 @@ int main(int argc, char** argv)
 	gg.mesh = mesh1.GetGUID();
 	gg.texture = tex1.GetGUID();
 	DirectX::XMStoreFloat4x4(&gg.transform, DirectX::XMMatrixScaling(0.6,0.6,0.6) * DirectX::XMMatrixTranslation(0.0f, 0.0f, 10.0f));
+	//gg.meshResource = mesh1;
+	//gg.textureResource = tex1;
+	gg.radius = 0.8f;
 
 	///Sleep(20000); //TODO:Graphics need to know if what it is trying to render exists or not, and if not render some placeholder.
 
 	printf("<----||Starting Game loop||---->\n\n");
-	SDL_Event ev;
+	InputManager* input = core->GetInputManager();
 	for (int i = 0; i < 10000; i++)
 	{
-		SDL_PollEvent(&ev);
+		
+		//Check event to handle input
+		if (input->WasKeyPressed(SDLK_k))
+			printf("K was pressed");
+
 		core->GetGraphics()->AddToRenderQueue(gg);
 		core->Update();
 
@@ -177,7 +184,10 @@ int main(int argc, char** argv)
 		ResourceManager::Instance().LoadResource("Sphere3.arf", Resource::Flag::NEEDED_NOW);
 		ResourceManager::Instance().LoadResource("Sphere2.arf", Resource::Flag::NEEDED_NOW);
 		ResourceManager::Instance().LoadResource("Sphere1.arf", Resource::Flag::NEEDED_NOW);
+
 	}
+
+	
 
 	printf("\n\n<----||Game loop ended||---->\n\n");
 
