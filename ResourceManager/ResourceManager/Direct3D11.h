@@ -194,7 +194,7 @@ public:
 //	virtual void CreateBuffer(Resource* resource);
 	virtual void CreateMeshBuffers(Resource& r);
 	virtual void CreateShaderResource(Resource& resource);
-	virtual void NotifyDelete(Resource& r);
+	virtual void NotifyDelete(SM_GUID guid);
 	virtual void AddToRenderQueue(const GameObject& gameObject);
 
 	

@@ -7,6 +7,7 @@
 #include "Types.h"
 #include "IAssetLoader.h"
 #include <functional>
+#include <mutex>
 
 class ResourceManager;
 class AssetParser;
@@ -53,20 +54,27 @@ private:
 	ResourceType _resourceType;
 	void* _data;
 	void SetGUID(SM_GUID inID) { ID = inID; };
-	void _NotifyObserver() { for (auto &it : (observers)) { it->NotifyDelete(*this); } };
-
+	void _NotifyObserver() { for (auto &it : (observers)) { it->NotifyDelete(ID); } };
+	std::mutex CounterLock;
+	std::mutex UnRefLock;
 public:
-	void UpdateCounter(bool used = false) 
+	void UnRef()
 	{
-		if (used && _callCount < UINT16_MAX-2)
-			_callCount+=2;
+		UnRefLock.lock();
+		_refCount = (_refCount == 0) ? 0 : _refCount - 1;
+		UnRefLock.unlock();
+	}
+	void UpdateCounter(int16_t inc) 
+	{
+		CounterLock.lock();
+		int32_t temp = (int32_t)_callCount + (int32_t)inc;
+		if (temp < INT16_MIN)
+			_callCount = INT16_MIN;
+		else if (temp > INT16_MAX)
+			_callCount = INT16_MAX;
 		else
-		{
-			if (_callCount != 0)
-			{
-				_callCount--;
-			}
-		}
+			_callCount += inc;
+		CounterLock.unlock();
 	};
 	void registerObserver(Observer* observer) 
 	{ 

@@ -10,7 +10,7 @@ public:
 	Observer() {};
 	virtual ~Observer() {};
 	
-	virtual void NotifyDelete(Resource& r) = 0;
+	virtual void NotifyDelete(SM_GUID guid) = 0;
 };
 
 

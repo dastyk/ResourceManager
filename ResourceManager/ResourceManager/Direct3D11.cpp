@@ -375,22 +375,22 @@ void Direct3D11::CreateShaderResource(Resource& resource)
 	}
 }
 
-void Direct3D11::NotifyDelete(Resource& r)
+void Direct3D11::NotifyDelete(SM_GUID guid)
 {
-	auto& find = _vertexBuffers.find(r.GetGUID());
+	auto& find = _vertexBuffers.find(guid);
 	if (find != _vertexBuffers.end())
 	{
-		auto& findIndexBuffer = _indexBuffers.find(r.GetGUID());
+		auto& findIndexBuffer = _indexBuffers.find(guid);
 		if (findIndexBuffer != _indexBuffers.end())
 			SAFE_RELEASE(findIndexBuffer->second.buffer);
 		SAFE_RELEASE(find->second.buffer);
-		_vertexBuffers.erase(r.GetGUID());
+		_vertexBuffers.erase(guid);
 	}
-	auto& got = _textures.find(r.GetGUID().data);
+	auto& got = _textures.find(guid);
 	if (got != _textures.end())
 	{
 		SAFE_RELEASE(got->second);
-		_textures.erase(r.GetGUID());
+		_textures.erase(guid);
 	}
 }
 
