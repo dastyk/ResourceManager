@@ -46,31 +46,36 @@ Resource & ResourceManager::LoadResource(SM_GUID guid, const Resource::Flag& fla
 	if (find)
 	{
 		//printf("Resource already loaded. GUID: %llu \n", guid.data);
-		find->_refCount++;
+		find->Loaded();
 		return *find;
 	}
 		
 
 	auto temp = (Resource*)_resourcePool->Malloc();
 	new (temp) Resource();
+	_mutexLockResourceArr.lock();
 	_resources[guid.data] = temp;
 	Resource& r = *temp;
 	r._refCount = 1;
 	r.ID = guid;
 	r._flags = flag;
-
+	_mutexLockResourceArr.unlock();
 	
 	if (flag & Resource::Flag::LOAD_AND_WAIT)
 	{
-		_mutexLockGeneral.lock();
+		_mutexLockLoader.lock();
 		printf("Resource loading. GUID: %llu\n", r.GetGUID().data);
 		r.SetData(_assetLoader->LoadResource(guid), [](void* data) 
 		{
 			operator delete(((RawData*)data)->data);
 			delete data;
 		});
+		_mutexLockLoader.unlock();
+
+		_mutexLockParser.lock();
 		_parser.ParseResource(r);
-		_mutexLockGeneral.unlock();
+		_mutexLockParser.unlock();
+		printf("Resource finished loading. GUID: %llu\n", r.GetGUID().data);
 	}
 	else
 	{
@@ -375,13 +380,15 @@ void ResourceManager::_Free(int32_t firstBlock, uint32_t numBlocks)
 	}
 }
 
-Resource* ResourceManager::_FindResource(SM_GUID guid) const
+Resource* ResourceManager::_FindResource(SM_GUID guid)
 {
+	_mutexLockResourceArr.lock();
 	auto& find = _resources.find(guid.data);
 	if (find != _resources.end())
 	{
 		return find->second;
 	}
+	_mutexLockResourceArr.unlock();
 	return nullptr;
 }
 
@@ -419,18 +426,27 @@ void ResourceManager::_Run()
 	while (_running)
 	{
 		//Loop through all resources, ticking them down
+		_mutexLockResourceArr.lock();
 		for (auto &it : _resources)
 		{
-			it.second->UpdateCounter(-2);
-		}
+			if (it.second->_refCount == 0)
+			{
+				_resources.erase(it.second->ID);
+				_resourcePool->Free((char*)it.second);
+				it.second->~Resource();				
+			}
 		
+		}
+		_mutexLockResourceArr.unlock();
 
-		this_thread::sleep_for(std::chrono::milliseconds(17));
+		//this_thread::sleep_for(std::chrono::milliseconds(17));
 	}
+	
 	bool allThreadsJoined = false;
 	while (!allThreadsJoined)
 	{
 		allThreadsJoined = true;
+		_mutexLockGeneral.lock();
 		for (auto &it : _threadRunningMap)
 		{
 			if (it.second.inUse)
@@ -442,10 +458,11 @@ void ResourceManager::_Run()
 				if (!it.second.beenJoined)
 				{
 					_threadIDMap.find(it.first)->second.join();
+					it.second.beenJoined = true;
 				}
 			}
-
 		}
+		_mutexLockGeneral.unlock();
 	}
 
 
@@ -466,41 +483,34 @@ void ResourceManager::_LoadingThread(uint16_t threadID)
 		_mutexLockLoadingQueue.lock();
 		while (_loadingQueue.size())
 		{
-			SM_GUID job = _loadingQueue.top()->GetGUID();
+			Resource* job = _loadingQueue.top();
 			_loadingQueue.pop();
 			_mutexLockLoadingQueue.unlock();
 			ostringstream dataStream;
-			dataStream << job.data;
+			dataStream << job->GetGUID().data;
 
-			printf("Started loading resource. GUID: %llu\n", job.data);
-			DebugLogger::GetInstance()->AddMsg("Started Job: " + dataStream.str());
+			printf("Started loading resource. GUID: %llu\n", job->GetGUID().data);
+			//DebugLogger::GetInstance()->AddMsg("Started Job: " + dataStream.str());
 
 
 
-			_mutexLockGeneral.lock();
+			_mutexLockLoader.lock();
 			//Call asset loader to load the data we want
-			void* temp = _assetLoader->LoadResource(job);
-			_mutexLockGeneral.unlock();
+			void* temp = _assetLoader->LoadResource(job->GetGUID());
+			_mutexLockLoader.unlock();
 
-			printf("Finished loading resource. GUID: %llu\n", job.data);
+			printf("Finished loading resource. GUID: %llu\n", job->GetGUID().data);
 			//Lock so we can insert the data to the resources
-			Resource* workingResource = nullptr;
-			for (auto &it : _resources)
+
+			job->SetData(temp, [](void* data)
 			{
-				if (it.second->GetGUID() == job)
-				{
-					workingResource = it.second;
-					it.second->SetData(temp, [](void* data)
-					{
-						operator delete(((RawData*)data)->data);
-						delete data;
-					});
-					break;
-				}
-			}
+				operator delete(((RawData*)data)->data);
+				delete data;
+			});
+
 
 			_mutexLockParserQueue.lock();
-			_parserQueue.push(workingResource);
+			_parserQueue.push(job);
 			_mutexLockParserQueue.unlock();
 
 
@@ -508,7 +518,7 @@ void ResourceManager::_LoadingThread(uint16_t threadID)
 			_mutexLockLoadingQueue.lock();
 		}
 		_mutexLockLoadingQueue.unlock();
-		std::this_thread::sleep_for(std::chrono::milliseconds(17));
+		//std::this_thread::sleep_for(std::chrono::seconds(2));
 	}
 
 	_mutexLockGeneral.lock();
@@ -547,7 +557,7 @@ void ResourceManager::_ParserThread(uint16_t threadID)
 			_mutexLockParserQueue.lock();
 		}
 		_mutexLockParserQueue.unlock();
-		std::this_thread::sleep_for(std::chrono::milliseconds(17));
+		//std::this_thread::sleep_for(std::chrono::milliseconds(17));
 	}
 	_mutexLockGeneral.lock();
 	_threadRunningMap[threadID].inUse = false;

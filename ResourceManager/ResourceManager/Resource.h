@@ -55,18 +55,23 @@ private:
 	void* _data;
 	void SetGUID(SM_GUID inID) { ID = inID; };
 	void _NotifyObserver() { for (auto &it : (observers)) { it->NotifyDelete(ID); } };
-	std::mutex CounterLock;
-	std::mutex UnRefLock;
+	std::mutex _SetDataLock;
+	std::mutex _UnRefLock;
 public:
+	void Loaded()
+	{
+		_UnRefLock.lock();
+		_refCount++;
+		_UnRefLock.unlock();
+	}
 	void Unload()
 	{
-		UnRefLock.lock();
+		_UnRefLock.lock();
 		_refCount = (_refCount == 0) ? 0 : _refCount - 1;
-		UnRefLock.unlock();
+		_UnRefLock.unlock();
 	}
 	void UpdateCounter(int16_t inc) 
 	{
-		CounterLock.lock();
 		int32_t temp = (int32_t)_callCount + (int32_t)inc;
 		if (temp < INT16_MIN)
 			_callCount = INT16_MIN;
@@ -74,7 +79,6 @@ public:
 			_callCount = INT16_MAX;
 		else
 			_callCount += inc;
-		CounterLock.unlock();
 	};
 	void registerObserver(Observer* observer) 
 	{ 
@@ -90,8 +94,13 @@ public:
 	}
 	SM_GUID GetGUID()const { return ID; };
 	void* GetData() const { return _data; };
-	void Destroy() { if (_destroyFunction) _destroyFunction(_data); };
-	void SetData(void* data, const std::function<void(void*)>& dfunc) { _data = data; _destroyFunction = dfunc; };
+	void Destroy() { _SetDataLock.lock(); if (_destroyFunction) _destroyFunction(_data); _SetDataLock.unlock(); };
+	void SetData(void* data, const std::function<void(void*)>& dfunc) 
+	{
+		_SetDataLock.lock();
+		_data = data; _destroyFunction = dfunc; 
+		_SetDataLock.unlock();
+	};
 	const ResourceType GetResourceType() const { return _resourceType; };
 
 	operator SM_GUID()const { return ID; }

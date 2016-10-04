@@ -90,7 +90,7 @@ private:
 	int _FindSuitableAllocationSlot(uint32_t blocks);
 	void _Allocate(int32_t allocSlot, uint32_t blocks);
 	void _Free(int32_t firstBlock, uint32_t numBlocks);
-	Resource* _FindResource(SM_GUID guid)const;
+	Resource* _FindResource(SM_GUID guid);
 	
 	PoolAllocator* _resourcePool;
 	std::map<uint64_t, Resource*> _resources;
@@ -109,6 +109,8 @@ private:
 	std::thread _runningThread;
 	int32_t _firstFreeBlock = -1;
 	std::mutex _mutexLockGeneral;
+	std::mutex _mutexLockResourceArr;
+	std::mutex _mutexLockLoader;
 	std::mutex _mutexLockParser;
 	std::mutex _mutexLockLoadingQueue;
 	std::mutex _mutexLockParserQueue;
