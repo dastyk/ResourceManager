@@ -18,6 +18,7 @@ public:
 		float upX = 0.0f, float upY = 1.0f, float upZ = 0.0f,
 		float nearPlane = 1.0f, float farPlane = 100.0f);
 	unsigned CycleActiveCamera();
+	Camera GetActiveCamera()const;
 	void SetActiveCamera(unsigned id);
 	void FillPerFrameBuffer(PerFrameBuffer& pfb, int cameraID = -1);
 	void RotateActiveCamera(float degX, float degY, float degZ);
