@@ -39,23 +39,10 @@ Resource & ResourceManager::LoadResource(SM_GUID guid, const Resource::Flag& fla
 	// * Either we store the compressed size or the parsed data. The latter case involved a trip to the asset parser.
 	// * When we have the final size it's time to allocate. If we find a suitable slot we can use it, otherwise something must be evicted.
 
-	_mutexLock.lock();
-	// TODO: finish return statement
-	// rawData = AssetLoader->Load(SM_GUID);
-	// resources.push_back(AssetParser->Parse(rawData))
-
-	// Mutex lock
-	// if(loaded)
-	//		Resource& r = _instance->Find(guid);
-	//		r._refCount++;
-	//		return r;
-	// else
-
 	auto find = _FindResource(guid);
 	if (find)
 	{
 		find->_refCount++;
-		_mutexLock.unlock();
 		return *find;
 	}
 		
@@ -68,8 +55,10 @@ Resource & ResourceManager::LoadResource(SM_GUID guid, const Resource::Flag& fla
 	r.ID = guid;
 	r._flags = flag;
 
+	_mutexLock.lock();
 	if (flag & Resource::Flag::LOAD_AND_WAIT)
 	{
+		
 		printf("Resource loading. GUID: %llu\n", r.GetGUID().data);
 		r.SetData(_assetLoader->LoadResource(guid), [](void* data) 
 		{
@@ -394,7 +383,7 @@ Resource* ResourceManager::_FindResource(SM_GUID guid) const
 
 void ResourceManager::_Run()
 {
-	_mutexLock.lock();
+
 	_numBlocks = 20;
 	_pool = new char[_numBlocks * _blockSize];
 
@@ -409,7 +398,7 @@ void ResourceManager::_Run()
 		_threadRunningMap.insert({ i, ThreadControl() });
 	}
 	_running = true;
-	_mutexLock.unlock();
+
 	while (_running)
 	{
 		//Loop through all resources, ticking them down
@@ -432,11 +421,8 @@ void ResourceManager::_Run()
 			}
 		}
 
-		_mutexLock.unlock();
-
 
 		//Om vi har lediga trÂdar, sl‰ng upp nya jobb som ligger pÅEstacken.
-		_mutexLock.lock();
 
 		
 		for (auto &it : _threadRunningMap)
@@ -488,18 +474,17 @@ void ResourceManager::_Threading(uint16_t ID, SM_GUID job)
 	ostringstream dataStream;
 	dataStream << job.data;
 
-	_mutexLock.lock();
 	printf("Started loading resource. GUID: %llu\n", job.data);
 	DebugLogger::GetInstance()->AddMsg("Started Job: " + dataStream.str());
 
+
+
+	_mutexLock.lock();
 	//Call asset loader to load the data we want
 	void* temp = _assetLoader->LoadResource(job);
-
 	_mutexLock.unlock();
-
+	printf("Finished loading resource. GUID: %llu\n", job.data);
 	//Lock so we can insert the data to the resources
-	_mutexLock.lock();
-	
 	Resource* workingResource = nullptr;
 	for (auto &it : _resources)
 	{
@@ -515,17 +500,22 @@ void ResourceManager::_Threading(uint16_t ID, SM_GUID job)
 		}
 	}
 
-	_mutexLock.unlock();
+	
 
+	// TODO: Create one thread for loading the resource and one, or multiple threads for parsing the data.
+
+	printf("Starting parsing resource. GUID: %llu\n", job.data);
+	_mutexLock.lock();
 	//Let the parser make their magic. Should implement a "dummy" GUID at this point in time, that we "use as resource" for the frame that the parser might work
 	if(workingResource != nullptr)
 		_parser.ParseResource(*workingResource);
 
+	_mutexLock.unlock();
+	
 
-	_mutexLock.lock();
-
-	printf("Finished loading resource. GUID: %llu\n", job.data);
+	printf("Finished parsing resource. GUID: %llu\n", job.data);
 	DebugLogger::GetInstance()->AddMsg("Finished Job: " + dataStream.str());
+	_mutexLock.lock();
 	_threadRunningMap.find(ID)->second.inUse = false;
 	_threadRunningMap.find(ID)->second.beenJoined = false;
 	
