@@ -165,9 +165,10 @@ int main(int argc, char** argv)
 	///Sleep(20000); //TODO:Graphics need to know if what it is trying to render exists or not, and if not render some placeholder.
 
 	printf("<----||Starting Game loop||---->\n\n");
-
+	SDL_Event ev;
 	for (int i = 0; i < 10000; i++)
 	{
+		SDL_PollEvent(&ev);
 		core->GetGraphics()->AddToRenderQueue(gg);
 		core->Update();
 
