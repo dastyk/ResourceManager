@@ -67,6 +67,10 @@ struct GameObject
 	SM_GUID mesh;
 	SM_GUID texture;
 	DirectX::XMFLOAT4X4 transform;
+
+	Resource meshResource;
+	Resource textureResource;
+	float radius;
 };
 
 
