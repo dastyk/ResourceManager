@@ -11,7 +11,7 @@
 #include <map>
 #pragma comment (lib, "d3d11.lib")
 #pragma comment (lib, "d3dcompiler.lib")
-
+#include <mutex>
 
 #include "Structs.h"
 #include "IGraphics.h"
@@ -153,7 +153,8 @@ private:
 		};
 		std::vector<MeshBatch> meshes;
 	};
-	
+	std::mutex _bufferLock;
+	std::mutex _textureLock;
 	RenderBatches _renderBatches;
 	
 	std::map<uint64_t, BufferInfo> _vertexBuffers;
@@ -193,7 +194,7 @@ public:
 //	virtual void CreateBuffer(Resource* resource);
 	virtual void CreateMeshBuffers(Resource& r);
 	virtual void CreateShaderResource(Resource& resource);
-	virtual void NotifyDelete(Resource& r);
+	virtual void NotifyDelete(SM_GUID guid);
 	virtual void AddToRenderQueue(const GameObject& gameObject);
 
 	

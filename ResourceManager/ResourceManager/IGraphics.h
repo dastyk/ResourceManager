@@ -12,7 +12,7 @@ public:
 	IGraphics() {};
 	virtual ~IGraphics() {};
 
-	virtual void NotifyDelete(Resource& r) = 0;
+	virtual void NotifyDelete(SM_GUID guid) = 0;
 
 	virtual void Draw() = 0;
 	//CreateBuffer(Resource* ) is too generic to work. Depending on what kind of buffers/shader resource views need to be created

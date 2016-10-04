@@ -148,6 +148,7 @@
     <ClCompile Include="flexbison\parser.flex.cpp" />
     <ClCompile Include="flexbison\parser.tab.cpp" />
     <ClCompile Include="IGraphics.cpp" />
+    <ClCompile Include="InputManager.cpp" />
     <ClCompile Include="stdafx.cpp" />
     <ClCompile Include="TestMain.cpp" />
     <ClCompile Include="unzipper.cpp" />
@@ -162,6 +163,7 @@
     <ClInclude Include="flexbison\stack.hh" />
     <ClInclude Include="IAssetLoader.h" />
     <ClInclude Include="IGraphics.h" />
+    <ClInclude Include="InputManager.h" />
     <ClInclude Include="MeshData.h" />
     <ClInclude Include="Resource.h" />
     <ClInclude Include="stdafx.h" />

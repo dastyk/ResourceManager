@@ -346,9 +346,11 @@ void Direct3D11::CreateMeshBuffers(Resource& r)
 	auto& got = _vertexBuffers.find(guid);
 	if (got == _vertexBuffers.end())
 	{
+		_bufferLock.lock();
 		_vertexBuffers[guid] = BufferInfo(_CreateVertexBuffer(pdata->vertices, pdata->NumVertices), pdata->NumVertices);
 		_indexBuffers[guid] = BufferInfo(_CreateIndexBuffer(pdata->Indices, pdata->IndexCount), pdata->IndexCount);
 		r.registerObserver(this);
+		_bufferLock.unlock();
 	}
 	else
 	{
@@ -361,9 +363,11 @@ void Direct3D11::CreateShaderResource(Resource& resource)
 	auto& got = _textures.find(resource.GetGUID().data);
 	if (got == _textures.end())
 	{
+		_textureLock.lock();
 		TextureData* td = (TextureData*)resource.GetData();
 		_textures[resource.GetGUID().data] = _CreateWICTexture(td->data, td->size);
 		resource.registerObserver(this);
+		_textureLock.unlock();
 	}
 	else
 	{
@@ -371,22 +375,22 @@ void Direct3D11::CreateShaderResource(Resource& resource)
 	}
 }
 
-void Direct3D11::NotifyDelete(Resource& r)
+void Direct3D11::NotifyDelete(SM_GUID guid)
 {
-	auto& find = _vertexBuffers.find(r.GetGUID());
+	auto& find = _vertexBuffers.find(guid);
 	if (find != _vertexBuffers.end())
 	{
-		auto& findIndexBuffer = _indexBuffers.find(r.GetGUID());
+		auto& findIndexBuffer = _indexBuffers.find(guid);
 		if (findIndexBuffer != _indexBuffers.end())
 			SAFE_RELEASE(findIndexBuffer->second.buffer);
 		SAFE_RELEASE(find->second.buffer);
-		_vertexBuffers.erase(r.GetGUID());
+		_vertexBuffers.erase(guid);
 	}
-	auto& got = _textures.find(r.GetGUID().data);
+	auto& got = _textures.find(guid);
 	if (got != _textures.end())
 	{
 		SAFE_RELEASE(got->second);
-		_textures.erase(r.GetGUID());
+		_textures.erase(guid);
 	}
 }
 
