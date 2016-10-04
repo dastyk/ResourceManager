@@ -84,7 +84,8 @@ private:
 
 
 	void _Startup();
-	void _Threading(uint16_t ID, SM_GUID job);
+	void _LoadingThread(uint16_t threadID);
+	void _ParserThread(uint16_t threadID);
 	void _SetupFreeBlockList(void);
 	int _FindSuitableAllocationSlot(uint32_t blocks);
 	void _Allocate(int32_t allocSlot, uint32_t blocks);
@@ -94,6 +95,7 @@ private:
 	PoolAllocator* _resourcePool;
 	std::map<uint64_t, Resource*> _resources;
 	std::priority_queue<Resource*, std::vector<Resource*>, CompareResources> _loadingQueue;
+	std::priority_queue<Resource*, std::vector<Resource*>, CompareResources> _parserQueue;
 	std::unordered_map<uint16_t, ThreadControl, KeyHasher> _threadRunningMap;
 	std::unordered_map<uint16_t, std::thread, KeyHasher> _threadIDMap;
 	IAssetLoader* _assetLoader = nullptr;
@@ -106,7 +108,10 @@ private:
 	uint32_t _numBlocks = 0;
 	std::thread _runningThread;
 	int32_t _firstFreeBlock = -1;
-	std::mutex _mutexLock;
+	std::mutex _mutexLockGeneral;
+	std::mutex _mutexLockParser;
+	std::mutex _mutexLockLoadingQueue;
+	std::mutex _mutexLockParserQueue;
 };
 
 #endif

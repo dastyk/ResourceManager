@@ -7,6 +7,9 @@
 #include "DebugLogger.h"
 #include <sstream>
 
+#define NR_OF_LOADING_THREADS 1
+#define NR_OF_PARSING_THREADS 2
+
 using namespace std;
 
 ResourceManager& ResourceManager::Instance()
@@ -42,6 +45,7 @@ Resource & ResourceManager::LoadResource(SM_GUID guid, const Resource::Flag& fla
 	auto find = _FindResource(guid);
 	if (find)
 	{
+		//printf("Resource already loaded. GUID: %llu \n", guid.data);
 		find->_refCount++;
 		return *find;
 	}
@@ -55,10 +59,10 @@ Resource & ResourceManager::LoadResource(SM_GUID guid, const Resource::Flag& fla
 	r.ID = guid;
 	r._flags = flag;
 
-	_mutexLock.lock();
+	
 	if (flag & Resource::Flag::LOAD_AND_WAIT)
 	{
-		
+		_mutexLockGeneral.lock();
 		printf("Resource loading. GUID: %llu\n", r.GetGUID().data);
 		r.SetData(_assetLoader->LoadResource(guid), [](void* data) 
 		{
@@ -66,13 +70,15 @@ Resource & ResourceManager::LoadResource(SM_GUID guid, const Resource::Flag& fla
 			delete data;
 		});
 		_parser.ParseResource(r);
+		_mutexLockGeneral.unlock();
 	}
 	else
 	{
+		_mutexLockLoadingQueue.lock();
 		printf("Adding resource to toLoad stack. GUID: %llu\n", r.GetGUID().data);
 		_loadingQueue.push(&r);
+		_mutexLockLoadingQueue.unlock();
 	}
-	_mutexLock.unlock();
 
 	return r;
 }
@@ -111,7 +117,7 @@ void ResourceManager::PrintOccupancy(void)
 
 void ResourceManager::TestAlloc(void)
 {
-	int32_t allocSlot = -1;
+	/*int32_t allocSlot = -1;
 	_mutexLock.lock();
 	_mutexLock.unlock();
 	PrintOccupancy();
@@ -143,7 +149,7 @@ void ResourceManager::TestAlloc(void)
 	PrintOccupancy();
 	allocSlot = _FindSuitableAllocationSlot(3);
 	_Allocate(allocSlot, 3);
-	PrintOccupancy();
+	PrintOccupancy();*/
 }
 
 void ResourceManager::_Startup()
@@ -205,8 +211,6 @@ void ResourceManager::_SetupFreeBlockList(void)
 int ResourceManager::_FindSuitableAllocationSlot(uint32_t blocks)
 {
 	//FIX LATER
-	_mutexLock.lock();
-	_mutexLock.unlock();
 	if (_firstFreeBlock == -1)
 	{
 		return -1;
@@ -383,7 +387,7 @@ Resource* ResourceManager::_FindResource(SM_GUID guid) const
 
 void ResourceManager::_Run()
 {
-
+	_mutexLockGeneral.lock();
 	_numBlocks = 20;
 	_pool = new char[_numBlocks * _blockSize];
 
@@ -391,12 +395,25 @@ void ResourceManager::_Run()
 	_SetupFreeBlockList();
 
 	//Create threads and initialize them as "free"
-	for (uint16_t i = 0; i < 1; i++)
+	for (uint16_t i = 0; i < NR_OF_LOADING_THREADS; i++)
 	{
 		_threadIDMap.insert({ i, thread() });
 
+		_threadIDMap.find(i)->second = thread(&ResourceManager::_LoadingThread, this, i);
+
 		_threadRunningMap.insert({ i, ThreadControl() });
 	}
+
+	for (uint16_t i = NR_OF_LOADING_THREADS; i < NR_OF_PARSING_THREADS + NR_OF_LOADING_THREADS; i++)
+	{
+		_threadIDMap.insert({ i, thread() });
+
+		_threadIDMap.find(i)->second = thread(&ResourceManager::_ParserThread, this, i);
+
+		_threadRunningMap.insert({ i, ThreadControl() });
+
+	}
+	_mutexLockGeneral.unlock();
 	_running = true;
 
 	while (_running)
@@ -406,42 +423,9 @@ void ResourceManager::_Run()
 		{
 			it.second->UpdateCounter(-2);
 		}
-		//GEigenom färdiga trådar, joinar in dem
-		_mutexLock.lock();
-
-		for (auto &it : _threadRunningMap)
-		{
-			if (!it.second.inUse)
-			{
-				if (!it.second.beenJoined)
-				{
-					_threadIDMap.find(it.first)->second.join();
-					it.second.beenJoined = true;
-				}
-			}
-		}
-
-
-		//Om vi har lediga trådar, släng upp nya jobb som ligger pEstacken.
-
 		
-		for (auto &it : _threadRunningMap)
-		{
-			if (!_loadingQueue.empty())
-			{
-				if (!it.second.inUse && it.second.beenJoined)
-				{
-					it.second.inUse = true;
-					it.second.beenJoined = false;
-					_threadIDMap.find(it.first)->second = thread(&ResourceManager::_Threading, this, it.first, _loadingQueue.top()->GetGUID());
-					_loadingQueue.pop();
-				}
-			}
-		}
 
-		_mutexLock.unlock();
-
-		this_thread::sleep_for(std::chrono::milliseconds(20));
+		this_thread::sleep_for(std::chrono::milliseconds(17));
 	}
 	bool allThreadsJoined = false;
 	while (!allThreadsJoined)
@@ -469,66 +453,112 @@ void ResourceManager::_Run()
 }
 
 	
-void ResourceManager::_Threading(uint16_t ID, SM_GUID job)
+void ResourceManager::_LoadingThread(uint16_t threadID)
 {
-	ostringstream dataStream;
-	dataStream << job.data;
+	_mutexLockGeneral.lock();
 
-	printf("Started loading resource. GUID: %llu\n", job.data);
-	DebugLogger::GetInstance()->AddMsg("Started Job: " + dataStream.str());
+	_threadRunningMap.find(threadID)->second.inUse = true;
+	_threadRunningMap.find(threadID)->second.beenJoined = false;
 
-
-
-	_mutexLock.lock();
-	//Call asset loader to load the data we want
-	void* temp = _assetLoader->LoadResource(job);
-	_mutexLock.unlock();
-	printf("Finished loading resource. GUID: %llu\n", job.data);
-	//Lock so we can insert the data to the resources
-	Resource* workingResource = nullptr;
-	for (auto &it : _resources)
+	_mutexLockGeneral.unlock();
+	while (_running)
 	{
-		if (it.second->GetGUID() == job)
+		_mutexLockLoadingQueue.lock();
+		while (_loadingQueue.size())
 		{
-			workingResource = it.second;
-			it.second->SetData(temp, [](void* data)
+			SM_GUID job = _loadingQueue.top()->GetGUID();
+			_loadingQueue.pop();
+			_mutexLockLoadingQueue.unlock();
+			ostringstream dataStream;
+			dataStream << job.data;
+
+			printf("Started loading resource. GUID: %llu\n", job.data);
+			DebugLogger::GetInstance()->AddMsg("Started Job: " + dataStream.str());
+
+
+
+			_mutexLockGeneral.lock();
+			//Call asset loader to load the data we want
+			void* temp = _assetLoader->LoadResource(job);
+			_mutexLockGeneral.unlock();
+
+			printf("Finished loading resource. GUID: %llu\n", job.data);
+			//Lock so we can insert the data to the resources
+			Resource* workingResource = nullptr;
+			for (auto &it : _resources)
 			{
-				operator delete(((RawData*)data)->data);
-				delete data;
-			});
-			break;
+				if (it.second->GetGUID() == job)
+				{
+					workingResource = it.second;
+					it.second->SetData(temp, [](void* data)
+					{
+						operator delete(((RawData*)data)->data);
+						delete data;
+					});
+					break;
+				}
+			}
+
+			_mutexLockParserQueue.lock();
+			_parserQueue.push(workingResource);
+			_mutexLockParserQueue.unlock();
+
+
+
+			_mutexLockLoadingQueue.lock();
 		}
+		_mutexLockLoadingQueue.unlock();
 	}
 
-	
+	_mutexLockGeneral.lock();
+	_threadRunningMap.find(threadID)->second.inUse = false;
+	_mutexLockGeneral.unlock();
+}
 
-	// TODO: Create one thread for loading the resource and one, or multiple threads for parsing the data.
+void ResourceManager::_ParserThread(uint16_t threadID)
+{
+	_mutexLockGeneral.lock();
 
-	printf("Starting parsing resource. GUID: %llu\n", job.data);
-	_mutexLock.lock();
-	//Let the parser make their magic. Should implement a "dummy" GUID at this point in time, that we "use as resource" for the frame that the parser might work
-	if(workingResource != nullptr)
-		_parser.ParseResource(*workingResource);
+	_threadRunningMap[threadID].inUse = true;
+	_threadRunningMap[threadID].beenJoined = false;
 
-	_mutexLock.unlock();
-	
+	_mutexLockGeneral.unlock();
+	while (_running)
+	{
+		_mutexLockParserQueue.lock();
+		while (_parserQueue.size())
+		{
+			Resource* workingResource = _parserQueue.top();
+			_parserQueue.pop();
+			_mutexLockParserQueue.unlock();
+			// TODO: Create one thread for loading the resource and one, or multiple threads for parsing the data.
 
-	printf("Finished parsing resource. GUID: %llu\n", job.data);
-	DebugLogger::GetInstance()->AddMsg("Finished Job: " + dataStream.str());
-	_mutexLock.lock();
-	_threadRunningMap.find(ID)->second.inUse = false;
-	_threadRunningMap.find(ID)->second.beenJoined = false;
-	
-	_mutexLock.unlock();
+
+			printf("Starting parsing resource. GUID: %llu\n", workingResource->GetGUID().data);
+			_mutexLockParser.lock();
+			//Let the parser make their magic. Should implement a "dummy" GUID at this point in time, that we "use as resource" for the frame that the parser might work
+			_parser.ParseResource(*workingResource);
+			_mutexLockParser.unlock();
+
+			printf("Finished parsing resource. GUID: %llu\n", workingResource->GetGUID().data);
+			
+
+			_mutexLockParserQueue.lock();
+		}
+		_mutexLockParserQueue.unlock();
+	}
+	_mutexLockGeneral.lock();
+	_threadRunningMap[threadID].inUse = false;
+	_mutexLockGeneral.unlock();
 }
 
 void ResourceManager::ShutDown()
 {
 
 
-	_mutexLock.lock();
+	_mutexLockGeneral.lock();
 	_running = false;
-	_mutexLock.unlock();
+	_mutexLockGeneral.unlock();
 	_runningThread.join();
 	delete _assetLoader;
 	_assetLoader = nullptr;
