@@ -177,7 +177,7 @@ int main(int argc, char** argv)
 		ResourceManager::Instance().LoadResource("Sphere4.arf", Resource::Flag::NEEDED_NOW);
 	}
 
-	printf("<----||Game loop ended||---->\n\n");
+	printf("\n\n<----||Game loop ended||---->\n\n");
 
 
 	ResourceManager::Instance().ShutDown();

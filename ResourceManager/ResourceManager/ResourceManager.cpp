@@ -394,7 +394,7 @@ Resource* ResourceManager::_FindResource(SM_GUID guid) const
 
 void ResourceManager::_Run()
 {
-	_mutexLock.lock();
+
 	_numBlocks = 20;
 	_pool = new char[_numBlocks * _blockSize];
 
@@ -409,7 +409,7 @@ void ResourceManager::_Run()
 		_threadRunningMap.insert({ i, ThreadControl() });
 	}
 	_running = true;
-	_mutexLock.unlock();
+
 	while (_running)
 	{
 		//Loop through all resources, ticking them down
@@ -432,11 +432,8 @@ void ResourceManager::_Run()
 			}
 		}
 
-		_mutexLock.unlock();
-
 
 		//Om vi har lediga trÂdar, sl‰ng upp nya jobb som ligger pÅEstacken.
-		_mutexLock.lock();
 
 		
 		for (auto &it : _threadRunningMap)
@@ -488,18 +485,17 @@ void ResourceManager::_Threading(uint16_t ID, SM_GUID job)
 	ostringstream dataStream;
 	dataStream << job.data;
 
-	_mutexLock.lock();
 	printf("Started loading resource. GUID: %llu\n", job.data);
 	DebugLogger::GetInstance()->AddMsg("Started Job: " + dataStream.str());
 
+
+
+	_mutexLock.lock();
 	//Call asset loader to load the data we want
 	void* temp = _assetLoader->LoadResource(job);
-
 	_mutexLock.unlock();
 
 	//Lock so we can insert the data to the resources
-	_mutexLock.lock();
-	
 	Resource* workingResource = nullptr;
 	for (auto &it : _resources)
 	{
@@ -515,17 +511,21 @@ void ResourceManager::_Threading(uint16_t ID, SM_GUID job)
 		}
 	}
 
-	_mutexLock.unlock();
+	
 
+	// TODO: Create one thread for loading the resource and one, or multiple threads for parsing the data.
+
+	_mutexLock.lock();
 	//Let the parser make their magic. Should implement a "dummy" GUID at this point in time, that we "use as resource" for the frame that the parser might work
 	if(workingResource != nullptr)
 		_parser.ParseResource(*workingResource);
+	_mutexLock.unlock();
 
-
-	_mutexLock.lock();
+	
 
 	printf("Finished loading resource. GUID: %llu\n", job.data);
 	DebugLogger::GetInstance()->AddMsg("Finished Job: " + dataStream.str());
+	_mutexLock.lock();
 	_threadRunningMap.find(ID)->second.inUse = false;
 	_threadRunningMap.find(ID)->second.beenJoined = false;
 	
