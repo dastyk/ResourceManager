@@ -404,7 +404,7 @@ void ResourceManager::_Run()
 		//Loop through all resources, ticking them down
 		for (auto &it : _resources)
 		{
-			it.second->UpdateCounter();
+			it.second->UpdateCounter(-2);
 		}
 		//GEigenom färdiga trådar, joinar in dem
 		_mutexLock.lock();
