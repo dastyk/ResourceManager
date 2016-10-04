@@ -6,6 +6,7 @@
 #include "Direct3D11.h"
 #include "CameraManager.h"
 #include "Timer.h"
+#include "InputManager.h"
 
 //Singleton
 class Core
@@ -17,6 +18,7 @@ private:
 	Window* _window;
 	IGraphics* _graphics;
 	CameraManager* _cameraManager;
+	InputManager* _inputManager;
 
 	Timer* _timer;
 
@@ -31,6 +33,7 @@ public:
 	IGraphics* GetGraphics() const;
 	CameraManager* GetCameraManager() const;
 	Timer* GetTimer() const;
+	InputManager* GetInputManager() const;
 
 
 
