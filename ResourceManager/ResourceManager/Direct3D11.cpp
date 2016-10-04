@@ -346,9 +346,11 @@ void Direct3D11::CreateMeshBuffers(Resource& r)
 	auto& got = _vertexBuffers.find(guid);
 	if (got == _vertexBuffers.end())
 	{
+		_bufferLock.lock();
 		_vertexBuffers[guid] = BufferInfo(_CreateVertexBuffer(pdata->vertices, pdata->NumVertices), pdata->NumVertices);
 		_indexBuffers[guid] = BufferInfo(_CreateIndexBuffer(pdata->Indices, pdata->IndexCount), pdata->IndexCount);
 		r.registerObserver(this);
+		_bufferLock.unlock();
 	}
 	else
 	{
@@ -361,9 +363,11 @@ void Direct3D11::CreateShaderResource(Resource& resource)
 	auto& got = _textures.find(resource.GetGUID().data);
 	if (got == _textures.end())
 	{
+		_textureLock.lock();
 		TextureData* td = (TextureData*)resource.GetData();
 		_textures[resource.GetGUID().data] = _CreateWICTexture(td->data, td->size);
 		resource.registerObserver(this);
+		_textureLock.unlock();
 	}
 	else
 	{
