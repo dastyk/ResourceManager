@@ -13,6 +13,8 @@
 #include "flexbison\ObjParser.h"
 #include "ArfData.h"
 
+#include "Scene.h"
+
 
 int main(int argc, char** argv)
 {
@@ -150,7 +152,7 @@ int main(int argc, char** argv)
 
 
 	Resource& tex1 = ResourceManager::Instance().LoadResource("gold.jpg", Resource::Flag::LOAD_AND_WAIT);
-	Resource& mesh1 = ResourceManager::Instance().LoadResource("Sphere0.arf", Resource::Flag::LOAD_AND_WAIT);
+	Resource& mesh1 = ResourceManager::Instance().LoadResource("Sphere1.arf", Resource::Flag::LOAD_AND_WAIT);
 
 
 
@@ -161,9 +163,12 @@ int main(int argc, char** argv)
 	gg.mesh = mesh1.GetGUID();
 	gg.texture = tex1.GetGUID();
 	DirectX::XMStoreFloat4x4(&gg.transform, DirectX::XMMatrixScaling(0.6,0.6,0.6) * DirectX::XMMatrixTranslation(0.0f, 0.0f, 10.0f));
-	gg.meshResource = &mesh1;
-	gg.textureResource = &tex1;
+	gg.pos = DirectX::XMFLOAT3(0.0f, 0.0f, 10.0f);
+	gg.scale = 0.6f;
 	gg.radius = 0.8f;
+
+	Scene testScene;
+	testScene.AddGameObject(gg);
 
 	///Sleep(20000); //TODO:Graphics need to know if what it is trying to render exists or not, and if not render some placeholder.
 
@@ -188,17 +193,23 @@ int main(int argc, char** argv)
 		if (input->IsKeyDown(SDLK_a))
 			core->GetCameraManager()->RotateActiveCamera(0.0f, -0.01f * core->GetTimer()->GetDeltaTime(), 0.0f);
 
+		testScene.Update(core->GetCameraManager()->GetActiveCamera().position);
 
+		std::vector<GameObject>& renderObjects = testScene.GetObjectsToRender();
 
+		for (int i = 0; i < renderObjects.size(); i++)
+		{
+			core->GetGraphics()->AddToRenderQueue(renderObjects[i]);
+		}
 
-		core->GetGraphics()->AddToRenderQueue(gg);
+		//core->GetGraphics()->AddToRenderQueue(gg);
 		core->Update();
 
-		ResourceManager::Instance().LoadResource("Sphere5.arf", Resource::Flag::NEEDED_NOW);
-		ResourceManager::Instance().LoadResource("Sphere4.arf", Resource::Flag::NEEDED_NOW);
-		ResourceManager::Instance().LoadResource("Sphere3.arf", Resource::Flag::NEEDED_NOW);
-		ResourceManager::Instance().LoadResource("Sphere2.arf", Resource::Flag::NEEDED_NOW);
-		ResourceManager::Instance().LoadResource("Sphere1.arf", Resource::Flag::NEEDED_NOW);
+		//ResourceManager::Instance().LoadResource("Sphere5.arf", Resource::Flag::NEEDED_NOW);
+		//ResourceManager::Instance().LoadResource("Sphere4.arf", Resource::Flag::NEEDED_NOW);
+		//ResourceManager::Instance().LoadResource("Sphere3.arf", Resource::Flag::NEEDED_NOW);
+		//ResourceManager::Instance().LoadResource("Sphere2.arf", Resource::Flag::NEEDED_NOW);
+		//ResourceManager::Instance().LoadResource("Sphere1.arf", Resource::Flag::NEEDED_NOW);
 
 	}
 

@@ -52,6 +52,11 @@ unsigned CameraManager::CycleActiveCamera()
 	return _activeCamera;
 }
 
+Camera CameraManager::GetActiveCamera() const
+{
+	return _cameras[_activeCamera];
+}
+
 void CameraManager::SetActiveCamera(unsigned id)
 {
 	if (id >= _cameras.size())
