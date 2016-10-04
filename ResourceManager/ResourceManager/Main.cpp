@@ -168,9 +168,13 @@ int main(int argc, char** argv)
 	///Sleep(20000); //TODO:Graphics need to know if what it is trying to render exists or not, and if not render some placeholder.
 
 	printf("<----||Starting Game loop||---->\n\n");
-
+	InputManager* input = core->GetInputManager();
 	for (int i = 0; i < 10000; i++)
 	{
+		
+		//Check event to handle input
+		if (input->WasKeyPressed(SDLK_k))
+			printf("K was pressed");
 		core->GetGraphics()->AddToRenderQueue(gg);
 		core->Update();
 
@@ -181,6 +185,8 @@ int main(int argc, char** argv)
 		ResourceManager::Instance().LoadResource("Sphere1.arf", Resource::Flag::NEEDED_NOW);
 
 	}
+
+	
 
 	printf("\n\n<----||Game loop ended||---->\n\n");
 

@@ -33,6 +33,7 @@ void Core::ShutDown()
 	SAFE_DELETE(Core::GetInstance()->_graphics);
 	SAFE_DELETE(Core::GetInstance()->_cameraManager);
 	SAFE_DELETE(Core::GetInstance()->_timer);
+	SAFE_DELETE(Core::GetInstance()->_inputManager);
 	delete _instance;
 	_instance = nullptr;
 }
@@ -43,11 +44,13 @@ void Core::Init(uint32_t width, uint32_t height, bool fullscreen)
 	_graphics = new Direct3D11();
 	_cameraManager = new CameraManager();
 	_timer = new Timer();
+	_inputManager = new InputManager();
 
 }
 
 void Core::Update()
 {
+	_inputManager->Update();
 	_timer->Update();
 	_graphics->Draw();
 }
@@ -72,5 +75,10 @@ CameraManager * Core::GetCameraManager() const
 Timer * Core::GetTimer() const
 {
 	return _timer;
+}
+
+InputManager * Core::GetInputManager() const
+{
+	return _inputManager;
 }
 
