@@ -12,20 +12,21 @@ ZipLoader::ZipLoader(const std::string & file)
 	data[3] = std::hash<std::string>{} ("Sphere3.arf");
 	data[4] = std::hash<std::string>{} ("Sphere4.arf");
 	data[5] = std::hash<std::string>{} ("Sphere5.arf");
-
-	hashTable[data[0]] = "Sphere0.arf";
-	hashTable[data[1]] = "Sphere1.arf";
-	hashTable[data[2]] = "Sphere2.arf";
-	hashTable[data[3]] = "Sphere3.arf";
-	hashTable[data[4]] = "Sphere4.arf";
-	hashTable[data[5]] = "Sphere5.arf";
-
 	compressedFile = file;
 
 	if (!zipFile.open(file.c_str()))
 	{
 		// THROW ERRORS AND SHIT BROZKY, TIME TO ABANDON SHIP CAUSE THIS AIN'T MY FUCKING FAULT!
 	}
+
+
+	auto names = zipFile.getFilenames();
+	for (auto& n : names)
+	{
+		uint64_t hash = std::hash<std::string>{} (n);
+		hashTable[hash] = n;
+	}
+
 
 }
 
@@ -60,8 +61,8 @@ void* ZipLoader::LoadResource(SM_GUID guid)
 	{
 		//HÄR BORDE NOG ETT EXCEPTION KASTAS SENARE, ELLER SÅ TAR VI PAJ BAKNING
 	}
-
-	uint32_t fileType = std::hash<std::string>{} (fileName.substr(fileName.length() - 3, 3));
+	std::string end = fileName.substr(fileName.length() - 3, 3);
+	uint32_t fileType = std::hash<std::string>{} (end);
 
 
 	auto find2 = _fileTypes.find(fileType);

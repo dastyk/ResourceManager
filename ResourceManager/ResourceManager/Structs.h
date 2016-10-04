@@ -6,6 +6,7 @@
 #include <vector>
 #include <unordered_map>
 #include "SM_GUID.h"
+#include "TextureData.h"
 
 
 struct PNTVertex
@@ -21,12 +22,6 @@ struct PNTMeshData
 	uint32_t vertexCount;
 	uint32_t* indices;
 	uint32_t indexCount;
-};
-
-struct TextureData
-{
-	void* data;
-	size_t size;
 };
 
 
@@ -71,7 +66,7 @@ struct GameObject
 {
 	SM_GUID mesh;
 	SM_GUID texture;
-	DirectX::XMFLOAT4X4 WorldPos;
+	DirectX::XMFLOAT4X4 transform;
 };
 
 

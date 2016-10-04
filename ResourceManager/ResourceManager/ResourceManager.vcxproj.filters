@@ -22,6 +22,9 @@
     <Filter Include="Source Files\Graphics">
       <UniqueIdentifier>{1ec3d2bb-5eba-41af-9348-df825b46f962}</UniqueIdentifier>
     </Filter>
+    <Filter Include="OBJParser">
+      <UniqueIdentifier>{670f2060-ab13-489f-a583-552ff546deda}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Main.cpp">
@@ -84,6 +87,18 @@
     <ClCompile Include="Direct3D11.cpp">
       <Filter>Source Files\Graphics</Filter>
     </ClCompile>
+    <ClCompile Include="flexbison\Object.cpp">
+      <Filter>OBJParser</Filter>
+    </ClCompile>
+    <ClCompile Include="flexbison\ObjParser.cpp">
+      <Filter>OBJParser</Filter>
+    </ClCompile>
+    <ClCompile Include="flexbison\parser.flex.cpp">
+      <Filter>OBJParser</Filter>
+    </ClCompile>
+    <ClCompile Include="flexbison\parser.tab.cpp">
+      <Filter>OBJParser</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Window.h">
@@ -132,9 +147,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="ResourceManager.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Resource.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="flags.h">
@@ -200,6 +212,27 @@
     <ClInclude Include="MeshData.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="flexbison\stack.hh">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="flexbison\FlexLexer.h">
+      <Filter>OBJParser</Filter>
+    </ClInclude>
+    <ClInclude Include="flexbison\Object.h">
+      <Filter>OBJParser</Filter>
+    </ClInclude>
+    <ClInclude Include="flexbison\parser.tab.h">
+      <Filter>OBJParser</Filter>
+    </ClInclude>
+    <ClInclude Include="flexbison\ObjParser.h">
+      <Filter>OBJParser</Filter>
+    </ClInclude>
+    <ClInclude Include="Resource.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="TextureData.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="Shaders\DX11\FinalPS.hlsl">
@@ -217,5 +250,15 @@
     <None Include="Shaders\DX11\StaticMeshVS.hlsl">
       <Filter>Source Files\Shaders\DX11</Filter>
     </None>
+  </ItemGroup>
+  <ItemGroup>
+    <Flex Include="flexbison\parser.l">
+      <Filter>OBJParser</Filter>
+    </Flex>
+  </ItemGroup>
+  <ItemGroup>
+    <Bison Include="flexbison\parser.y">
+      <Filter>OBJParser</Filter>
+    </Bison>
   </ItemGroup>
 </Project>

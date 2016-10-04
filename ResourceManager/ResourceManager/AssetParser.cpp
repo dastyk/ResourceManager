@@ -1,5 +1,5 @@
 #include "AssetParser.h"
-
+#include "ArfData.h"
 
 
 AssetParser::AssetParser()
