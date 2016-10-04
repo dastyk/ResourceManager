@@ -39,23 +39,10 @@ Resource & ResourceManager::LoadResource(SM_GUID guid, const Resource::Flag& fla
 	// * Either we store the compressed size or the parsed data. The latter case involved a trip to the asset parser.
 	// * When we have the final size it's time to allocate. If we find a suitable slot we can use it, otherwise something must be evicted.
 
-	_mutexLock.lock();
-	// TODO: finish return statement
-	// rawData = AssetLoader->Load(SM_GUID);
-	// resources.push_back(AssetParser->Parse(rawData))
-
-	// Mutex lock
-	// if(loaded)
-	//		Resource& r = _instance->Find(guid);
-	//		r._refCount++;
-	//		return r;
-	// else
-
 	auto find = _FindResource(guid);
 	if (find)
 	{
 		find->_refCount++;
-		_mutexLock.unlock();
 		return *find;
 	}
 		
@@ -68,8 +55,10 @@ Resource & ResourceManager::LoadResource(SM_GUID guid, const Resource::Flag& fla
 	r.ID = guid;
 	r._flags = flag;
 
+	_mutexLock.lock();
 	if (flag & Resource::Flag::LOAD_AND_WAIT)
 	{
+		
 		printf("Resource loading. GUID: %llu\n", r.GetGUID().data);
 		r.SetData(_assetLoader->LoadResource(guid), [](void* data) 
 		{
