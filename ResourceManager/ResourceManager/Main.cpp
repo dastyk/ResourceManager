@@ -195,7 +195,7 @@ int main(int argc, char** argv)
 
 		
 
-		testScene.Update(core->GetCameraManager()->GetActiveCamera().position);
+	//	testScene.Update(core->GetCameraManager()->GetActiveCamera().position);
 
 		std::vector<GameObject>& renderObjects = testScene.GetObjectsToRender();
 
