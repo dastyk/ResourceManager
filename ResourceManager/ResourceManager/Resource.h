@@ -17,7 +17,7 @@ class AssetParser;
 class Resource
 {
 public:
-	CreateFlag(Flag, uint32_t, 3,
+	CreateFlag(Flag, uint32_t, 4,
 		PERSISTENT = 1 << 0,
 		NOT_URGENT = 1 << 1,
 		NEEDED_NOW = 1 << 2,
