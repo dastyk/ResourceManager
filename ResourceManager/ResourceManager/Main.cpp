@@ -208,15 +208,15 @@ int main(int argc, char** argv)
 		//core->GetGraphics()->AddToRenderQueue(gg);
 		core->Update();
 
-		//ResourceManager::Instance().LoadResource("Sphere5.arf", Resource::Flag::NEEDED_NOW);
-		//ResourceManager::Instance().LoadResource("Sphere4.arf", Resource::Flag::NEEDED_NOW);
-		//ResourceManager::Instance().LoadResource("Sphere3.arf", Resource::Flag::NEEDED_NOW);
-		//ResourceManager::Instance().LoadResource("Sphere2.arf", Resource::Flag::NEEDED_NOW);
-		//ResourceManager::Instance().LoadResource("Sphere1.arf", Resource::Flag::NEEDED_NOW);
+		ResourceManager::Instance().LoadResource("Sphere5.arf", Resource::Flag::NEEDED_NOW);
+		ResourceManager::Instance().LoadResource("Sphere4.arf", Resource::Flag::NEEDED_NOW);
+		ResourceManager::Instance().LoadResource("Sphere3.arf", Resource::Flag::NEEDED_NOW);
+		ResourceManager::Instance().LoadResource("Sphere2.arf", Resource::Flag::NEEDED_NOW);
+		ResourceManager::Instance().LoadResource("Sphere1.arf", Resource::Flag::NEEDED_NOW);
 
 	}
 
-	
+	ResourceManager::Instance().UnloadResource(gg.mesh);
 	
 
 	printf("\n\n<----||Game loop ended||---->\n\n");
