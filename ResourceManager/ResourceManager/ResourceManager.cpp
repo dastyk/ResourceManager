@@ -518,7 +518,7 @@ void ResourceManager::_Run()
 		{
 			if (it.second->_refCount == 0)
 			{
-				
+				printf("Unloading resource. GUID: %llu.\n", it.second->ID.data);
 				it.second->~Resource();			
 				_resourcePool->Free((char*)it.second);
 				_resources.erase(it.second->ID.data);
