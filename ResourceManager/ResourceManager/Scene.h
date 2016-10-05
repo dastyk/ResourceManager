@@ -5,7 +5,7 @@
 
 #include <vector>
 
-#include "Structs.h"
+#include "GameObject.h"
 #include "ResourceManager.h"
 
 #include <math.h>
@@ -24,7 +24,7 @@ public:
 	void AddGameObject(GameObject gameObject);
 	void Update(DirectX::XMFLOAT3 playerPos);
 
-	std::vector<GameObject>& GetObjectsToRender();
+	void GetObjectsToRender(std::vector<GameObject>& objects);
 };
 
 #endif

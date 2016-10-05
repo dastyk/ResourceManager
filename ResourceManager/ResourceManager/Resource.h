@@ -65,9 +65,10 @@ private:
 	void SetGUID(SM_GUID inID) { ID = inID; };
 	void _NotifyObserver() { for (auto &it : (observers)) { it->NotifyDelete(ID); } };
 	std::mutex _SetDataLock;
+	std::mutex _StateLock;
 	std::mutex _UnRefLock;
 public:
-	void Loaded()
+	void IncRefCount()
 	{
 		_UnRefLock.lock();
 		_refCount++;
@@ -104,6 +105,12 @@ public:
 	SM_GUID GetGUID()const { return ID; };
 	void* GetData() const { return _data; };
 	void Destroy() { _SetDataLock.lock(); if (_destroyFunction) _destroyFunction(_data); _SetDataLock.unlock(); };
+	void SetState(ResourceState state)
+	{
+		_StateLock.lock();
+		_state = state;
+		_StateLock.unlock();
+	}
 	ResourceState GetState()
 	{
 		return _state;

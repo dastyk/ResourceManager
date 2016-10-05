@@ -4,7 +4,8 @@
 #include "Observer.h"
 #include "SM_GUID.h"
 #include "Resource.h"
-#include "Structs.h"
+#include "GameObject.h"
+
 
 class IGraphics : public Observer
 {

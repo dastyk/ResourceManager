@@ -34,7 +34,7 @@ public:
 	void UnloadResource(SM_GUID guid);
 	void EvictResource(SM_GUID guid);
 	void UpdatePriority(SM_GUID guid, const Resource::Flag& flag);
-
+	bool IsLoaded(SM_GUID guid);
 
 	void PrintOccupancy(void);
 	void TestAlloc(void);

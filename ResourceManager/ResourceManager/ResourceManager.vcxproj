@@ -162,6 +162,7 @@
     <ClInclude Include="flexbison\ObjParser.h" />
     <ClInclude Include="flexbison\parser.tab.h" />
     <ClInclude Include="flexbison\stack.hh" />
+    <ClInclude Include="GameObject.h" />
     <ClInclude Include="IAssetLoader.h" />
     <ClInclude Include="IGraphics.h" />
     <ClInclude Include="InputManager.h" />

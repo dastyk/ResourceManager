@@ -151,8 +151,8 @@ int main(int argc, char** argv)
 
 
 
-	Resource& tex1 = ResourceManager::Instance().LoadResource("gold.jpg", Resource::Flag::LOAD_AND_WAIT);
-	Resource& mesh1 = ResourceManager::Instance().LoadResource("Sphere1.arf", Resource::Flag::LOAD_AND_WAIT);
+	//Resource& tex1 = ResourceManager::Instance().LoadResource("gold.jpg", Resource::Flag::LOAD_AND_WAIT);
+	//Resource& mesh1 = ResourceManager::Instance().LoadResource("Sphere1.arf", Resource::Flag::LOAD_AND_WAIT);
 
 
 
@@ -160,8 +160,14 @@ int main(int argc, char** argv)
 
 
 	GameObject gg;
-	gg.mesh = mesh1.GetGUID();
-	gg.texture = tex1.GetGUID();
+	gg.AddLODMesh("Sphere0.arf");
+	gg.AddLODMesh("Sphere1.arf");
+	gg.AddLODMesh("Sphere2.arf");
+	gg.AddLODMesh("Sphere3.arf");
+	gg.AddLODMesh("Sphere4.arf");
+	gg.AddLODMesh("Sphere5.arf");
+
+	gg.AddLODTexture("gold.jpg");
 	DirectX::XMStoreFloat4x4(&gg.transform, DirectX::XMMatrixScaling(0.6,0.6,0.6) * DirectX::XMMatrixTranslation(0.0f, 0.0f, 10.0f));
 	gg.pos = DirectX::XMFLOAT3(0.0f, 0.0f, 10.0f);
 	gg.scale = 0.6f;
@@ -174,6 +180,7 @@ int main(int argc, char** argv)
 
 	printf("<----||Starting Game loop||---->\n\n");
 	InputManager* input = core->GetInputManager();
+	std::vector<GameObject> renderObjects;
 	while(!input->WasKeyPressed(SDLK_ESCAPE))
 	{
 		
@@ -195,9 +202,10 @@ int main(int argc, char** argv)
 
 		
 
-	//	testScene.Update(core->GetCameraManager()->GetActiveCamera().position);
+		testScene.Update(core->GetCameraManager()->GetActiveCamera().position);
 
-		std::vector<GameObject>& renderObjects = testScene.GetObjectsToRender();
+		renderObjects.clear();
+		testScene.GetObjectsToRender(renderObjects);
 
 
 		for (int i = 0; i < renderObjects.size(); i++)
@@ -208,16 +216,14 @@ int main(int argc, char** argv)
 		//core->GetGraphics()->AddToRenderQueue(gg);
 		core->Update();
 
-		ResourceManager::Instance().LoadResource("Sphere5.arf", Resource::Flag::NEEDED_NOW);
-		ResourceManager::Instance().LoadResource("Sphere4.arf", Resource::Flag::NEEDED_NOW);
-		ResourceManager::Instance().LoadResource("Sphere3.arf", Resource::Flag::NEEDED_NOW);
-		ResourceManager::Instance().LoadResource("Sphere2.arf", Resource::Flag::NEEDED_NOW);
-		ResourceManager::Instance().LoadResource("Sphere1.arf", Resource::Flag::NEEDED_NOW);
+	//	ResourceManager::Instance().LoadResource("Sphere5.arf", Resource::Flag::NEEDED_NOW);
+		//ResourceManager::Instance().LoadResource("Sphere4.arf", Resource::Flag::NEEDED_NOW);
+		//ResourceManager::Instance().LoadResource("Sphere3.arf", Resource::Flag::NEEDED_NOW);
+		//ResourceManager::Instance().LoadResource("Sphere2.arf", Resource::Flag::NEEDED_NOW);
+		//ResourceManager::Instance().LoadResource("Sphere1.arf", Resource::Flag::NEEDED_NOW);
 
 	}
 
-	ResourceManager::Instance().UnloadResource(gg.mesh);
-	
 
 	printf("\n\n<----||Game loop ended||---->\n\n");
 
