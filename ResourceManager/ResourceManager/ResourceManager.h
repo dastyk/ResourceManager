@@ -64,7 +64,7 @@ private:
 	public:
 		bool operator()(Resource *a, Resource *b) const
 		{
-			return a->_flags > b->_flags;
+			return a->_flags < b->_flags;
 		}
 	};
 

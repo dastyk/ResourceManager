@@ -42,6 +42,8 @@ Resource & ResourceManager::LoadResource(SM_GUID guid, const Resource::Flag& fla
 	// * Either we store the compressed size or the parsed data. The latter case involved a trip to the asset parser.
 	// * When we have the final size it's time to allocate. If we find a suitable slot we can use it, otherwise something must be evicted.
 
+
+
 	auto find = _FindResource(guid);
 	if (find)
 	{
@@ -135,7 +137,7 @@ void ResourceManager::UpdatePriority(SM_GUID guid,const Resource::Flag& flag)
 		_loadingQueue = newQ;
 
 		_mutexLockLoadingQueue.unlock();
-
+		
 		newQ.empty();
 
 		_mutexLockParserQueue.lock();
