@@ -15,7 +15,7 @@ Scene::~Scene()
 
 }
 
-void Scene::AddGameObject(GameObject gameObject)
+void Scene::AddGameObject(GameObject& gameObject)
 {
 	gameObjects.push_back(gameObject);
 }

@@ -21,7 +21,7 @@ public:
 	Scene();
 	virtual ~Scene();
 
-	void AddGameObject(GameObject gameObject);
+	void AddGameObject(GameObject& gameObject);
 	void Update(DirectX::XMFLOAT3 playerPos);
 
 	void GetObjectsToRender(std::vector<GameObject>& objects);

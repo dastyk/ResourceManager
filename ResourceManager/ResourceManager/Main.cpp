@@ -18,6 +18,7 @@
 
 int main(int argc, char** argv)
 {
+	srand(time(NULL));
 
 	_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
 	// Flex/Bison causes 3 memory leaks per run time, does not increase during runtime.
@@ -182,8 +183,6 @@ int main(int argc, char** argv)
 	Scene testScene;
 	testScene.AddGameObject(gg);
 
-	///Sleep(20000); //TODO:Graphics need to know if what it is trying to render exists or not, and if not render some placeholder.
-
 	printf("<----||Starting Game loop||---->\n\n");
 	InputManager* input = core->GetInputManager();
 	std::vector<GameObject> renderObjects;
@@ -206,7 +205,16 @@ int main(int argc, char** argv)
 		if (input->IsKeyDown(SDLK_a))
 			core->GetCameraManager()->RotateActiveCamera(0.0f, -0.01f * core->GetTimer()->GetDeltaTime(), 0.0f);
 
-		
+		if (input->WasKeyPressed(SDLK_1))
+		{
+			gg.pos = DirectX::XMFLOAT3(rand()%20 -10, rand() % 20 - 10, rand() % 20 - 10);
+			gg.scale = rand()%8 / 10 + 0.2f;
+			gg.radius = rand() % 8 / 10 + 0.2f;
+
+			DirectX::XMStoreFloat4x4(&gg.transform, DirectX::XMMatrixScaling(gg.scale, gg.scale, gg.scale) * DirectX::XMMatrixTranslationFromVector(DirectX::XMLoadFloat3(&gg.pos)));
+			
+			testScene.AddGameObject(gg);
+		}
 
 		testScene.Update(core->GetCameraManager()->GetActiveCamera().position);
 

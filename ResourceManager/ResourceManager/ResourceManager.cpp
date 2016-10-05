@@ -528,7 +528,7 @@ void ResourceManager::_Run()
 		}
 		_mutexLockResourceArr.unlock();
 
-		//this_thread::sleep_for(std::chrono::milliseconds(17));
+		this_thread::sleep_for(std::chrono::milliseconds(17));
 		_mutexLockGeneral.lock();
 	}
 	_mutexLockGeneral.unlock();
@@ -610,7 +610,7 @@ void ResourceManager::_LoadingThread(uint16_t threadID)
 			_mutexLockLoadingQueue.lock();
 		}
 		_mutexLockLoadingQueue.unlock();
-		//std::this_thread::sleep_for(std::chrono::seconds(2));
+		std::this_thread::sleep_for(std::chrono::milliseconds(17));
 	}
 
 	_mutexLockGeneral.lock();
@@ -650,7 +650,7 @@ void ResourceManager::_ParserThread(uint16_t threadID)
 			_mutexLockParserQueue.lock();
 		}
 		_mutexLockParserQueue.unlock();
-		//std::this_thread::sleep_for(std::chrono::milliseconds(17));
+		std::this_thread::sleep_for(std::chrono::milliseconds(17));
 	}
 	_mutexLockGeneral.lock();
 	_threadRunningMap[threadID].inUse = false;
