@@ -61,7 +61,7 @@ private:
 	public:
 		bool operator()(Resource *a, Resource *b) const
 		{
-			a->_flags > b->_flags;
+			return false; //a->_flags > b->_flags;
 		}
 	};
 
@@ -95,6 +95,7 @@ private:
 	Resource* _FindResource(SM_GUID guid);
 	
 	PoolAllocator* _resourcePool;
+	std::map<uint64_t, Resource*> _resources;
 	std::priority_queue<Resource*, std::vector<Resource*>, CompareResources> _loadingQueue;
 	std::priority_queue<Resource*, std::vector<Resource*>, CompareResources> _parserQueue;
 	std::unordered_map<uint16_t, ThreadControl, KeyHasher> _threadRunningMap;
