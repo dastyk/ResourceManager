@@ -30,7 +30,7 @@ int main(int argc, char** argv)
 	ResourceManager& r = ResourceManager::Instance(); // Kickstart at our will
 	
 
-	r.SetAssetLoader(new ZipLoader("Spheres.zip"));
+	r.SetAssetLoader(new ZipLoader("data.dat"));
 
 	r.AddParser("jpg",
 		[](Resource& r)
@@ -152,8 +152,8 @@ int main(int argc, char** argv)
 
 
 	//Resource& tex1 = ResourceManager::Instance().LoadResource("gold.jpg", Resource::Flag::LOAD_AND_WAIT);
-	//Resource& mesh1 = ResourceManager::Instance().LoadResource("Sphere1.arf", Resource::Flag::LOAD_AND_WAIT);
-
+	ResourceManager::Instance().LoadResource("gold.jpg", Resource::Flag::LOAD_AND_WAIT);
+	// For some reason if you removed the line above this comment, the LOD textures all turn black.
 
 
 
@@ -167,7 +167,13 @@ int main(int argc, char** argv)
 	gg.AddLODMesh("Sphere4.arf");
 	gg.AddLODMesh("Sphere5.arf");
 
-	gg.AddLODTexture("gold.jpg");
+	gg.AddLODTexture("b0.jpg");
+	gg.AddLODTexture("b1.jpg");
+	gg.AddLODTexture("b2.jpg");
+	gg.AddLODTexture("b3.jpg");
+	gg.AddLODTexture("b4.jpg");
+	gg.AddLODTexture("b5.jpg");
+
 	DirectX::XMStoreFloat4x4(&gg.transform, DirectX::XMMatrixScaling(0.6,0.6,0.6) * DirectX::XMMatrixTranslation(0.0f, 0.0f, 10.0f));
 	gg.pos = DirectX::XMFLOAT3(0.0f, 0.0f, 10.0f);
 	gg.scale = 0.6f;
