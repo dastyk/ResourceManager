@@ -88,6 +88,30 @@ Resource & ResourceManager::LoadResource(SM_GUID guid, const Resource::Flag& fla
 	return r;
 }
 
+void ResourceManager::UnloadResource(SM_GUID guid)
+{
+	auto found = _FindResource(guid);
+
+	if (found)
+	{
+		found->Unload();
+	}
+}
+
+//Should maybe never be called
+void ResourceManager::EvictResource(SM_GUID guid)
+{
+	printf("Setting resource to be evicted. GUID: %llu\n");
+	auto found = _FindResource(guid);
+
+	if (found)
+	{
+		found->_refCount = 0;
+	}
+
+
+}
+
 // Little debug function that outputs occupancy of blocks where O indicates open
 // and X indicates occupied.
 void ResourceManager::PrintOccupancy(void)
@@ -386,6 +410,7 @@ Resource* ResourceManager::_FindResource(SM_GUID guid)
 	auto& find = _resources.find(guid.data);
 	if (find != _resources.end())
 	{
+		_mutexLockResourceArr.unlock();
 		return find->second;
 	}
 	_mutexLockResourceArr.unlock();
@@ -422,26 +447,31 @@ void ResourceManager::_Run()
 	}
 	_mutexLockGeneral.unlock();
 	_running = true;
-
+	_mutexLockGeneral.lock();
 	while (_running)
 	{
+		_mutexLockGeneral.unlock();
 		//Loop through all resources, ticking them down
 		_mutexLockResourceArr.lock();
+		uint64_t erased = 0;
 		for (auto &it : _resources)
 		{
 			if (it.second->_refCount == 0)
 			{
-				_resources.erase(it.second->ID);
+				
+				it.second->~Resource();			
 				_resourcePool->Free((char*)it.second);
-				it.second->~Resource();				
+				_resources.erase(it.second->ID.data);
+				break;
 			}
 		
 		}
 		_mutexLockResourceArr.unlock();
 
 		//this_thread::sleep_for(std::chrono::milliseconds(17));
+		_mutexLockGeneral.lock();
 	}
-	
+	_mutexLockGeneral.unlock();
 	bool allThreadsJoined = false;
 	while (!allThreadsJoined)
 	{
@@ -566,8 +596,6 @@ void ResourceManager::_ParserThread(uint16_t threadID)
 
 void ResourceManager::ShutDown()
 {
-
-
 	_mutexLockGeneral.lock();
 	_running = false;
 	_mutexLockGeneral.unlock();

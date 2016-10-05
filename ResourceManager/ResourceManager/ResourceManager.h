@@ -30,6 +30,8 @@ public:
 	static ResourceManager& Instance();
 	
 	Resource& LoadResource(SM_GUID guid, const Resource::Flag& flag);
+	void UnloadResource(SM_GUID guid);
+	void EvictResource(SM_GUID guid);
 
 	void PrintOccupancy(void);
 	void TestAlloc(void);
