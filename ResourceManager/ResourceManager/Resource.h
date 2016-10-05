@@ -31,6 +31,14 @@ public:
 		
 	};
 
+	enum ResourceState : uint32_t
+	{
+		Waiting,
+		Loading,
+		Parsing,
+		Loaded
+	};
+
 	friend ResourceManager;
 	friend AssetParser;
 	~Resource() 
@@ -47,6 +55,7 @@ private:
 	Flag _flags;
 	uint16_t _refCount;
 	uint16_t _callCount;
+	ResourceState _state;
 	Resource() : _refCount(0), _callCount(0), observers(std::vector<Observer*>())
 	{
 
@@ -95,6 +104,10 @@ public:
 	SM_GUID GetGUID()const { return ID; };
 	void* GetData() const { return _data; };
 	void Destroy() { _SetDataLock.lock(); if (_destroyFunction) _destroyFunction(_data); _SetDataLock.unlock(); };
+	ResourceState GetState()
+	{
+		return _state;
+	};
 	void SetData(void* data, const std::function<void(void*)>& dfunc) 
 	{
 		_SetDataLock.lock();

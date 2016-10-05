@@ -78,10 +78,12 @@ Resource & ResourceManager::LoadResource(SM_GUID guid, const Resource::Flag& fla
 		_parser.ParseResource(r);
 		_mutexLockParser.unlock();
 		printf("Resource finished loading. GUID: %llu\n", r.GetGUID().data);
+		r._state = Resource::ResourceState::Loaded;
 	}
 	else
 	{
 		_mutexLockLoadingQueue.lock();
+		r._state = Resource::ResourceState::Waiting;
 		printf("Adding resource to toLoad stack. GUID: %llu\n", r.GetGUID().data);
 		_loadingQueue.push(&r);
 		_mutexLockLoadingQueue.unlock();
@@ -565,6 +567,7 @@ void ResourceManager::_LoadingThread(uint16_t threadID)
 			ostringstream dataStream;
 			dataStream << job->GetGUID().data;
 
+			job->_state = Resource::ResourceState::Loading;
 			printf("Started loading resource. GUID: %llu\n", job->GetGUID().data);
 			//DebugLogger::GetInstance()->AddMsg("Started Job: " + dataStream.str());
 
@@ -575,6 +578,7 @@ void ResourceManager::_LoadingThread(uint16_t threadID)
 			void* temp = _assetLoader->LoadResource(job->GetGUID());
 			_mutexLockLoader.unlock();
 
+			job->_state = Resource::ResourceState::Waiting;
 			printf("Finished loading resource. GUID: %llu\n", job->GetGUID().data);
 			//Lock so we can insert the data to the resources
 
@@ -620,13 +624,14 @@ void ResourceManager::_ParserThread(uint16_t threadID)
 			_mutexLockParserQueue.unlock();
 			// TODO: Create one thread for loading the resource and one, or multiple threads for parsing the data.
 
-
+			workingResource->_state = Resource::ResourceState::Parsing;
 			printf("Starting parsing resource. GUID: %llu\n", workingResource->GetGUID().data);
 			_mutexLockParser.lock();
 			//Let the parser make their magic. Should implement a "dummy" GUID at this point in time, that we "use as resource" for the frame that the parser might work
 			_parser.ParseResource(*workingResource);
 			_mutexLockParser.unlock();
 
+			workingResource->_state = Resource::ResourceState::Loaded;
 			printf("Finished parsing resource. GUID: %llu\n", workingResource->GetGUID().data);
 			
 
