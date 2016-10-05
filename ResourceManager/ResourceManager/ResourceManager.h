@@ -10,6 +10,7 @@
 #include "AssetParser.h"
 #include "IAssetLoader.h"
 #include "MemoryManager.h"
+#include <stack>
 #include <map>
 // Flöjt TODO:
 // Chunked allocation, i.e. make this a pool allocator with doubly linked list of
@@ -32,6 +33,8 @@ public:
 	Resource& LoadResource(SM_GUID guid, const Resource::Flag& flag);
 	void UnloadResource(SM_GUID guid);
 	void EvictResource(SM_GUID guid);
+	void UpdatePriority(SM_GUID guid, const Resource::Flag& flag);
+
 
 	void PrintOccupancy(void);
 	void TestAlloc(void);
@@ -61,7 +64,7 @@ private:
 	public:
 		bool operator()(Resource *a, Resource *b) const
 		{
-			return false; //a->_flags > b->_flags;
+			return a->_flags > b->_flags;
 		}
 	};
 

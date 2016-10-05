@@ -112,6 +112,50 @@ void ResourceManager::EvictResource(SM_GUID guid)
 
 }
 
+void ResourceManager::UpdatePriority(SM_GUID guid,const Resource::Flag& flag)
+{
+	auto find = _FindResource(guid);
+	if (find)
+	{
+		find->_flags = flag;
+
+
+		std::priority_queue<Resource*, std::vector<Resource*>, CompareResources> newQ;
+
+		_mutexLockLoadingQueue.lock();
+
+		size_t size = _loadingQueue.size();
+		for (size_t i = 0; i < size; i++)
+		{
+			auto r = _loadingQueue.top();
+			_loadingQueue.pop();
+			newQ.push(r);
+		}
+
+		_loadingQueue = newQ;
+
+		_mutexLockLoadingQueue.unlock();
+
+		newQ.empty();
+
+		_mutexLockParserQueue.lock();
+
+		size = _parserQueue.size();
+		for (size_t i = 0; i < size; i++)
+		{
+			auto r = _parserQueue.top();
+			_parserQueue.pop();
+			newQ.push(r);
+		}
+
+		_parserQueue = newQ;
+		_mutexLockParserQueue.unlock();
+	}
+
+
+	
+}
+
 // Little debug function that outputs occupancy of blocks where O indicates open
 // and X indicates occupied.
 void ResourceManager::PrintOccupancy(void)
