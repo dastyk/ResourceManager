@@ -14,6 +14,7 @@ name    operator |(const type& addValue)const { name  result(*this); result |= a
 name&   operator &=(const type& maskValue) { _flags &= maskValue; return *this; }\
 name    operator &(const type& maskValue)const { name  result(*this); result &= maskValue; return result; }\
 name    operator ~()const { name  result(*this); result._flags = ~result._flags; return result; }\
+bool	operator>(const name& other){ if(_flags > other._flags) return true; return false;}\
 operator type() { return _flags; }\
 type _flags;\
 }
