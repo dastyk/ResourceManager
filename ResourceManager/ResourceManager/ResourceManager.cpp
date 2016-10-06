@@ -53,8 +53,9 @@ Resource & ResourceManager::LoadResource(SM_GUID guid, const Resource::Flag& fla
 		return *find;
 	}
 		
-
+	_mutexLockGeneral.lock();
 	auto temp = (Resource*)_resourcePool->Malloc();
+	_mutexLockGeneral.unlock();
 	new (temp) Resource();
 	_mutexLockResourceArr.lock();
 	_resources[guid.data] = temp;
@@ -297,14 +298,16 @@ void ResourceManager::_SetupFreeBlockList(void)
 	}
 }
 
-int ResourceManager::_FindSuitableAllocationSlot(uint32_t blocks)
+uint32_t ResourceManager::_FindSuitableAllocationSlot(uint64_t size)
 {
+
 	//FIX LATER
 	if (_firstFreeBlock == -1)
 	{
 		return -1;
 		//throw runtime_error("No free blocks remaining!");
 	}
+	uint32_t blocks = size / _blockSize;
 
 	int32_t allocSlot = _firstFreeBlock;
 	int32_t walker = _firstFreeBlock;
@@ -341,12 +344,14 @@ int ResourceManager::_FindSuitableAllocationSlot(uint32_t blocks)
 
 // Given a valid allocation slot and number of blocks -- extract those blocks
 // from the list of free blocks.
-void ResourceManager::_Allocate(int32_t allocSlot, uint32_t blocks)
+void ResourceManager::_Allocate(int32_t allocSlot, uint64_t size)
 {
+
 	if (allocSlot == -1)
 	{
 		throw runtime_error("Invalid allocation slot!");
 	}
+	uint32_t blocks = size / _blockSize;
 
 	if (allocSlot == _firstFreeBlock)
 	{
@@ -368,8 +373,10 @@ void ResourceManager::_Allocate(int32_t allocSlot, uint32_t blocks)
 }
 
 // Frees certain blocks by inserting them into the free block list.
-void ResourceManager::_Free(int32_t firstBlock, uint32_t numBlocks)
+void ResourceManager::_Free(int32_t firstBlock, uint64_t size)
 {
+	uint32_t numBlocks = size / _blockSize;
+
 	// If there is no list to insert into, just make the current ones the new list.
 	if (_firstFreeBlock == -1)
 	{
@@ -519,8 +526,10 @@ void ResourceManager::_Run()
 			if (it.second->_refCount == 0)
 			{
 				printf("Unloading resource. GUID: %llu.\n", it.second->ID.data);
-				it.second->~Resource();			
+				it.second->~Resource();		
+				_mutexLockGeneral.lock();
 				_resourcePool->Free((char*)it.second);
+				_mutexLockGeneral.unlock();
 				_resources.erase(it.second->ID.data);
 				break;
 			}

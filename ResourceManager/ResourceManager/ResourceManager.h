@@ -92,9 +92,9 @@ private:
 	void _LoadingThread(uint16_t threadID);
 	void _ParserThread(uint16_t threadID);
 	void _SetupFreeBlockList(void);
-	int _FindSuitableAllocationSlot(uint32_t blocks);
-	void _Allocate(int32_t allocSlot, uint32_t blocks);
-	void _Free(int32_t firstBlock, uint32_t numBlocks);
+	uint32_t _FindSuitableAllocationSlot(uint64_t size);
+	void _Allocate(int32_t allocSlot, uint64_t size);
+	void _Free(int32_t firstBlock, uint64_t size);
 	Resource* _FindResource(SM_GUID guid);
 	
 	PoolAllocator* _resourcePool;
