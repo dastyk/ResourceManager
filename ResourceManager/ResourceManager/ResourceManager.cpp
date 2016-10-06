@@ -21,7 +21,7 @@ ResourceManager& ResourceManager::Instance()
 ResourceManager::ResourceManager()
 {
 	_resourcePool = MemoryManager::CreatePoolAllocator(sizeof(Resource), 1337, 0);
-	_runningThread = thread(&ResourceManager::_Run, this);
+
 }
 
 ResourceManager::~ResourceManager()
@@ -41,29 +41,29 @@ Resource & ResourceManager::LoadResource(SM_GUID guid, const Resource::Flag& fla
 	// * Either we store the compressed size or the parsed data. The latter case involved a trip to the asset parser.
 	// * When we have the final size it's time to allocate. If we find a suitable slot we can use it, otherwise something must be evicted.
 
-
-
+	_mutexLockGeneral.lock();
 	auto find = _FindResource(guid);
 	if (find)
 	{
 		//printf("Resource already loaded. GUID: %llu \n", guid.data);
+		_mutexLockGeneral.unlock();
 		UpdatePriority(guid, flag);
+		_mutexLockGeneral.lock();
 		find->IncRefCount();
+		_mutexLockGeneral.unlock();
 		return *find;
 	}
 		
-	_mutexLockGeneral.lock();
+	
 	auto temp = (Resource*)_resourcePool->Malloc();
-	_mutexLockGeneral.unlock();
 	new (temp) Resource();
-	_mutexLockResourceArr.lock();
+	
 	_resources[guid.data] = temp;
 	Resource& r = *temp;
 	r._refCount = 1;
 	r.ID = guid;
 	r._flags = flag;
-	_mutexLockResourceArr.unlock();
-	
+
 	if (flag & Resource::Flag::LOAD_AND_WAIT)
 	{
 		_mutexLockLoader.lock();
@@ -89,12 +89,13 @@ Resource & ResourceManager::LoadResource(SM_GUID guid, const Resource::Flag& fla
 		_loadingQueue.push(&r);
 		_mutexLockLoadingQueue.unlock();
 	}
-
+	_mutexLockGeneral.unlock();
 	return r;
 }
 
 void ResourceManager::UnloadResource(SM_GUID guid)
 {
+	_mutexLockGeneral.lock();
 	auto found = _FindResource(guid);
 
 	if (found)
@@ -102,6 +103,7 @@ void ResourceManager::UnloadResource(SM_GUID guid)
 		printf("Unreferencing resource. GUID: %llu. RefCount: %d\n", guid.data, found->_refCount);
 		found->Unload();
 	}
+	_mutexLockGeneral.unlock();
 }
 
 //Should maybe never be called
@@ -120,6 +122,7 @@ void ResourceManager::EvictResource(SM_GUID guid)
 
 void ResourceManager::UpdatePriority(SM_GUID guid,const Resource::Flag& flag)
 {
+	_mutexLockGeneral.lock();
 	auto find = _FindResource(guid);
 	if (find)
 	{
@@ -129,7 +132,7 @@ void ResourceManager::UpdatePriority(SM_GUID guid,const Resource::Flag& flag)
 		std::priority_queue<Resource*, std::vector<Resource*>, CompareResources> newQ;
 
 		_mutexLockLoadingQueue.lock();
-
+		_mutexLockParserQueue.lock();
 		size_t size = _loadingQueue.size();
 		for (size_t i = 0; i < size; i++)
 		{
@@ -138,13 +141,9 @@ void ResourceManager::UpdatePriority(SM_GUID guid,const Resource::Flag& flag)
 			newQ.push(r);
 		}
 
-		_loadingQueue = newQ;
+		_loadingQueue = std::move(newQ);
 
-		_mutexLockLoadingQueue.unlock();
-		
-		newQ.empty();
 
-		_mutexLockParserQueue.lock();
 
 		size = _parserQueue.size();
 		for (size_t i = 0; i < size; i++)
@@ -154,21 +153,25 @@ void ResourceManager::UpdatePriority(SM_GUID guid,const Resource::Flag& flag)
 			newQ.push(r);
 		}
 
-		_parserQueue = newQ;
+		_parserQueue = std::move(newQ);
 		_mutexLockParserQueue.unlock();
+		_mutexLockLoadingQueue.unlock();
 	}
+	_mutexLockGeneral.unlock();
 
-
-	
 }
 
 bool ResourceManager::IsLoaded(SM_GUID guid)
 {
+	_mutexLockGeneral.lock();
 	auto find = _FindResource(guid);
 	if (find)
 	{
-		return find->GetState() == Resource::ResourceState::Loaded;
+		bool ret = find->GetState() == Resource::ResourceState::Loaded;
+		_mutexLockGeneral.unlock();
+		return ret;
 	}
+	_mutexLockGeneral.unlock();
 	return false;
 }
 
@@ -176,8 +179,9 @@ bool ResourceManager::IsLoaded(SM_GUID guid)
 // and X indicates occupied.
 
 
-void ResourceManager::_Startup()
+void ResourceManager::Startup()
 {
+	_runningThread = thread(&ResourceManager::_Run, this);
 }
 
 void ResourceManager::SetAssetLoader(IAssetLoader * loader)
@@ -196,14 +200,11 @@ void ResourceManager::AddParser(const std::string& fileend, const std::function<
 
 Resource* ResourceManager::_FindResource(SM_GUID guid)
 {
-	_mutexLockResourceArr.lock();
 	auto& find = _resources.find(guid.data);
 	if (find != _resources.end())
 	{
-		_mutexLockResourceArr.unlock();
 		return find->second;
 	}
-	_mutexLockResourceArr.unlock();
 	return nullptr;
 }
 
@@ -231,35 +232,31 @@ void ResourceManager::_Run()
 		_threadRunningMap.insert({ i, ThreadControl() });
 
 	}
-	_mutexLockGeneral.unlock();
 	_running = true;
-	_mutexLockGeneral.lock();
+	_mutexLockGeneral.unlock();
+
 	while (_running)
 	{
-		_mutexLockGeneral.unlock();
+		_mutexLockGeneral.lock();
 		//Loop through all resources, ticking them down
-		_mutexLockResourceArr.lock();
 		uint64_t erased = 0;
 		for (auto &it : _resources)
 		{
 			if (it.second->_refCount == 0)
 			{
 				printf("Unloading resource. GUID: %llu.\n", it.second->ID.data);
-				it.second->~Resource();		
-				_mutexLockGeneral.lock();
+				it.second->~Resource();
 				_resourcePool->Free((char*)it.second);
-				_mutexLockGeneral.unlock();
 				_resources.erase(it.second->ID.data);
 				break;
 			}
-		
-		}
-		_mutexLockResourceArr.unlock();
 
+
+			
+		}
+		_mutexLockGeneral.unlock();
 		this_thread::sleep_for(std::chrono::milliseconds(17));
-		_mutexLockGeneral.lock();
 	}
-	_mutexLockGeneral.unlock();
 	bool allThreadsJoined = false;
 	while (!allThreadsJoined)
 	{
@@ -294,12 +291,12 @@ void ResourceManager::_LoadingThread(uint16_t threadID)
 
 	_threadRunningMap.find(threadID)->second.inUse = true;
 	_threadRunningMap.find(threadID)->second.beenJoined = false;
-
 	_mutexLockGeneral.unlock();
 	while (_running)
 	{
+		//_mutexLockGeneral.lock();
 		_mutexLockLoadingQueue.lock();
-		while (_loadingQueue.size())
+		if(_loadingQueue.size())
 		{
 			Resource* job = _loadingQueue.top();
 			_loadingQueue.pop();
@@ -333,11 +330,10 @@ void ResourceManager::_LoadingThread(uint16_t threadID)
 			_parserQueue.push(job);
 			_mutexLockParserQueue.unlock();
 
-
-
-			_mutexLockLoadingQueue.lock();
 		}
-		_mutexLockLoadingQueue.unlock();
+		else
+			_mutexLockLoadingQueue.unlock();
+	//	_mutexLockGeneral.unlock();
 		std::this_thread::sleep_for(std::chrono::milliseconds(17));
 	}
 
@@ -352,12 +348,12 @@ void ResourceManager::_ParserThread(uint16_t threadID)
 
 	_threadRunningMap[threadID].inUse = true;
 	_threadRunningMap[threadID].beenJoined = false;
-
 	_mutexLockGeneral.unlock();
 	while (_running)
 	{
+		//_mutexLockGeneral.lock();
 		_mutexLockParserQueue.lock();
-		while (_parserQueue.size())
+		if (_parserQueue.size())
 		{
 			Resource* workingResource = _parserQueue.top();
 			_parserQueue.pop();
@@ -366,18 +362,18 @@ void ResourceManager::_ParserThread(uint16_t threadID)
 
 			workingResource->SetState(Resource::ResourceState::Parsing);
 			printf("Starting parsing resource. GUID: %llu\n", workingResource->GetGUID().data);
-			_mutexLockParser.lock();
+			//_mutexLockParser.lock();
 			//Let the parser make their magic. Should implement a "dummy" GUID at this point in time, that we "use as resource" for the frame that the parser might work
 			_parser.ParseResource(*workingResource);
-			_mutexLockParser.unlock();
+			//_mutexLockParser.unlock();
 
 			workingResource->SetState(Resource::ResourceState::Loaded);
 			printf("Finished parsing resource. GUID: %llu\n", workingResource->GetGUID().data);
-			
 
-			_mutexLockParserQueue.lock();
 		}
-		_mutexLockParserQueue.unlock();
+		else
+			_mutexLockParserQueue.unlock();
+	//	_mutexLockGeneral.unlock();
 		std::this_thread::sleep_for(std::chrono::milliseconds(17));
 	}
 	_mutexLockGeneral.lock();
@@ -387,9 +383,7 @@ void ResourceManager::_ParserThread(uint16_t threadID)
 
 void ResourceManager::ShutDown()
 {
-	_mutexLockGeneral.lock();
 	_running = false;
-	_mutexLockGeneral.unlock();
 	_runningThread.join();
 	delete _assetLoader;
 	_assetLoader = nullptr;

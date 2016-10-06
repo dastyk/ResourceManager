@@ -41,7 +41,7 @@ public:
 	void AddParser(const std::string& fileend,const std::function<void(Resource& r)>& parseFunction);
 
 	void ShutDown();
-
+	void Startup();
 	
 
 private:
@@ -81,7 +81,7 @@ private:
 	void _Run();
 
 
-	void _Startup();
+
 	void _LoadingThread(uint16_t threadID);
 	void _ParserThread(uint16_t threadID);
 	
@@ -101,7 +101,7 @@ private:
 
 	std::thread _runningThread;
 	std::mutex _mutexLockGeneral;
-	std::mutex _mutexLockResourceArr;
+	//std::mutex _mutexLockResourceArr;
 	std::mutex _mutexLockLoader;
 	std::mutex _mutexLockParser;
 	std::mutex _mutexLockLoadingQueue;

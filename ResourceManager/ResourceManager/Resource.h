@@ -103,7 +103,14 @@ public:
 		}
 	}
 	SM_GUID GetGUID()const { return ID; };
-	void* GetData() const { return _data; };
+	void* GetData() 
+	{
+		_SetDataLock.lock();
+		void* returnd = _data;
+		_SetDataLock.unlock();
+		return returnd;
+		
+	};
 	void Destroy() { _SetDataLock.lock(); if (_destroyFunction) _destroyFunction(_data); _SetDataLock.unlock(); };
 	void SetState(ResourceState state)
 	{

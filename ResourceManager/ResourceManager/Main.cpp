@@ -137,6 +137,8 @@ int main(int argc, char** argv)
 		Core::GetInstance()->GetGraphics()->CreateMeshBuffers(r);
 	});
 
+	r.Startup();
+
 
 	if (!AllocConsole()) throw std::runtime_error("Failed to alloc console.");
 	freopen("conin$", "r", stdin);

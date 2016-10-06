@@ -67,17 +67,18 @@ public:
 			}
 			if (!render)
 			{
+				if (!_MeshLODs[0].first)
+				{
+					_MeshLODs[0].first = true;
+					ResourceManager::Instance().LoadResource(_MeshLODs[0].second, Resource::Flag::NEEDED_NOW);
+				}
 				if (!_MeshLODs[_currentLOD].first)
 				{
 					_MeshLODs[_currentLOD].first = true;
 					ResourceManager::Instance().LoadResource(_MeshLODs[_currentLOD].second, Resource::Flag::NEEDED_NOW);
 				}
 
-				if (!_MeshLODs[0].first)
-				{
-					_MeshLODs[0].first = true;
-					ResourceManager::Instance().LoadResource(_MeshLODs[0].second, Resource::Flag::NEEDED_NOW);
-				}
+				
 			}
 		}
 
@@ -105,18 +106,18 @@ public:
 
 			level++;
 		}
-		
+		if (!_TextureLODs[0].first)
+		{
+			_TextureLODs[0].first = true;
+			ResourceManager::Instance().LoadResource(_TextureLODs[0].second, Resource::Flag::NEEDED_NOW);
+		}	
 		if (!_TextureLODs[_currentLOD].first)
 		{
 			_TextureLODs[_currentLOD].first = true;
 			ResourceManager::Instance().LoadResource(_TextureLODs[_currentLOD].second, Resource::Flag::NEEDED_NOW);
 		}
 
-		if (!_TextureLODs[0].first)
-		{
-			_TextureLODs[0].first = true;
-			ResourceManager::Instance().LoadResource(_TextureLODs[0].second, Resource::Flag::NEEDED_NOW);
-		}
+
 		return false;
 			
 	}

@@ -18,14 +18,18 @@ void AssetParser::AddParser(uint32_t type,const std::function<void(Resource & r)
 
 void AssetParser::ParseResource(Resource & r) const
 {
-	RawData& rdata = *(RawData*)r.GetData();
-	auto find = _parsers.find(rdata.fType);
-	if(find != _parsers.end())
+	void* pdata = r.GetData();
+	if (pdata)
 	{
-		find->second(r);
-		return;
+		RawData& rdata = *(RawData*)pdata;
+
+		auto& find = _parsers.find(rdata.fType);
+		if (find != _parsers.end())
+		{
+			find->second(r);
+			return;
+		}
+
+		throw std::runtime_error("Unable to handle object type.");
 	}
-
-	throw std::runtime_error("Unable to handle object type.");
-
 }
