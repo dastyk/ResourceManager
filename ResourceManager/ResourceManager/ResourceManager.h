@@ -36,8 +36,6 @@ public:
 	void UpdatePriority(SM_GUID guid, const Resource::Flag& flag);
 	bool IsLoaded(SM_GUID guid);
 
-	void PrintOccupancy(void);
-	void TestAlloc(void);
 	
 	void SetAssetLoader(IAssetLoader* loader);
 	void AddParser(const std::string& fileend,const std::function<void(Resource& r)>& parseFunction);
@@ -47,11 +45,6 @@ public:
 	
 
 private:
-	struct FreeBlock
-	{
-		int32_t Previous = -1;
-		int32_t Next = -1;
-	};
 
 	struct ThreadControl
 	{
@@ -91,10 +84,7 @@ private:
 	void _Startup();
 	void _LoadingThread(uint16_t threadID);
 	void _ParserThread(uint16_t threadID);
-	void _SetupFreeBlockList(void);
-	uint32_t _FindSuitableAllocationSlot(uint64_t size);
-	void _Allocate(int32_t allocSlot, uint64_t size);
-	void _Free(int32_t firstBlock, uint64_t size);
+	
 	Resource* _FindResource(SM_GUID guid);
 	
 	PoolAllocator* _resourcePool;
@@ -108,11 +98,8 @@ private:
 
 	bool _running;
 	AssetParser _parser;
-	char* _pool = nullptr;
-	const uint32_t _blockSize = 512 * 1024;
-	uint32_t _numBlocks = 0;
+
 	std::thread _runningThread;
-	int32_t _firstFreeBlock = -1;
 	std::mutex _mutexLockGeneral;
 	std::mutex _mutexLockResourceArr;
 	std::mutex _mutexLockLoader;
