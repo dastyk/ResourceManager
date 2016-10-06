@@ -232,7 +232,7 @@ ID3D11ShaderResourceView * Direct3D11::_CreateWICTexture(const void * data, size
 void Direct3D11::Draw()
 {
 	const Core* core = Core::GetInstance();
-	float clearColor[] = { 0.0f,1.0f,0.0f,0.0f };
+	float clearColor[] = { 0.0f,0.0f,0.0f,0.0f };
 
 
 	for (auto &rtv : _renderTargetViews)
