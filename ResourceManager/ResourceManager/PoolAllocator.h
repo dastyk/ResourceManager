@@ -34,7 +34,7 @@ public:
 		return ret;
 	}
 
-	inline void Free(char*p)
+	inline void Free(void*p)
 	{
 		if (!p) throw std::runtime_error("Free on nullptr");
 
@@ -43,12 +43,12 @@ public:
 		if (_freeBlockList)
 		{
 			char* prev = _freeBlockList;
-			_freeBlockList = p;
+			_freeBlockList = (char*)p;
 			((List*)_freeBlockList)->next = prev - _pool;
 		}
 		else
 		{
-			_freeBlockList = p;
+			_freeBlockList = (char*)p;
 			((List*)_freeBlockList)->next = -1;
 		}
 	}
