@@ -12,11 +12,6 @@
 #include "MemoryManager.h"
 #include <stack>
 #include <map>
-// Flöjt TODO:
-// Chunked allocation, i.e. make this a pool allocator with doubly linked list of
-// free blocks. Allocation is a matter if going to first empty (ordered) and see if
-// we can find enough blocks in a row to store a file.
-// Use asset loaders and asset parsers with GUID to load.
 
 // TODO:
 // The LoadResource function can not return a finished loaded thing, since we are going to multithread

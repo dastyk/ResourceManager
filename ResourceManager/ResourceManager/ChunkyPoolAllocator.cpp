@@ -4,7 +4,7 @@
 #include <stdexcept>
 ChunkyPoolAllocator::ChunkyPoolAllocator()
 {
-	_numBlocks = 20;
+	_numFreeBlocks = _numBlocks = 20;
 	_pool = new char[_numBlocks * _blockSize];
 
 	// Make blocks form a linked list (all of them at startup)
@@ -125,7 +125,6 @@ void ChunkyPoolAllocator::_SetupFreeBlockList(void)
 
 int32_t ChunkyPoolAllocator::FindSuitableAllocationSlot(uint32_t size)
 {
-
 	//FIX LATER
 	if (_firstFreeBlock == -1)
 	{
@@ -171,7 +170,6 @@ int32_t ChunkyPoolAllocator::FindSuitableAllocationSlot(uint32_t size)
 // from the list of free blocks.
 void ChunkyPoolAllocator::Allocate(int32_t allocSlot, uint32_t size)
 {
-
 	if (allocSlot == -1)
 	{
 		throw std::runtime_error("Invalid allocation slot!");
@@ -195,6 +193,8 @@ void ChunkyPoolAllocator::Allocate(int32_t allocSlot, uint32_t size)
 		if (nextFree != -1)
 			reinterpret_cast<FreeBlock*>(_pool + nextFree * _blockSize)->Previous = firstToAlloc->Previous;
 	}
+
+	_numFreeBlocks -= blocks;
 }
 
 // Frees certain blocks by inserting them into the free block list.
@@ -294,4 +294,6 @@ void ChunkyPoolAllocator::Free(int32_t firstBlock, uint32_t size)
 		if (currFree != -1)
 			reinterpret_cast<FreeBlock*>(_pool + currFree * _blockSize)->Previous = firstBlock + numBlocks - 1;
 	}
+
+	_numFreeBlocks += numBlocks;
 }

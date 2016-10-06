@@ -16,6 +16,7 @@ private:
 	char* _pool = nullptr;
 	const uint32_t _blockSize = 512 * 1024;
 	uint32_t _numBlocks = 0;
+	uint32_t _numFreeBlocks = 0;
 	int32_t _firstFreeBlock = -1;
 
 	void _SetupFreeBlockList(void);
@@ -32,6 +33,9 @@ public:
 	int32_t FindSuitableAllocationSlot(uint32_t size);
 	void Allocate(int32_t allocSlot, uint32_t size);
 	void Free(int32_t firstBlock, uint32_t size);
+
+	uint32_t FreeMemory(void) const { return _numFreeBlocks * _blockSize; }
+	uint32_t MaxMemory(void) const { return _numBlocks * _blockSize; }
 };
 
 #endif

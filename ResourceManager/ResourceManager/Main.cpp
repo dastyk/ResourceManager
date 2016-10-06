@@ -2,6 +2,7 @@
 #include "DebugLogger.h"
 #include <SDL_events.h>
 #include <sstream>
+#include <iomanip>
 #include <string>
 #include "ResourceManager.h"
 #include "MemoryManager.h"
@@ -235,6 +236,36 @@ int main(int argc, char** argv)
 		//ResourceManager::Instance().LoadResource("Sphere2.arf", Resource::Flag::NEEDED_NOW);
 		//ResourceManager::Instance().LoadResource("Sphere1.arf", Resource::Flag::NEEDED_NOW);
 
+		auto bytesToString = [](uint32_t freeMemory) -> std::string {
+			// http://stackoverflow.com/questions/3758606
+			std::stringstream ss;
+			const uint32_t base = 1024;
+
+			if (freeMemory < base)
+			{
+				ss << freeMemory << " B";
+			}
+			else
+			{
+				uint32_t exp = static_cast<uint32_t>(log(freeMemory) / log(base));
+				char unit = std::string("kMGTPE").at(exp - 1);
+				ss << std::setprecision(1) << std::fixed << freeMemory / pow(base, exp) << " " << unit << "B";
+			}
+
+			return std::move(ss.str());
+		};
+
+		uint32_t maxMemory = 512 * 1024 * 1024;
+		uint32_t freeMemory = 454646548;
+		std::string maxMemoryStr = bytesToString(maxMemory);
+		std::string freeMemoryStr = bytesToString(freeMemory);
+
+		std::stringstream ss;
+		ss << "Free memory: " << freeMemoryStr.c_str() << " / " << maxMemoryStr.c_str() << " (" << std::setprecision(1) << std::fixed << 100.0f * freeMemory / maxMemory << "%)";
+		//printf("Free memory: %s / %s (%.1f%%)\n", freeMemoryStr.c_str(), maxMemoryStr.c_str(), 100.0f * freeMemory / maxMemory);
+
+		HWND hwnd = core->GetWindow()->GetHandle();
+		SetWindowTextA(hwnd, ss.str().c_str());
 	}
 
 
