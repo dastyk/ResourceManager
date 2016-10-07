@@ -53,7 +53,7 @@ Resource & ResourceManager::LoadResource(SM_GUID guid, const Resource::Flag& fla
 		_mutexLockGeneral.unlock();
 		return find->resource;
 	}
-		
+	
 	auto& r = _CreateResource(guid, flag)->resource;
 	r.IncRefCount();
 	if (flag & Resource::Flag::LOAD_AND_WAIT)

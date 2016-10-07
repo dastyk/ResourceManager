@@ -256,8 +256,8 @@ int main(int argc, char** argv)
 			return std::move(ss.str());
 		};
 
-		uint32_t maxMemory = 512 * 1024 * 1024;
-		uint32_t freeMemory = 454646548;
+		uint32_t maxMemory = r.MaxMemory();
+		uint32_t freeMemory = r.FreeMemory();
 		std::string maxMemoryStr = bytesToString(maxMemory);
 		std::string freeMemoryStr = bytesToString(freeMemory);
 
