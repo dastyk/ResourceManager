@@ -21,15 +21,17 @@ ResourceManager& ResourceManager::Instance()
 ResourceManager::ResourceManager()
 {
 	_resourcePool = MemoryManager::CreatePoolAllocator(sizeof(ResourceList), 1337, 0);
+
+	_numFreeBlocks = _numBlocks = 20;
+	_pool = (char*)MemoryManager::Alloc(_numBlocks * _blockSize);
+
+	// Make blocks form a linked list (all of them at startup)
+	_SetupFreeBlockList();
 }
 
 ResourceManager::~ResourceManager()
 {
-	delete _assetLoader;
-	_assetLoader = nullptr;
-	
-	delete[] _pool;
-	_pool = nullptr;
+
 }
 
 Resource & ResourceManager::LoadResource(SM_GUID guid, const Resource::Flag& flag)
@@ -170,6 +172,8 @@ bool ResourceManager::IsLoaded(SM_GUID guid)
 	return false;
 }
 
+
+
 // Little debug function that outputs occupancy of blocks where O indicates open
 // and X indicates occupied.
 void ResourceManager::PrintOccupancy( void )
@@ -242,6 +246,21 @@ void ResourceManager::TestAlloc( void )
 void ResourceManager::Startup()
 {
 	_runningThread = thread(&ResourceManager::_Run, this);
+}
+
+void * ResourceManager::Allocate(uint32_t size)
+{
+	uint32_t blocks = size / _blockSize;
+	_mutexLockGeneral.lock();
+	int32_t allocSlot = _FindSuitableAllocationSlot(blocks);
+	_Allocate(allocSlot, blocks);
+	void* ret = _pool + allocSlot*_blockSize;
+	_mutexLockGeneral.unlock();
+	return ret;
+}
+
+void ResourceManager::Free(void * p)
+{
 }
 
 void ResourceManager::SetAssetLoader(IAssetLoader * loader)
@@ -471,11 +490,6 @@ void ResourceManager::_Run()
 {
 	_mutexLockGeneral.lock();
 	
-	_numFreeBlocks = _numBlocks = 20;
-	_pool = new char[_numBlocks * _blockSize];
-
-	// Make blocks form a linked list (all of them at startup)
-	_SetupFreeBlockList();
 
 	//Create threads and initialize them as "free"
 	for (uint16_t i = 0; i < NR_OF_LOADING_THREADS; i++)
@@ -646,11 +660,12 @@ void ResourceManager::ShutDown()
 {
 	_running = false;
 	_runningThread.join();
+
 	delete _assetLoader;
 	_assetLoader = nullptr;
 
-	delete[] _pool;
-	_pool = nullptr;
+	MemoryManager::ReleasePoolAllocator(_resourcePool);
+	MemoryManager::Release(_pool);
 
 	auto r = _resources;
 	while(r)

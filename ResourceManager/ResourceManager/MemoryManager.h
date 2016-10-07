@@ -55,7 +55,7 @@ public:
 
 	static void ReleasePoolAllocator(PoolAllocator* object);
 	static void ReleaseStackAllocator(StackAllocator* object);
-
+	static void Release(void* p);
 	//DEBUG
 	void PrintBlockInfo();
 

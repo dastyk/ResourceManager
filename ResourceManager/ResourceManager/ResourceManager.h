@@ -34,9 +34,10 @@ public:
 	void PrintOccupancy( void );
 	void TestAlloc( void );
 
-	uint32_t FreeMemory( void ) const { return _numFreeBlocks * _blockSize; }
-	uint32_t MaxMemory( void ) const { return _numBlocks * _blockSize; }
-	
+	uint32_t FreeMemory( void ) const { return _numFreeBlocks * _blockSize + _resourcePool->FreeMemory(); }
+	uint32_t MaxMemory( void ) const { return _numBlocks * _blockSize + _resourcePool->Size(); }
+	void* Allocate(uint32_t size);
+	void Free(void* p);
 	void SetAssetLoader(IAssetLoader* loader);
 	void AddParser(const std::string& fileend,const std::function<void(Resource& r)>& parseFunction);
 

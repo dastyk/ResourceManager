@@ -30,7 +30,7 @@ public:
 			_freeBlockList = _pool + ((List*)_freeBlockList)->next;
 		else
 			_freeBlockList = nullptr;
-
+		_freeBlocks--;
 		return ret;
 	}
 
@@ -51,13 +51,20 @@ public:
 			_freeBlockList = (char*)p;
 			((List*)_freeBlockList)->next = -1;
 		}
+		_freeBlocks++;
 	}
 
-	inline size_t Size()
+	inline size_t Size()const
 	{
 		return _numBlocks * _blockSize;
 	}
-	inline size_t BlockSize()
+
+	uint32_t FreeMemory()const
+	{
+		return _freeBlocks*_blockSize;
+	}
+
+	inline size_t BlockSize()const
 	{
 		return _blockSize;
 	}
@@ -70,6 +77,7 @@ private:
    char* _freeBlockList;
 	size_t _numBlocks;
 	size_t _blockSize;
+	size_t _freeBlocks;
 };
 
 #endif //POOL_ALLOCATOR_H
