@@ -20,8 +20,7 @@ ResourceManager& ResourceManager::Instance()
 
 ResourceManager::ResourceManager()
 {
-	_resourcePool = MemoryManager::CreatePoolAllocator(sizeof(Resource), 1337, 0);
-
+	_resourcePool = MemoryManager::CreatePoolAllocator(sizeof(ResourceList), 1337, 0);
 }
 
 ResourceManager::~ResourceManager()
@@ -49,21 +48,13 @@ Resource & ResourceManager::LoadResource(SM_GUID guid, const Resource::Flag& fla
 		_mutexLockGeneral.unlock();
 		UpdatePriority(guid, flag);
 		_mutexLockGeneral.lock();
-		find->IncRefCount();
+		find->resource.IncRefCount();
 		_mutexLockGeneral.unlock();
-		return *find;
+		return find->resource;
 	}
 		
-	
-	auto temp = (Resource*)_resourcePool->Malloc();
-	new (temp) Resource();
-	
-	_resources[guid.data] = temp;
-	Resource& r = *temp;
-	r._refCount = 1;
-	r.ID = guid;
-	r._flags = flag;
-
+	auto& r = _CreateResource(guid, flag)->resource;
+	r.IncRefCount();
 	if (flag & Resource::Flag::LOAD_AND_WAIT)
 	{
 		_mutexLockLoader.lock();
@@ -100,8 +91,8 @@ void ResourceManager::UnloadResource(SM_GUID guid)
 
 	if (found)
 	{
-		printf("Unreferencing resource. GUID: %llu. RefCount: %d\n", guid.data, found->_refCount);
-		found->Unload();
+		printf("Unreferencing resource. GUID: %llu. RefCount: %d\n", guid.data, found->resource._refCount);
+		found->resource.Unload();
 	}
 	_mutexLockGeneral.unlock();
 }
@@ -114,7 +105,7 @@ void ResourceManager::EvictResource(SM_GUID guid)
 
 	if (found)
 	{
-		found->_refCount = 0;
+		found->resource._refCount = 0;
 	}
 
 
@@ -126,7 +117,7 @@ void ResourceManager::UpdatePriority(SM_GUID guid,const Resource::Flag& flag)
 	auto find = _FindResource(guid);
 	if (find)
 	{
-		find->_flags = flag;
+		find->resource._flags = flag;
 
 
 		std::priority_queue<Resource*, std::vector<Resource*>, CompareResources> newQ;
@@ -167,7 +158,7 @@ bool ResourceManager::IsLoaded(SM_GUID guid)
 	auto find = _FindResource(guid);
 	if (find)
 	{
-		bool ret = find->GetState() == Resource::ResourceState::Loaded;
+		bool ret = find->resource.GetState() == Resource::ResourceState::Loaded;
 		_mutexLockGeneral.unlock();
 		return ret;
 	}
@@ -198,15 +189,7 @@ void ResourceManager::AddParser(const std::string& fileend, const std::function<
 }
 
 
-Resource* ResourceManager::_FindResource(SM_GUID guid)
-{
-	auto& find = _resources.find(guid.data);
-	if (find != _resources.end())
-	{
-		return find->second;
-	}
-	return nullptr;
-}
+
 
 void ResourceManager::_Run()
 {
@@ -240,19 +223,16 @@ void ResourceManager::_Run()
 		_mutexLockGeneral.lock();
 		//Loop through all resources, ticking them down
 		uint64_t erased = 0;
-		for (auto &it : _resources)
+		auto r = _resources;
+		while (r)
 		{
-			if (it.second->_refCount == 0)
+			if (r->resource._refCount == 0)
 			{
-				printf("Unloading resource. GUID: %llu.\n", it.second->ID.data);
-				it.second->~Resource();
-				_resourcePool->Free((char*)it.second);
-				_resources.erase(it.second->ID.data);
+				printf("Unloading resource. GUID: %llu.\n", r->resource.ID.data);
+				_RemoveResource(r);
 				break;
 			}
-
-
-			
+			r = r->next;
 		}
 		_mutexLockGeneral.unlock();
 		this_thread::sleep_for(std::chrono::milliseconds(17));
@@ -388,10 +368,10 @@ void ResourceManager::ShutDown()
 	delete _assetLoader;
 	_assetLoader = nullptr;
 
-	for (auto& r : _resources)
+	auto r = _resources;
+	while(r)
 	{		
-		r.second->~Resource();
+		_RemoveResource(r);
+		r = _resources;
 	}
-	_resources.clear();
-	
 }

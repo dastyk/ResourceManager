@@ -79,11 +79,79 @@ private:
 
 	void _LoadingThread(uint16_t threadID);
 	void _ParserThread(uint16_t threadID);
-	
-	Resource* _FindResource(SM_GUID guid);
-	
-	PoolAllocator* _resourcePool;
-	std::map<uint64_t, Resource*> _resources;
+
+	struct ResourceList
+	{
+		ResourceList(SM_GUID guid, const Resource::Flag& flag) : resource(guid, flag), prev(nullptr), next(nullptr)
+		{
+
+		}
+		ResourceList* prev;
+		Resource resource;
+		ResourceList* next;
+	};
+
+	ResourceList* _CreateResource(SM_GUID guid, const Resource::Flag& flag)
+	{
+		if (_resources)
+		{
+			auto& newR = _resources->prev->next = (ResourceList*)_resourcePool->Malloc();
+			new (_resources->prev->next) ResourceList(guid, flag);
+			_resources->prev->next->prev = _resources->prev;
+			_resources->prev = _resources->prev->next;
+			return newR;
+		}
+		else
+		{
+			_resources = (ResourceList*)_resourcePool->Malloc();
+			new (_resources) ResourceList(guid, flag);
+			_resources->prev = _resources;
+			return _resources;
+		}
+	}
+
+	ResourceList* _FindResource(SM_GUID guid)
+	{
+		auto n = _resources;
+		while (n)
+		{
+			if (n->resource.ID == guid)
+			{
+				return n;
+			}
+			n = n->next;
+		}
+		return nullptr;
+
+	}
+
+	void _RemoveResource(ResourceList* rm)
+	{
+		if (rm == _resources)
+		{
+			if(_resources->next)
+				_resources->next->prev = _resources->prev;
+			_resources = _resources->next;
+			rm->~ResourceList();
+
+		}
+		else
+		{
+			rm->prev->next = rm->next;
+
+			if (rm->next)
+				rm->next->prev = rm->prev;
+			else
+				_resources->prev = rm->prev;
+			rm->~ResourceList();
+		}
+
+		_resourcePool->Free(rm);
+	}
+
+	PoolAllocator* _resourcePool = nullptr;
+	ResourceList* _resources = nullptr;
+	//std::map<uint64_t, Resource*> _resources;
 	std::priority_queue<Resource*, std::vector<Resource*>, CompareResources> _loadingQueue;
 	std::priority_queue<Resource*, std::vector<Resource*>, CompareResources> _parserQueue;
 	std::unordered_map<uint16_t, ThreadControl, KeyHasher> _threadRunningMap;
