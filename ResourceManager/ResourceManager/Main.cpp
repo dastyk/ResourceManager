@@ -152,7 +152,7 @@ int main(int argc, char** argv)
 
 
 
-	//Resource& tex1 = ResourceManager::Instance().LoadResource("gold.jpg", Resource::Flag::LOAD_AND_WAIT);
+	//Resource& tex1 = ResourceManager::Instance().LoadResource("Sphere0.arf", Resource::Flag::LOAD_AND_WAIT);
 	ResourceManager::Instance().LoadResource("gold.jpg", Resource::Flag::LOAD_AND_WAIT);
 	// For some reason if you removed the line above this comment, the LOD textures all turn black.
 
