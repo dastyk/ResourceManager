@@ -60,6 +60,9 @@ Resource & ResourceManager::LoadResource(SM_GUID guid, const Resource::Flag& fla
 	{
 		_mutexLockLoader.lock();
 		printf("Resource loading. GUID: %llu\n", r.GetGUID().data);
+
+		// TODO: Query asset loader for data size -> reserve memory here -> give pointer where asset data can be stored to the asset loader
+
 		r.SetData(_assetLoader->LoadResource(guid), [](void* data) 
 		{
 			operator delete(((RawData*)data)->data);
