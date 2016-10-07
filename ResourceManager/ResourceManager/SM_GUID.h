@@ -17,7 +17,7 @@ struct SM_GUID
 	{
 		data = std::hash<std::string>{} (c);
 	}
-	operator uint64_t() {
+	operator uint64_t() const {
 		return data;
 	}
 

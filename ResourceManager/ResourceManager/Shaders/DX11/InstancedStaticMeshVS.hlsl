@@ -33,7 +33,7 @@ struct PerObject
 
 cbuffer ObjectBuffer : register(b1)
 {
-	PerObject gPOB[128];
+	PerObject gPOB[32];
 }
 
 

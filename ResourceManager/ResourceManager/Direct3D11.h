@@ -3,7 +3,7 @@
 
 #define GBUFFER_COUNT 4
 #define SAFE_RELEASE(x) {if(x){ x->Release(); x = nullptr;}};
-#define MAX_INSTANCES 128
+#define MAX_INSTANCES 32 //If you change this, also change it in InstancedStaticMeshVS.hlsl
 
 #include <d3d11.h>
 #include <d3dcompiler.h>

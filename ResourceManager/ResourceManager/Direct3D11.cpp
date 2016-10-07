@@ -252,7 +252,7 @@ void Direct3D11::Draw()
 	UINT stride = sizeof(PNTVertex);
 	UINT offset = 0;
 	_deviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-	_deviceContext->VSSetShader(_vertexShaders[VertexShaders::VS_STATIC_MESHES], nullptr, 0);
+	_deviceContext->VSSetShader(_vertexShaders[VertexShaders::VS_STATIC_MESHES_INSTANCED], nullptr, 0);
 	_deviceContext->PSSetShader(_pixelShaders[PixelShaders::PS_STATIC_MESHES], nullptr, 0);
 	_deviceContext->OMSetRenderTargets(RenderTargets::RT_COUNT, &_renderTargetViews[0], _depth.DSV);
 	
@@ -267,31 +267,53 @@ void Direct3D11::Draw()
 	XMMATRIX view = core->GetCameraManager()->GetView();
 	XMMATRIX proj = core->GetCameraManager()->GetProj();
 
-	for (auto &meshes : _renderBatches.meshes)
+	for (const auto &meshes : _renderBatches.meshes)
 	{
 		_deviceContext->IASetVertexBuffers(0, 1, &_vertexBuffers[meshes.mesh].buffer, &stride, &offset);
 		_deviceContext->IASetIndexBuffer(_indexBuffers[meshes.mesh].buffer, DXGI_FORMAT_R32_UINT, 0);
-		for (auto &textures : meshes.textures)
+		for (const auto &textures : meshes.textures)
 		{
 			_deviceContext->PSSetShaderResources(0, 1, &_textures[textures.texture.data]);
-			PerObjectBuffer pob;
-			for (auto &transforms : textures.transforms)
+			PerObjectBuffer pob[MAX_INSTANCES];
+			uint32_t loopCount = textures.transforms.size() / MAX_INSTANCES + min(textures.transforms.size() % MAX_INSTANCES, 1);
+			for (int i = 0; i < loopCount; i++)
 			{
-				XMMATRIX world = XMLoadFloat4x4(&transforms);
-				XMStoreFloat4x4(&pob.World, XMMatrixTranspose(world));
-				XMStoreFloat4x4(&pob.WorldView, XMMatrixTranspose(world * view));
-				XMStoreFloat4x4(&pob.WorldViewInvTrp, XMMatrixInverse(nullptr,world * view));
-				XMStoreFloat4x4(&pob.WVP, XMMatrixTranspose(world * view * proj));
-
+				int instancesThisIteration = min(MAX_INSTANCES, textures.transforms.size() - i * MAX_INSTANCES);
+				for (int j = 0; j < instancesThisIteration; j++)
+				{
+					XMMATRIX world = XMLoadFloat4x4(&textures.transforms[j + MAX_INSTANCES * i]);
+					XMStoreFloat4x4(&pob[j].World, XMMatrixTranspose(world));
+					XMStoreFloat4x4(&pob[j].WorldView, XMMatrixTranspose(world * view));
+					XMStoreFloat4x4(&pob[j].WorldViewInvTrp, XMMatrixInverse(nullptr,world * view));
+					XMStoreFloat4x4(&pob[j].WVP, XMMatrixTranspose(world * view * proj));
+				}
 				D3D11_MAPPED_SUBRESOURCE msr;
-				_deviceContext->Map(_constantBuffers[ConstantBuffers::CB_PER_OBJECT], 0, D3D11_MAP_WRITE_DISCARD, 0, &msr);
-				memcpy(msr.pData, &pob, sizeof(PerObjectBuffer));
-				_deviceContext->Unmap(_constantBuffers[ConstantBuffers::CB_PER_OBJECT], 0);
-				_deviceContext->VSSetConstantBuffers(1, 1, &_constantBuffers[ConstantBuffers::CB_PER_OBJECT]);
+				_deviceContext->Map(_constantBuffers[ConstantBuffers::CB_PER_INSTANCE], 0, D3D11_MAP_WRITE_DISCARD, 0, &msr);
+				memcpy(msr.pData, &pob[0], sizeof(PerObjectBuffer) * instancesThisIteration);
+				_deviceContext->Unmap(_constantBuffers[ConstantBuffers::CB_PER_INSTANCE], 0);
+				_deviceContext->VSSetConstantBuffers(1, 1, &_constantBuffers[ConstantBuffers::CB_PER_INSTANCE]);
 
-				//_deviceContext->Draw(_vertexBuffers[meshes.mesh].count, 0);
-				_deviceContext->DrawIndexed(_indexBuffers[meshes.mesh].count, 0, 0);
+				_deviceContext->DrawIndexedInstanced(_indexBuffers[meshes.mesh].count, instancesThisIteration, 0, 0, 0);
 			}
+			
+			//PerObjectBuffer pob;
+			//for (auto &transforms : textures.transforms)
+			//{
+			//	XMMATRIX world = XMLoadFloat4x4(&transforms);
+			//	XMStoreFloat4x4(&pob.World, XMMatrixTranspose(world));
+			//	XMStoreFloat4x4(&pob.WorldView, XMMatrixTranspose(world * view));
+			//	XMStoreFloat4x4(&pob.WorldViewInvTrp, XMMatrixInverse(nullptr,world * view));
+			//	XMStoreFloat4x4(&pob.WVP, XMMatrixTranspose(world * view * proj));
+
+			//	D3D11_MAPPED_SUBRESOURCE msr;
+			//	_deviceContext->Map(_constantBuffers[ConstantBuffers::CB_PER_OBJECT], 0, D3D11_MAP_WRITE_DISCARD, 0, &msr);
+			//	memcpy(msr.pData, &pob, sizeof(PerObjectBuffer));
+			//	_deviceContext->Unmap(_constantBuffers[ConstantBuffers::CB_PER_OBJECT], 0);
+			//	_deviceContext->VSSetConstantBuffers(1, 1, &_constantBuffers[ConstantBuffers::CB_PER_OBJECT]);
+
+			//	//_deviceContext->Draw(_vertexBuffers[meshes.mesh].count, 0);
+			//	_deviceContext->DrawIndexed(_indexBuffers[meshes.mesh].count, 0, 0);
+			//}
 
 		}
 
