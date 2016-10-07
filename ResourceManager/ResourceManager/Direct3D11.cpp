@@ -221,6 +221,7 @@ ID3D11ShaderResourceView * Direct3D11::_CreateWICTexture(const void * data, size
 {
 	ID3D11ShaderResourceView* srv = nullptr;
 	HRESULT hr = CreateWICTextureFromMemory(_device, (uint8_t*)data, size, nullptr, &srv);
+	
 	if (FAILED(hr))
 	{
 		return nullptr;
@@ -363,6 +364,7 @@ void Direct3D11::CreateMeshBuffers(Resource& r)
 void Direct3D11::CreateShaderResource(Resource& resource)
 {
 	_textureLock.lock();
+	HRESULT hr = CoInitializeEx(NULL, COINIT_MULTITHREADED);
 	auto& got = _textures.find(resource.GetGUID().data);
 	if (got == _textures.end())
 	{
