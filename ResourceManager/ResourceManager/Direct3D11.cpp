@@ -80,6 +80,7 @@ Direct3D11::Direct3D11()
 	_CreateViewPort();
 	_CreateRasterizerState();
 	_CreateConstantBuffers();
+	
 }
 
 Direct3D11::~Direct3D11()
@@ -364,7 +365,7 @@ void Direct3D11::CreateMeshBuffers(Resource& r)
 void Direct3D11::CreateShaderResource(Resource& resource)
 {
 	_textureLock.lock();
-	HRESULT hr = CoInitializeEx(NULL, COINIT_MULTITHREADED);
+	CoInitializeEx(NULL, COINIT_MULTITHREADED);
 	auto& got = _textures.find(resource.GetGUID().data);
 	if (got == _textures.end())
 	{
