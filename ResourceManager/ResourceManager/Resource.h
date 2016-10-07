@@ -60,6 +60,11 @@ private:
 	{
 
 	};
+	Resource(SM_GUID id, const Flag& flag)
+	{
+		ID = id;
+		_flags = flag;
+	}
 	ResourceType _resourceType;
 	void* _data;
 	void SetGUID(SM_GUID inID) { ID = inID; };

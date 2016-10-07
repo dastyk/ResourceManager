@@ -51,6 +51,7 @@ public:
 
 	static PoolAllocator* CreatePoolAllocator(uint32_t sizeOfObject, uint32_t nrOfObjects, uint32_t alignment);
 	static StackAllocator* CreateStackAllocator(uint64_t size);
+	static void* Alloc(uint32_t size);
 
 	static void ReleasePoolAllocator(PoolAllocator* object);
 	static void ReleaseStackAllocator(StackAllocator* object);

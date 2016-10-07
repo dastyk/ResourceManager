@@ -173,7 +173,7 @@ PoolAllocator * MemoryManager::CreatePoolAllocator(uint32_t sizeOfObject, uint32
 		uint64_t requirement = effectiveBlockSize * (nrOfObjects + 1) + sizeof(PoolAllocator);
 		if (_instance->_remainingMemory < (requirement))
 		{
-			throw std::runtime_error("Not enough memory");
+			throw std::runtime_error("Memory Manager ran out of memory");
 		}
 		_instance->_remainingMemory -= requirement;
 		char* alignedAddress = rawAddress + adjustment + sizeof(PoolAllocator);
@@ -201,7 +201,7 @@ StackAllocator * MemoryManager::CreateStackAllocator(uint64_t size)
 	_instance->_mutexLock.lock();
 	if (_instance->_remainingMemory < size + sizeof(StackAllocator))
 	{
-		throw std::runtime_error("Not enough memory");
+		throw std::runtime_error("Memory Manager ran out of memory");
 	}
 	char* rawAdd = (char*)_instance->_Allocate(size + sizeof(StackAllocator));
 	StackAllocator* stack = new(rawAdd) StackAllocator(rawAdd + sizeof(StackAllocator), size);
@@ -209,6 +209,20 @@ StackAllocator * MemoryManager::CreateStackAllocator(uint64_t size)
 	_instance->_remainingMemory -= sizeof(StackAllocator) + size;
 	_instance->_mutexLock.unlock();
 	return stack;
+}
+
+void * MemoryManager::Alloc(uint32_t size)
+{
+	_instance->_mutexLock.lock();
+	if (_instance->_remainingMemory < size)
+		throw std::runtime_error("Memory Manager ran out of memory.");
+
+	void* ret = _instance->_Allocate(size);
+	_instance->_allocatedBlocks[ret] = size;
+	_instance->_remainingMemory -= size;
+	_instance->_mutexLock.unlock();
+	
+	return ret;
 }
 
 void MemoryManager::ReleasePoolAllocator(PoolAllocator * object)
