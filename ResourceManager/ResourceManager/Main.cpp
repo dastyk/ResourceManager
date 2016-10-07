@@ -43,10 +43,10 @@ int main(int argc, char** argv)
 		texd->data = temp->data;
 
 		delete temp;
-		r.SetData(texd, [](void* data) 
+		r.SetData(reinterpret_cast<RawData*>(texd), 0, 0, [](RawData* data, uint32_t startBlock, uint32_t numBlocks) 
 		{
-			delete ((TextureData*)data)->data;
-			delete data;
+			//delete ((TextureData*)data)->data;
+			//delete data;
 		});
 
 		Core::GetInstance()->GetGraphics()->CreateShaderResource(r);
@@ -106,7 +106,7 @@ int main(int argc, char** argv)
 
 		// Save parsed data.
 		r.Destroy();
-		r.SetData(pmdata, [](void* data) 
+		r.SetData(reinterpret_cast<RawData*>(pmdata), 0, 0, [](RawData* data, uint32_t startBlock, uint32_t numBlocks) 
 		{
 			MeshData::MeshData* pmdata = (MeshData::MeshData*)data;
 			delete[] pmdata->vertices;
@@ -127,7 +127,7 @@ int main(int argc, char** argv)
 
 		//// Save parsed data.
 		r.Destroy();
-		r.SetData(pdata, [](void* data)
+		r.SetData(reinterpret_cast<RawData*>(pdata), 0, 0, [](RawData* data, uint32_t startBlock, uint32_t numBlocks)
 		{
 			MeshData::MeshData* pmdata = (MeshData::MeshData*)data;
 			delete[] pmdata->vertices;

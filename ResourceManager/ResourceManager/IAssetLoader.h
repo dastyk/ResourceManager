@@ -6,14 +6,14 @@
 #include <fstream>
 #include "SM_GUID.h"
 #include "Types.h"
-
+#include <functional>
 #include <map>
 
 struct RawData
 {
-	uint64_t size;
-	char* data;
 	uint32_t fType;
+	uint32_t size;
+	char* data;
 };
 
 class IAssetLoader
@@ -29,7 +29,7 @@ public:
 	IAssetLoader(const std::string &file) { compressedFile = file; };
 	virtual ~IAssetLoader() {};
 
-	virtual void* LoadResource(SM_GUID guid)=0;
+	virtual RawData* LoadResource(SM_GUID guid, std::function<char*(uint32_t dataSize)> allocCallback)=0;
 	void AddType(uint32_t& type)
 	{
 		uint32_t t = _fileTypes.size();
