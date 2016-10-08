@@ -363,17 +363,16 @@ void Direct3D11::Draw()
 //	
 //}
 
-void Direct3D11::CreateMeshBuffers(Resource& r)
+void Direct3D11::CreateMeshBuffers(Resource& r, MeshData::Vertex* vertices, uint32_t numVertices, uint32_t* indices, uint32_t indexCount)
 {
-	MeshData::MeshData* pdata = (MeshData::MeshData*)r.GetData();
 	uint64_t guid = r.GetGUID().data;
 	_bufferLock.lock();
 	auto& got = _vertexBuffers.find(guid);
 	if (got == _vertexBuffers.end())
 	{
 		
-		_vertexBuffers[guid] = BufferInfo(_CreateVertexBuffer(pdata->vertices, pdata->NumVertices), pdata->NumVertices);
-		_indexBuffers[guid] = BufferInfo(_CreateIndexBuffer(pdata->Indices, pdata->IndexCount), pdata->IndexCount);
+		_vertexBuffers[guid] = BufferInfo(_CreateVertexBuffer(vertices, numVertices), numVertices);
+		_indexBuffers[guid] = BufferInfo(_CreateIndexBuffer(indices, indexCount), indexCount);
 		r.registerObserver(this);
 	
 	}
@@ -392,7 +391,7 @@ void Direct3D11::CreateShaderResource(Resource& resource)
 	if (got == _textures.end())
 	{
 		
-		TextureData* td = (TextureData*)resource.GetData();
+		RawData* td = (RawData*)resource.GetData();
 		_textures[resource.GetGUID().data] = _CreateWICTexture(td->data, td->size);
 		resource.registerObserver(this);
 		

@@ -26,7 +26,7 @@ namespace ziputils
 		const std::vector<std::string>& getFolders();
 
 		unzipper& operator>>( std::ostream& os );
-		char* getData();
+		void getData(uint32_t dataSize, char* storageLocation);
 
 	private:
 		void readEntries();

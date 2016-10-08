@@ -35,7 +35,7 @@ ZipLoader::~ZipLoader()
 	// nothing to do here
 }
 
-void* ZipLoader::LoadResource(SM_GUID guid)
+RawData* ZipLoader::LoadResource(SM_GUID guid, std::function<char*(uint32_t dataSize)> allocCallback)
 {
 	RawData* preturnData = new RawData;
 	RawData& returnData = *preturnData;
@@ -54,8 +54,11 @@ void* ZipLoader::LoadResource(SM_GUID guid)
 
 	if (zipFile.openEntry(fileName.c_str()))
 	{
-		returnData.size = zipFile.getEntrySize();
-		returnData.data = zipFile.getData();
+		uint32_t dataSize = zipFile.getEntrySize();
+		char* storageLocation = allocCallback( dataSize );
+		zipFile.getData( dataSize, storageLocation );
+		returnData.size = dataSize;
+		returnData.data = storageLocation;
 	}
 	else
 	{

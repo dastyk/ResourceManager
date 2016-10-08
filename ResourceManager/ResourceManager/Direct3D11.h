@@ -16,7 +16,6 @@
 #include "Structs.h"
 #include "IGraphics.h"
 #include "SM_GUID.h"
-#include "MeshData.h"
 
 enum VertexShaders
 {
@@ -192,7 +191,7 @@ public:
 	//Inherited from graphics interface
 	virtual void Draw();
 //	virtual void CreateBuffer(Resource* resource);
-	virtual void CreateMeshBuffers(Resource& r);
+	virtual void CreateMeshBuffers(Resource& r, MeshData::Vertex* vertices, uint32_t numVertices, uint32_t* indices, uint32_t indexCount);
 	virtual void CreateShaderResource(Resource& resource);
 	virtual void NotifyDelete(SM_GUID guid);
 	virtual void AddToRenderQueue(const GameObject& gameObject);

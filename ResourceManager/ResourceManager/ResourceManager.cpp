@@ -65,9 +65,34 @@ Resource & ResourceManager::LoadResource(SM_GUID guid, const Resource::Flag& fla
 
 		// TODO: Query asset loader for data size -> reserve memory here -> give pointer where asset data can be stored to the asset loader
 
-		r.SetData(_assetLoader->LoadResource(guid), [](void* data) 
+		uint32_t startBlock = 0;
+		uint32_t numBlocks = 0;
+
+		RawData* rawData = _assetLoader->LoadResource( guid, [this, &startBlock, &numBlocks](uint32_t dataSize) -> char*
 		{
-			operator delete(((RawData*)data)->data);
+			char* data = nullptr;
+
+			numBlocks = static_cast<uint32_t>(ceilf( static_cast<float>(dataSize) / _blockSize ));
+			int32_t allocSlot = _FindSuitableAllocationSlot( numBlocks );
+
+			if ( allocSlot == -1 )
+			{
+				numBlocks = 0;
+			}
+			else
+			{
+				startBlock = allocSlot;
+				_Allocate( allocSlot, numBlocks );
+				data = _pool + numBlocks * _blockSize;
+			}
+
+			return data;
+		} );
+
+		r.SetData(rawData, startBlock, numBlocks, [this](RawData* data, uint32_t startBlock, uint32_t numBlocks) 
+		{
+			//operator delete(((RawData*)data)->data);
+			_Free( startBlock, numBlocks );
 			delete data;
 		});
 		_mutexLockLoader.unlock();
@@ -532,6 +557,7 @@ void ResourceManager::_Run()
 		_mutexLockGeneral.unlock();
 		this_thread::sleep_for(std::chrono::milliseconds(17));
 	}
+
 	bool allThreadsJoined = false;
 	while (!allThreadsJoined)
 	{
@@ -554,11 +580,7 @@ void ResourceManager::_Run()
 		}
 		_mutexLockGeneral.unlock();
 	}
-
-
-
 }
-
 	
 void ResourceManager::_LoadingThread(uint16_t threadID)
 {
@@ -587,19 +609,40 @@ void ResourceManager::_LoadingThread(uint16_t threadID)
 
 			_mutexLockLoader.lock();
 			//Call asset loader to load the data we want
-			void* temp = _assetLoader->LoadResource(job->GetGUID());
+			uint32_t startBlock = 0;
+			uint32_t numBlocks = 0;
+			RawData* rawData = _assetLoader->LoadResource(job->GetGUID(), [this, &startBlock, &numBlocks]( uint32_t dataSize ) -> char*
+			{
+				char* data = nullptr;
+
+				numBlocks = static_cast<uint32_t>(ceilf( static_cast<float>(dataSize) / _blockSize ));
+				int32_t allocSlot = _FindSuitableAllocationSlot( numBlocks );
+
+				if ( allocSlot == -1 )
+				{
+					numBlocks = 0;
+				}
+				else
+				{
+					startBlock = allocSlot;
+					_Allocate( allocSlot, numBlocks );
+					data = _pool + numBlocks * _blockSize;
+				}
+
+				return data;
+			} );
 			_mutexLockLoader.unlock();
 
 			job->SetState(Resource::ResourceState::Waiting);
 			printf("Finished loading resource. GUID: %llu\n", job->GetGUID().data);
 			//Lock so we can insert the data to the resources
 
-			job->SetData(temp, [](void* data)
+			job->SetData(rawData, startBlock, numBlocks, [this]( RawData* data, uint32_t startBlock, uint32_t numBlocks )
 			{
-				operator delete(((RawData*)data)->data);
+				//operator delete(((RawData*)data)->data);
+				_Free( startBlock, numBlocks );
 				delete data;
 			});
-
 
 			_mutexLockParserQueue.lock();
 			_parserQueue.push(job);

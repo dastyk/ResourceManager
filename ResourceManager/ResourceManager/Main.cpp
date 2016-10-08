@@ -37,18 +37,6 @@ int main(int argc, char** argv)
 	r.AddParser("jpg",
 		[](Resource& r)
 	{
-		RawData* temp = (RawData*)r.GetData();
-		TextureData* texd = new TextureData;
-		texd->size = temp->size;
-		texd->data = temp->data;
-
-		delete temp;
-		r.SetData(texd, [](void* data) 
-		{
-			delete ((TextureData*)data)->data;
-			delete data;
-		});
-
 		Core::GetInstance()->GetGraphics()->CreateShaderResource(r);
 	});
 
@@ -66,12 +54,9 @@ int main(int argc, char** argv)
 		_datap.faces = (ArfData::Face*)((size_t)pdata + data->FaceStart);
 		_datap.subMesh = (ArfData::SubMesh*)((size_t)pdata + data->SubMeshStart);
 
-
 		// Interleave data
-		MeshData::MeshData* pmdata = new MeshData::MeshData;
-		MeshData::MeshData& mdata = *pmdata;
-		mdata.NumVertices = data->NumFace * 3;
-		mdata.vertices = new MeshData::Vertex[mdata.NumVertices];
+		uint32_t numVertices = data->NumFace * 3;
+		MeshData::Vertex* vertices = new MeshData::Vertex[numVertices];
 		uint32_t index = 0;
 		for (uint32_t i = 0; i < data->NumSubMesh; i++)
 		{
@@ -81,41 +66,30 @@ int main(int argc, char** argv)
 
 				for (uint8_t r = 0; r < face.indexCount; r++)
 				{
-					
 					auto& ind = face.indices[r];
 					// Positions
-					memcpy(&mdata.vertices[index].pos, &_datap.positions[ind.index[0]-1], sizeof(MeshData::Position));
+					memcpy(&vertices[index].pos, &_datap.positions[ind.index[0]-1], sizeof(MeshData::Position));
 					// Normals
-					memcpy(&mdata.vertices[index].norm, &_datap.normals[ind.index[2]-1], sizeof(MeshData::Normal));
+					memcpy(&vertices[index].norm, &_datap.normals[ind.index[2]-1], sizeof(MeshData::Normal));
 					// TexCoords
-					memcpy(&mdata.vertices[index].tex, &_datap.texCoords[ind.index[1]-1], sizeof(MeshData::TexCoord));
+					memcpy(&vertices[index].tex, &_datap.texCoords[ind.index[1]-1], sizeof(MeshData::TexCoord));
 					
 					index++;
 				}
-				
 			}
 		}
 
-		mdata.IndexCount = data->NumFace * 3;
-		mdata.Indices = new uint32_t[mdata.IndexCount];
-		for (uint32_t i = 0; i < mdata.IndexCount; i++)
+		uint32_t indexCount = data->NumFace * 3;
+		uint32_t* indices = new uint32_t[indexCount];
+		for (uint32_t i = 0; i < indexCount; i++)
 		{
-			mdata.Indices[i] = i;
+			indices[i] = i;
 		}
 
+		Core::GetInstance()->GetGraphics()->CreateMeshBuffers(r, vertices, numVertices, indices, indexCount);
 
-		// Save parsed data.
-		r.Destroy();
-		r.SetData(pmdata, [](void* data) 
-		{
-			MeshData::MeshData* pmdata = (MeshData::MeshData*)data;
-			delete[] pmdata->vertices;
-			delete[] pmdata->Indices;
-			delete data;
-		});
-
-
-		Core::GetInstance()->GetGraphics()->CreateMeshBuffers(r);
+		delete[] vertices;
+		delete[] indices;
 	});
 
 	r.AddParser("obj", [](Resource& r)
@@ -123,19 +97,12 @@ int main(int argc, char** argv)
 		MeshData::MeshData* pdata = new MeshData::MeshData;
 		RawData* rdata = (RawData*)r.GetData();
 		ParseObj(rdata->data, *pdata);
-
-
-		//// Save parsed data.
-		r.Destroy();
-		r.SetData(pdata, [](void* data)
-		{
-			MeshData::MeshData* pmdata = (MeshData::MeshData*)data;
-			delete[] pmdata->vertices;
-			delete[] pmdata->Indices;
-			delete data;
-		});
 		
-		Core::GetInstance()->GetGraphics()->CreateMeshBuffers(r);
+		Core::GetInstance()->GetGraphics()->CreateMeshBuffers(r, pdata->vertices, pdata->NumVertices, pdata->Indices, pdata->IndexCount);
+
+		delete[] pdata->vertices;
+		delete[] pdata->Indices;
+		delete pdata;
 	});
 
 	r.Startup();

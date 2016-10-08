@@ -45,12 +45,12 @@ public:
 	{
 		_NotifyObserver(); 
 		if (_destroyFunction)
-			_destroyFunction(_data);
+			_destroyFunction(_data, _startBlock, _numBlocks);
 	}
 	
 private:
 	std::vector<Observer*> observers;
-	std::function<void(void*data)> _destroyFunction;
+	std::function<void(RawData* rawData, uint32_t startBlock, uint32_t numBlocks)> _destroyFunction;
 	SM_GUID ID;
 	Flag _flags;
 	uint16_t _refCount;
@@ -66,7 +66,9 @@ private:
 		_flags = flag;
 	}
 	ResourceType _resourceType;
-	void* _data;
+	RawData* _data;
+	uint32_t _startBlock;
+	uint32_t _numBlocks;
 	void SetGUID(SM_GUID inID) { ID = inID; };
 	void _NotifyObserver() { for (auto &it : (observers)) { it->NotifyDelete(ID); } };
 	std::mutex _SetDataLock;
@@ -108,15 +110,15 @@ public:
 		}
 	}
 	SM_GUID GetGUID()const { return ID; };
-	void* GetData() 
+	RawData* GetData() 
 	{
 		_SetDataLock.lock();
-		void* returnd = _data;
+		RawData* returnd = _data;
 		_SetDataLock.unlock();
 		return returnd;
 		
 	};
-	void Destroy() { _SetDataLock.lock(); if (_destroyFunction) _destroyFunction(_data); _SetDataLock.unlock(); };
+	void Destroy() { _SetDataLock.lock(); if (_destroyFunction) _destroyFunction(_data, _startBlock, _numBlocks); _SetDataLock.unlock(); };
 	void SetState(ResourceState state)
 	{
 		_StateLock.lock();
@@ -127,10 +129,13 @@ public:
 	{
 		return _state;
 	};
-	void SetData(void* data, const std::function<void(void*)>& dfunc) 
+	void SetData(RawData* data, uint32_t startBlock, uint32_t numBlocks, const std::function<void(RawData*, uint32_t, uint32_t)>& dfunc) 
 	{
 		_SetDataLock.lock();
-		_data = data; _destroyFunction = dfunc; 
+		_data = data;
+		_startBlock = startBlock;
+		_numBlocks = numBlocks;
+		_destroyFunction = dfunc; 
 		_SetDataLock.unlock();
 	};
 	const ResourceType GetResourceType() const { return _resourceType; };

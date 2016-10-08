@@ -181,20 +181,16 @@ namespace ziputils
 	}
 
 	// OWN FUNCTION TO RETURN DATA
-	char* unzipper::getData()
+	void unzipper::getData(uint32_t dataSize, char* storageLocation)
 	{
-
 		if (isOpenEntry())
 		{
-			unsigned int size = getEntrySize();
-			char* buf = new char[size];
-			size = unzReadCurrentFile(zipFile_, buf, size);
-			return buf;
-		}
-		else
-		{
-			return nullptr;
-		}
+			if ( dataSize != getEntrySize() )
+			{
+				throw std::runtime_error( "Provided data size does not match uncompressed data size!" );
+			}
 
+			unzReadCurrentFile(zipFile_, storageLocation, dataSize);
+		}
 	}
 };
