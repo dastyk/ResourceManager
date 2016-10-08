@@ -543,6 +543,7 @@ void ResourceManager::_Run()
 		_mutexLockGeneral.unlock();
 		this_thread::sleep_for(std::chrono::milliseconds(17));
 	}
+
 	bool allThreadsJoined = false;
 	while (!allThreadsJoined)
 	{
@@ -565,11 +566,7 @@ void ResourceManager::_Run()
 		}
 		_mutexLockGeneral.unlock();
 	}
-
-
-
 }
-
 	
 void ResourceManager::_LoadingThread(uint16_t threadID)
 {

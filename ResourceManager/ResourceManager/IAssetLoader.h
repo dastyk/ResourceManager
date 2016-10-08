@@ -11,9 +11,9 @@
 
 struct RawData
 {
-	uint32_t fType;
 	uint32_t size;
 	char* data;
+	uint32_t fType;
 };
 
 class IAssetLoader

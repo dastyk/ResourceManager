@@ -110,10 +110,10 @@ public:
 		}
 	}
 	SM_GUID GetGUID()const { return ID; };
-	void* GetData() 
+	RawData* GetData() 
 	{
 		_SetDataLock.lock();
-		void* returnd = _data;
+		RawData* returnd = _data;
 		_SetDataLock.unlock();
 		return returnd;
 		
