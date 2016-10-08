@@ -38,8 +38,6 @@ int main(int argc, char** argv)
 		[](Resource& r)
 	{
 		Core::GetInstance()->GetGraphics()->CreateShaderResource(r);
-
-		r.Destroy();
 	});
 
 	r.AddParser("arf",
@@ -92,8 +90,6 @@ int main(int argc, char** argv)
 
 		delete[] vertices;
 		delete[] indices;
-
-		r.Destroy();
 	});
 
 	r.AddParser("obj", [](Resource& r)
@@ -107,8 +103,6 @@ int main(int argc, char** argv)
 		delete[] pdata->vertices;
 		delete[] pdata->Indices;
 		delete pdata;
-
-		r.Destroy();
 	});
 
 	r.Startup();
