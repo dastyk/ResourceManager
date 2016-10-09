@@ -41,12 +41,7 @@ public:
 
 	friend ResourceManager;
 	friend AssetParser;
-	~Resource() 
-	{
-		_NotifyObserver(); 
-		if (_destroyFunction)
-			_destroyFunction(_data);
-	}
+
 	
 private:
 	std::vector<Observer*> observers;
@@ -64,6 +59,12 @@ private:
 	{
 		ID = id;
 		_flags = flag;
+	}
+	~Resource()
+	{
+		_NotifyObserver();
+		if (_destroyFunction)
+			_destroyFunction(_data);
 	}
 	ResourceType _resourceType;
 	void* _data;
