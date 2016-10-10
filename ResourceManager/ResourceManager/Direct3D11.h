@@ -190,7 +190,6 @@ public:
 
 	//Inherited from graphics interface
 	virtual void Draw();
-//	virtual void CreateBuffer(Resource* resource);
 	virtual void CreateMeshBuffers(Resource& r, MeshData::Vertex* vertices, uint32_t numVertices, uint32_t* indices, uint32_t indexCount);
 	virtual void CreateShaderResource(Resource& resource);
 	virtual void NotifyDelete(SM_GUID guid);

@@ -1,8 +1,9 @@
 #include "Scene.h"
 
-float Scene::DistanceBetweenPoints(DirectX::XMFLOAT3 a, DirectX::XMFLOAT3 b)
+float Scene::DistanceBetweenPoints(const DirectX::XMFLOAT3& a, const DirectX::XMFLOAT3& b)
 {
-	return sqrt(pow(a.x - b.x, 2) + pow(a.y - b.y, 2) + pow(a.z - b.z, 2));
+	//return sqrt(pow(a.x - b.x, 2) + pow(a.y - b.y, 2) + pow(a.z - b.z, 2));
+	return sqrt((a.x - b.x) * (a.x - b.x) + (a.y - b.y) * (a.y - b.y) + (a.z - b.z) * (a.z - b.z));
 }
 
 Scene::Scene()
