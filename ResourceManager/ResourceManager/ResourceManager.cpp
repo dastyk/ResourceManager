@@ -288,6 +288,18 @@ void ResourceManager::TestAlloc( void )
 	//allocSlot = _Allocate(1);
 	//allocSlot = _Allocate(1);
 	//allocSlot = _Allocate(1);
+
+
+	//int32_t a1 = _Allocate(1);
+	//int32_t a2 = _Allocate(1);
+	//int32_t a3 = _Allocate(1);
+	//int32_t a4 = _Allocate(1);
+	//int32_t a5 = _Allocate(1);
+
+	//_Free(a4, 1);
+	//_Free(a5, 1);
+
+	//int i = 0;
 }
 
 void ResourceManager::Startup()
@@ -478,7 +490,7 @@ void ResourceManager::_Free( int32_t firstBlock, uint32_t numBlocks )
 		b->Next = -1;
 	}
 	// First free block is after the ones we are returning
-	else if ( _firstFreeBlock > firstBlock + numBlocks )
+	else if ( _firstFreeBlock > firstBlock + numBlocks - 1)
 	{
 		int32_t oldFirst = _firstFreeBlock;
 
