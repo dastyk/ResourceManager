@@ -83,7 +83,7 @@ Resource & ResourceManager::LoadResource(SM_GUID guid, const Resource::Flag& fla
 			{
 				startBlock = allocSlot;
 				_Allocate( allocSlot, numBlocks );
-				data = _pool + numBlocks * _blockSize;
+				data = _pool + allocSlot * _blockSize;
 			}
 
 			return data;
