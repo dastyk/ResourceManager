@@ -626,7 +626,7 @@ void ResourceManager::_LoadingThread(uint16_t threadID)
 				{
 					startBlock = allocSlot;
 					_Allocate( allocSlot, numBlocks );
-					data = _pool + numBlocks * _blockSize;
+					data = _pool + allocSlot * _blockSize;
 				}
 
 				return data;
