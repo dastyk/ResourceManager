@@ -135,13 +135,13 @@ private:
 
 	void _RemoveResource(ResourceList* rm)
 	{
+
+
 		if (rm == _resources)
 		{
 			if(_resources->next)
 				_resources->next->prev = _resources->prev;
-			_resources = _resources->next;
-			rm->~ResourceList();
-
+			_resources = _resources->next;		
 		}
 		else
 		{
@@ -151,14 +151,13 @@ private:
 				rm->next->prev = rm->prev;
 			else
 				_resources->prev = rm->prev;
-			rm->~ResourceList();
+		
 		}
 
-		for (auto &it : (rm->resource.observers))
-		{
-			it->NotifyDelete(rm->resource.ID);
-		}
-		
+		rm->~ResourceList();
+
+		_Free(rm->resource._startBlock, rm->resource._numBlocks);
+		_resourcePool->Free(rm);
 	}
 
 	void _RemoveAllResources()

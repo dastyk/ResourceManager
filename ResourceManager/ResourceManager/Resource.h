@@ -50,7 +50,13 @@ private:
 		ID = id;
 		_flags = flag;
 	}
-	~Resource() {}
+	~Resource() 
+	{
+		for (auto &it : observers)
+		{
+			it->NotifyDelete(ID);
+		}
+	}
 	RawData _rawData;
 	uint32_t _startBlock;
 	uint32_t _numBlocks;
@@ -109,7 +115,10 @@ public:
 	}
 	ResourceState GetState()
 	{
-		return _state;
+		_StateLock.lock();
+		ResourceState s = _state;
+		_StateLock.unlock();
+		return s;
 	};
 	void SetData(RawData data, uint32_t startBlock, uint32_t numBlocks) 
 	{

@@ -22,7 +22,7 @@ ResourceManager::ResourceManager()
 {
 	_resourcePool = MemoryManager::CreatePoolAllocator(sizeof(ResourceList), 1337, 0);
 
-	_numFreeBlocks = _numBlocks = 20;
+	_numFreeBlocks = _numBlocks = 25;
 	_pool = (char*)MemoryManager::Alloc(_numBlocks * _blockSize);
 
 	// Make blocks form a linked list (all of them at startup)
@@ -536,7 +536,7 @@ void ResourceManager::_Run()
 		auto r = _resources;
 		while (r)
 		{
-			if (r->resource._refCount == 0 && r->resource._state == Resource::ResourceState::Loaded && !(r->resource._flags & Resource::Flag::PERSISTENT))
+			if (r->resource._refCount == 0 && r->resource.GetState() == Resource::ResourceState::Loaded && !(r->resource._flags & Resource::Flag::PERSISTENT))
 			{
 				printf("Unloading resource. GUID: %llu.\n", r->resource.ID.data);
 				_RemoveResource(r);
@@ -645,7 +645,7 @@ void ResourceManager::_LoadingThread(uint16_t threadID)
 
 				_mutexLockLoadingQueue.lock();
 				job->SetState(Resource::ResourceState::Waiting);
-				_loadingQueue.push(job);
+				//_loadingQueue.push(job);
 				_mutexLockLoadingQueue.unlock();
 
 				_mutexLockLoader.unlock();

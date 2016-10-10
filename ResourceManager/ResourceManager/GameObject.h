@@ -70,12 +70,12 @@ public:
 				if (!_MeshLODs[0].first)
 				{
 					_MeshLODs[0].first = true;
-					ResourceManager::Instance().LoadResource(_MeshLODs[0].second, Resource::Flag::NEEDED_NOW | Resource::Flag::PERSISTENT);
+					ResourceManager::Instance().LoadResource(_MeshLODs[0].second, Resource::Flag::NEEDED_NOW);
 				}
 				if (!_MeshLODs[_currentLOD].first)
 				{
 					_MeshLODs[_currentLOD].first = true;
-					ResourceManager::Instance().LoadResource(_MeshLODs[_currentLOD].second, Resource::Flag::NEEDED_NOW | Resource::Flag::PERSISTENT);
+					ResourceManager::Instance().LoadResource(_MeshLODs[_currentLOD].second, Resource::Flag::NEEDED_NOW);
 				}
 
 				
@@ -109,12 +109,12 @@ public:
 		if (!_TextureLODs[0].first)
 		{
 			_TextureLODs[0].first = true;
-			ResourceManager::Instance().LoadResource(_TextureLODs[0].second, Resource::Flag::NEEDED_NOW | Resource::Flag::PERSISTENT);
+			ResourceManager::Instance().LoadResource(_TextureLODs[0].second, Resource::Flag::NEEDED_NOW);
 		}	
 		if (!_TextureLODs[_currentLOD].first)
 		{
 			_TextureLODs[_currentLOD].first = true;
-			ResourceManager::Instance().LoadResource(_TextureLODs[_currentLOD].second, Resource::Flag::NEEDED_NOW | Resource::Flag::PERSISTENT);
+			ResourceManager::Instance().LoadResource(_TextureLODs[_currentLOD].second, Resource::Flag::NEEDED_NOW);
 		}
 
 
@@ -134,14 +134,13 @@ public:
 					{
 						_MeshLODs[i].first = true;
 					
-						ResourceManager::Instance().LoadResource(_MeshLODs[i].second, Resource::Flag::NEEDED_NOW | Resource::Flag::PERSISTENT);
+						ResourceManager::Instance().LoadResource(_MeshLODs[i].second, Resource::Flag::NEEDED_NOW);
 						
 					}
-
 					if (!_TextureLODs[i].first)
 					{
 						_TextureLODs[i].first = true;
-						ResourceManager::Instance().LoadResource(_TextureLODs[i].second, Resource::Flag::NEEDED_NOW | Resource::Flag::PERSISTENT);
+						ResourceManager::Instance().LoadResource(_TextureLODs[i].second, Resource::Flag::NEEDED_NOW);
 					}
 				}
 				else if ((i == LOD - 1 || i == LOD + 1))
@@ -149,12 +148,12 @@ public:
 					if (!_MeshLODs[i].first)
 					{
 						_MeshLODs[i].first = true;
-						ResourceManager::Instance().LoadResource(_MeshLODs[i].second, Resource::Flag::NOT_URGENT | Resource::Flag::PERSISTENT);
+						ResourceManager::Instance().LoadResource(_MeshLODs[i].second, Resource::Flag::NOT_URGENT);
 					}
 					if (!_TextureLODs[i].first)
 					{
 						_TextureLODs[i].first = true;					
-						ResourceManager::Instance().LoadResource(_TextureLODs[i].second, Resource::Flag::NOT_URGENT | Resource::Flag::PERSISTENT);
+						ResourceManager::Instance().LoadResource(_TextureLODs[i].second, Resource::Flag::NOT_URGENT);
 					}
 				}
 				else
