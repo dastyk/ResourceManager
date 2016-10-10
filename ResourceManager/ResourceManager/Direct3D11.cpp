@@ -384,6 +384,7 @@ void Direct3D11::NotifyDelete(SM_GUID guid)
 	auto& find = _vertexBuffers.find(guid);
 	if (find != _vertexBuffers.end())
 	{
+		//The only time an index buffer exists is if a vertex buffer exists.
 		auto& findIndexBuffer = _indexBuffers.find(guid);
 		if (findIndexBuffer != _indexBuffers.end())
 		{
