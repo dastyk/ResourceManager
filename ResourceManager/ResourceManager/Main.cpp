@@ -106,14 +106,14 @@ int main(int argc, char** argv)
 
 	r.Startup();
 
-	//r.TestAlloc();
-
 	if (!AllocConsole()) throw std::runtime_error("Failed to alloc console.");
 	freopen("conin$", "r", stdin);
 	freopen("conout$", "w", stdout);
 	freopen("conout$", "w", stderr);
 
 	printf("<----||Console Initialized||---->\n\n");
+
+	r.TestAlloc();
 
 
 

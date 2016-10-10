@@ -22,7 +22,7 @@ ResourceManager::ResourceManager()
 {
 	_resourcePool = MemoryManager::CreatePoolAllocator(sizeof(ResourceList), 1337, 0);
 
-	_numFreeBlocks = _numBlocks = 25;
+	_numFreeBlocks = _numBlocks = 20;
 	_pool = (char*)MemoryManager::Alloc(_numBlocks * _blockSize);
 
 	// Make blocks form a linked list (all of them at startup)
@@ -73,17 +73,15 @@ const SM_GUID ResourceManager::LoadResource(SM_GUID guid, const Resource::Flag& 
 			char* data = nullptr;
 
 			numBlocks = static_cast<uint32_t>(ceilf( static_cast<float>(dataSize) / _blockSize ));
-			int32_t allocSlot = _FindSuitableAllocationSlot( numBlocks );
+			startBlock = _Allocate( numBlocks );
 
-			if ( allocSlot == -1 )
+			if (startBlock == -1 )
 			{
 				numBlocks = 0;
 			}
 			else
 			{
-				startBlock = allocSlot;
-				_Allocate( allocSlot, numBlocks );
-				data = _pool + allocSlot * _blockSize;
+				data = _pool + startBlock * _blockSize;
 			}
 
 			return data;
@@ -213,54 +211,83 @@ void ResourceManager::PrintOccupancy( void )
 			FreeBlock* f = reinterpret_cast<FreeBlock*>(_pool + free * _blockSize);
 			free = f->Next;
 
-			OutputDebugStringA( "[O]" );
+			//OutputDebugStringA( "[O]" );
+			printf("[O]");
 		}
 		else
 		{
-			OutputDebugStringA( "[X]" );
+			//OutputDebugStringA( "[X]" );
+			printf("[X]");
 		}
 
 		walker++;
 	}
 
-	OutputDebugStringA( "\n" );
+	//OutputDebugStringA( "\n" );
+	printf("\n");
 }
 
 void ResourceManager::TestAlloc( void )
 {
-	int32_t allocSlot = -1;
-	//_mutexLock.lock();
-	//_mutexLock.unlock();
-	PrintOccupancy();
-	allocSlot = _FindSuitableAllocationSlot(3);
-	_Allocate(allocSlot, 3);
-	PrintOccupancy();
-	allocSlot = _FindSuitableAllocationSlot(2);
-	_Allocate(allocSlot, 2);
-	PrintOccupancy();
-	allocSlot = _FindSuitableAllocationSlot(15);
-	_Allocate(allocSlot, 15);
-	PrintOccupancy();
-	_Free(2, 3);
-	PrintOccupancy();
-	_Free(7, 1);
-	PrintOccupancy();
-	_Free(5, 1);
-	PrintOccupancy();
-	_Free(0, 1);
-	PrintOccupancy();
-	_Free(19, 1);
-	PrintOccupancy();
-	allocSlot = _FindSuitableAllocationSlot(2);
-	_Allocate(allocSlot, 2);
-	PrintOccupancy();
-	_Free(9, 3);
-	PrintOccupancy();
-	_Free(14, 3);
-	PrintOccupancy();
-	allocSlot = _FindSuitableAllocationSlot(3);
-	_Allocate(allocSlot, 3);
-	PrintOccupancy();
+	//int32_t allocSlot = -1;
+	////_mutexLock.lock();
+	////_mutexLock.unlock();
+	//PrintOccupancy();
+	//allocSlot = _FindSuitableAllocationSlot(3);
+	//_Allocate(allocSlot, 3);
+	//PrintOccupancy();
+	//allocSlot = _FindSuitableAllocationSlot(2);
+	//_Allocate(allocSlot, 2);
+	//PrintOccupancy();
+	//allocSlot = _FindSuitableAllocationSlot(15);
+	//_Allocate(allocSlot, 15);
+	//PrintOccupancy();
+	//_Free(2, 3);
+	//PrintOccupancy();
+	//_Free(7, 1);
+	//PrintOccupancy();
+	//_Free(5, 1);
+	//PrintOccupancy();
+	//_Free(0, 1);
+	//PrintOccupancy();
+	//_Free(19, 1);
+	//PrintOccupancy();
+	//allocSlot = _FindSuitableAllocationSlot(2);
+	//_Allocate(allocSlot, 2);
+	//PrintOccupancy();
+	//_Free(9, 3);
+	//PrintOccupancy();
+	//_Free(14, 3);
+	//PrintOccupancy();
+	//allocSlot = _FindSuitableAllocationSlot(3);
+	//_Allocate(allocSlot, 3);
+	//PrintOccupancy();
+
+	//int32_t allocSlot = _Allocate(6);
+	//PrintOccupancy();
+
+	//allocSlot = _Allocate(14);
+	//PrintOccupancy();
+
+	//_Free(6, 1);
+	//PrintOccupancy();
+
+	//allocSlot = _Allocate(1);
+	//PrintOccupancy();
+
+	//_Free(18, 2);
+	//PrintOccupancy();
+
+	//_Free(19, 1);
+	//PrintOccupancy();
+
+	//_Free(9, 2);
+	//PrintOccupancy();
+
+	//int32_t allocSlot = _Allocate(18);
+	//allocSlot = _Allocate(1);
+	//allocSlot = _Allocate(1);
+	//allocSlot = _Allocate(1);
 }
 
 void ResourceManager::Startup()
@@ -323,9 +350,16 @@ void ResourceManager::_SetupFreeBlockList( void )
 	_mutexAllocLock.unlock();
 }
 
-int32_t ResourceManager::_FindSuitableAllocationSlot( uint32_t blocks )
+// Returns the slot that was allocated at. If no suitable slot was found, -1 is returned.
+int32_t ResourceManager::_Allocate( uint32_t blocks )
 {
+	// This first part finds a suitable allocation slot
+
 	_mutexAllocLock.lock();
+
+	printf("Before alloc with %d blocks\n", blocks);
+	PrintOccupancy();
+
 	if ( _firstFreeBlock == -1 )
 	{
 		_mutexAllocLock.unlock();
@@ -363,24 +397,33 @@ int32_t ResourceManager::_FindSuitableAllocationSlot( uint32_t blocks )
 			numContiguous++;
 		}
 	}
-	_mutexAllocLock.unlock();
-	return allocSlot;
-}
 
-// Given a valid allocation slot and number of blocks -- extract those blocks
-// from the list of free blocks.
-void ResourceManager::_Allocate( int32_t allocSlot, uint32_t blocks )
-{
-	_mutexAllocLock.lock();
+	// Given a valid allocation slot and number of blocks -- extract those blocks
+	// from the list of free blocks.
+
 	if ( allocSlot == -1 )
 	{
-		throw runtime_error( "Invalid allocation slot!" );
+		_mutexAllocLock.unlock();
+		return -1;
+		//throw runtime_error( "Invalid allocation slot!" );
 	}
 
 	if ( allocSlot == _firstFreeBlock )
 	{
+		// REMOVE THIS LATER
+		if (_numFreeBlocks == 1)
+		{
+			FreeBlock* test = reinterpret_cast<FreeBlock*>(_pool + (allocSlot + blocks - 1) * _blockSize);
+		}
+
 		// Index of the block after the last one to allocate
 		_firstFreeBlock = reinterpret_cast<FreeBlock*>(_pool + (allocSlot + blocks - 1) * _blockSize)->Next;
+
+		// REMOVE THIS LATER
+		if (_firstFreeBlock > 100)
+		{
+			int hej = 0;
+		}
 
 		if ( _firstFreeBlock != -1 )
 			reinterpret_cast<FreeBlock*>(_pool + _firstFreeBlock * _blockSize)->Previous = -1;
@@ -396,13 +439,23 @@ void ResourceManager::_Allocate( int32_t allocSlot, uint32_t blocks )
 	}
 
 	_numFreeBlocks -= blocks;
+
+	printf("After alloc at slot %d (%d blocks)\n", allocSlot, blocks);
+	PrintOccupancy();
+
 	_mutexAllocLock.unlock();
+
+	return allocSlot;
 }
 
 // Frees certain blocks by inserting them into the free block list.
 void ResourceManager::_Free( int32_t firstBlock, uint32_t numBlocks )
 {
 	_mutexAllocLock.lock();
+
+	printf("Before freeing at slot %d (%d blocks)\n", firstBlock, numBlocks);
+	PrintOccupancy();
+
 	// If there is no list to insert into, just make the current ones the new list.
 	if ( _firstFreeBlock == -1 )
 	{
@@ -497,6 +550,10 @@ void ResourceManager::_Free( int32_t firstBlock, uint32_t numBlocks )
 	}
 
 	_numFreeBlocks += numBlocks;
+
+	printf("After freeing at slot %d (%d blocks)\n", firstBlock, numBlocks);
+	PrintOccupancy();
+
 	_mutexAllocLock.unlock();
 }
 
@@ -609,17 +666,15 @@ void ResourceManager::_LoadingThread(uint16_t threadID)
 					char* data = nullptr;
 
 					numBlocks = static_cast<uint32_t>(ceilf(static_cast<float>(dataSize) / _blockSize));
-					int32_t allocSlot = _FindSuitableAllocationSlot(numBlocks);
+					startBlock = _Allocate(numBlocks);
 
-					if (allocSlot == -1)
+					if (startBlock == -1)
 					{
 						numBlocks = 0;
 					}
 					else
 					{
-						startBlock = allocSlot;
-						_Allocate(allocSlot, numBlocks);
-						data = _pool + allocSlot * _blockSize;
+						data = _pool + startBlock * _blockSize;
 					}
 
 					return data;

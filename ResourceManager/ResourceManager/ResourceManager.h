@@ -84,8 +84,7 @@ private:
 	void _LoadingThread(uint16_t threadID);
 	void _ParserThread(uint16_t threadID);
 	void _SetupFreeBlockList( void );
-	int32_t _FindSuitableAllocationSlot( uint32_t blocks );
-	void _Allocate( int32_t allocSlot, uint32_t blocks );
+	int32_t _Allocate( uint32_t blocks );
 	void _Free( int32_t firstBlock, uint32_t numBlocks );
 
 	struct ResourceList
@@ -154,9 +153,11 @@ private:
 		
 		}
 
+		uint32_t startBlock = rm->resource._startBlock;
+		uint32_t numBlocks = rm->resource._numBlocks;
 		rm->~ResourceList();
 
-		_Free(rm->resource._startBlock, rm->resource._numBlocks);
+		_Free(startBlock, numBlocks);
 		_resourcePool->Free(rm);
 	}
 
