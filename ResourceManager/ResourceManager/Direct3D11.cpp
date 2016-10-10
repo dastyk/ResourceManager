@@ -337,31 +337,6 @@ void Direct3D11::Draw()
 	_renderBatches.Clear();
 }
 
-//void Direct3D11::CreateBuffer(Resource * resource)
-//{
-//	resource->registerObserver(this);
-//	const Resource::ResourceType type = resource->GetResourceType();
-//	if (type == Resource::ResourceType::MESH_PNT)
-//	{
-//		const PNTMeshData* meshdata = (PNTMeshData*)resource->GetProcessedData();
-//		_vertexBuffers[resource->GetGUID().data] = _CreateVertexBuffer(meshdata->vertices, meshdata->vertexCount);
-//		if(meshdata->indices != nullptr)
-//			_indexBuffers[resource->GetGUID().data] = _CreateIndexBuffer(meshdata->indices, meshdata->indexCount);
-//	}
-//	else if (type == Resource::ResourceType::TEXTURE_DDS)
-//	{
-//		const TextureData* texdata = (TextureData*)resource->GetProcessedData();
-//		_textures[resource->GetGUID()] = _CreateDDSTexture(texdata->data, texdata->size);
-//	}
-//	else if (type & (Resource::ResourceType::TEXTURE_PNG | Resource::ResourceType::TEXTURE_JPG))
-//	{
-//		const TextureData* texdata = (TextureData*)resource->GetProcessedData();
-//		_textures[resource->GetGUID()] = _CreateWICTexture(texdata->data, texdata->size);
-//	}
-//
-//	
-//	
-//}
 
 void Direct3D11::CreateMeshBuffers(Resource& r, MeshData::Vertex* vertices, uint32_t numVertices, uint32_t* indices, uint32_t indexCount)
 {
