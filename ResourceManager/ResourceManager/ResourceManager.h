@@ -25,7 +25,7 @@ class ResourceManager
 public:
 	static ResourceManager& Instance();
 	
-	Resource& LoadResource(SM_GUID guid, const Resource::Flag& flag);
+	const SM_GUID LoadResource(SM_GUID guid, const Resource::Flag& flag);
 	void UnloadResource(SM_GUID guid);
 	void EvictResource(SM_GUID guid);
 	void UpdatePriority(SM_GUID guid, const Resource::Flag& flag);
@@ -36,8 +36,7 @@ public:
 
 	uint32_t FreeMemory( void ) const { return _numFreeBlocks * _blockSize + _resourcePool->FreeMemory(); }
 	uint32_t MaxMemory( void ) const { return _numBlocks * _blockSize + _resourcePool->Size(); }
-	void* Allocate(uint32_t size);
-	void Free(void* p);
+
 	void SetAssetLoader(IAssetLoader* loader);
 	void AddParser(const std::string& fileend,const std::function<void(Resource& r)>& parseFunction);
 
@@ -155,9 +154,23 @@ private:
 			rm->~ResourceList();
 		}
 
-		_resourcePool->Free(rm);
+		for (auto &it : (rm->resource.observers))
+		{
+			it->NotifyDelete(rm->resource.ID);
+		}
+		
 	}
 
+	void _RemoveAllResources()
+	{
+		auto r = _resources;
+		while (r)
+		{
+			r->~ResourceList();
+			r = r->next;
+		}
+		_resources = nullptr;
+	}
 private:
 	char* _pool = nullptr;
 	const uint32_t _blockSize = 512 * 1024;
@@ -180,6 +193,7 @@ private:
 
 	std::thread _runningThread;
 	std::mutex _mutexLockGeneral;
+	std::mutex _mutexAllocLock;
 	//std::mutex _mutexLockResourceArr;
 	std::mutex _mutexLockLoader;
 	std::mutex _mutexLockParser;

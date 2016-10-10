@@ -391,8 +391,8 @@ void Direct3D11::CreateShaderResource(Resource& resource)
 	if (got == _textures.end())
 	{
 		
-		RawData* td = (RawData*)resource.GetData();
-		_textures[resource.GetGUID().data] = _CreateWICTexture(td->data, td->size);
+		RawData td = resource.GetData();
+		_textures[resource.GetGUID().data] = _CreateWICTexture(td.data, td.size);
 		resource.registerObserver(this);
 		
 	}

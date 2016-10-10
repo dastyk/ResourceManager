@@ -20,7 +20,7 @@ public:
 	ZipLoader(const std::string &file);
 	virtual ~ZipLoader();
 
-	RawData* LoadResource(SM_GUID guid, std::function<char*(uint32_t dataSize)> allocCallback);
+	RawData LoadResource(SM_GUID guid, std::function<char*(uint32_t dataSize)> allocCallback);
 
 };
 

@@ -34,7 +34,7 @@ ResourceManager::~ResourceManager()
 
 }
 
-Resource & ResourceManager::LoadResource(SM_GUID guid, const Resource::Flag& flag)
+const SM_GUID ResourceManager::LoadResource(SM_GUID guid, const Resource::Flag& flag)
 {
 	// Idea of this method:
 	// * If the resource already exists, don't do anything because we're done
@@ -53,7 +53,7 @@ Resource & ResourceManager::LoadResource(SM_GUID guid, const Resource::Flag& fla
 		_mutexLockGeneral.lock();
 		find->resource.IncRefCount();
 		_mutexLockGeneral.unlock();
-		return find->resource;
+		return guid;
 	}
 	
 	auto& r = _CreateResource(guid, flag)->resource;
@@ -68,7 +68,7 @@ Resource & ResourceManager::LoadResource(SM_GUID guid, const Resource::Flag& fla
 		uint32_t startBlock = 0;
 		uint32_t numBlocks = 0;
 
-		RawData* rawData = _assetLoader->LoadResource( guid, [this, &startBlock, &numBlocks](uint32_t dataSize) -> char*
+		RawData rawData = _assetLoader->LoadResource( guid, [this, &startBlock, &numBlocks](uint32_t dataSize) -> char*
 		{
 			char* data = nullptr;
 
@@ -89,12 +89,7 @@ Resource & ResourceManager::LoadResource(SM_GUID guid, const Resource::Flag& fla
 			return data;
 		} );
 
-		r.SetData(rawData, startBlock, numBlocks, [this](RawData* data, uint32_t startBlock, uint32_t numBlocks) 
-		{
-			//operator delete(((RawData*)data)->data);
-			_Free( startBlock, numBlocks );
-			delete data;
-		});
+		r.SetData(rawData, startBlock, numBlocks);
 		_mutexLockLoader.unlock();
 
 		_mutexLockParser.lock();
@@ -112,7 +107,7 @@ Resource & ResourceManager::LoadResource(SM_GUID guid, const Resource::Flag& fla
 		_mutexLockLoadingQueue.unlock();
 	}
 	_mutexLockGeneral.unlock();
-	return r;
+	return guid;
 }
 
 void ResourceManager::UnloadResource(SM_GUID guid)
@@ -273,20 +268,6 @@ void ResourceManager::Startup()
 	_runningThread = thread(&ResourceManager::_Run, this);
 }
 
-void * ResourceManager::Allocate(uint32_t size)
-{
-	uint32_t blocks = size / _blockSize;
-	_mutexLockGeneral.lock();
-	int32_t allocSlot = _FindSuitableAllocationSlot(blocks);
-	_Allocate(allocSlot, blocks);
-	void* ret = _pool + allocSlot*_blockSize;
-	_mutexLockGeneral.unlock();
-	return ret;
-}
-
-void ResourceManager::Free(void * p)
-{
-}
 
 void ResourceManager::SetAssetLoader(IAssetLoader * loader)
 {
@@ -303,6 +284,7 @@ void ResourceManager::AddParser(const std::string& fileend, const std::function<
 
 void ResourceManager::_SetupFreeBlockList( void )
 {
+	_mutexAllocLock.lock();
 	// Iterate through blocks (all are free at first) and reinterpret them
 	// as the FreeBlock struct in order to set their previous and next ref-
 	// erences correctly in order to create a doubly linked list.
@@ -338,12 +320,15 @@ void ResourceManager::_SetupFreeBlockList( void )
 		last->Previous = _numBlocks - 2; // Zero based and one before this
 		last->Next = -1;
 	}
+	_mutexAllocLock.unlock();
 }
 
 int32_t ResourceManager::_FindSuitableAllocationSlot( uint32_t blocks )
 {
+	_mutexAllocLock.lock();
 	if ( _firstFreeBlock == -1 )
 	{
+		_mutexAllocLock.unlock();
 		return -1;
 		//throw runtime_error("No free blocks remaining!");
 	}
@@ -360,6 +345,7 @@ int32_t ResourceManager::_FindSuitableAllocationSlot( uint32_t blocks )
 
 		if ( lastFree->Next == -1 )
 		{
+			_mutexAllocLock.unlock();
 			return -1;
 			//throw runtime_error("Not enough contiguous free blocks to accomodate the allocation!");
 		}
@@ -377,7 +363,7 @@ int32_t ResourceManager::_FindSuitableAllocationSlot( uint32_t blocks )
 			numContiguous++;
 		}
 	}
-
+	_mutexAllocLock.unlock();
 	return allocSlot;
 }
 
@@ -385,6 +371,7 @@ int32_t ResourceManager::_FindSuitableAllocationSlot( uint32_t blocks )
 // from the list of free blocks.
 void ResourceManager::_Allocate( int32_t allocSlot, uint32_t blocks )
 {
+	_mutexAllocLock.lock();
 	if ( allocSlot == -1 )
 	{
 		throw runtime_error( "Invalid allocation slot!" );
@@ -409,11 +396,13 @@ void ResourceManager::_Allocate( int32_t allocSlot, uint32_t blocks )
 	}
 
 	_numFreeBlocks -= blocks;
+	_mutexAllocLock.unlock();
 }
 
 // Frees certain blocks by inserting them into the free block list.
 void ResourceManager::_Free( int32_t firstBlock, uint32_t numBlocks )
 {
+	_mutexAllocLock.lock();
 	// If there is no list to insert into, just make the current ones the new list.
 	if ( _firstFreeBlock == -1 )
 	{
@@ -508,6 +497,7 @@ void ResourceManager::_Free( int32_t firstBlock, uint32_t numBlocks )
 	}
 
 	_numFreeBlocks += numBlocks;
+	_mutexAllocLock.unlock();
 }
 
 
@@ -546,7 +536,7 @@ void ResourceManager::_Run()
 		auto r = _resources;
 		while (r)
 		{
-			if (r->resource._refCount == 0)
+			if (r->resource._refCount == 0 && r->resource._state == Resource::ResourceState::Loaded && !(r->resource._flags & Resource::Flag::PERSISTENT))
 			{
 				printf("Unloading resource. GUID: %llu.\n", r->resource.ID.data);
 				_RemoveResource(r);
@@ -611,42 +601,56 @@ void ResourceManager::_LoadingThread(uint16_t threadID)
 			//Call asset loader to load the data we want
 			uint32_t startBlock = 0;
 			uint32_t numBlocks = 0;
-			RawData* rawData = _assetLoader->LoadResource(job->GetGUID(), [this, &startBlock, &numBlocks]( uint32_t dataSize ) -> char*
+
+			try
 			{
-				char* data = nullptr;
-
-				numBlocks = static_cast<uint32_t>(ceilf( static_cast<float>(dataSize) / _blockSize ));
-				int32_t allocSlot = _FindSuitableAllocationSlot( numBlocks );
-
-				if ( allocSlot == -1 )
+				RawData rawData = _assetLoader->LoadResource(job->GetGUID(), [this, &startBlock, &numBlocks](uint32_t dataSize) -> char*
 				{
-					numBlocks = 0;
-				}
-				else
-				{
-					startBlock = allocSlot;
-					_Allocate( allocSlot, numBlocks );
-					data = _pool + allocSlot * _blockSize;
-				}
+					char* data = nullptr;
 
-				return data;
-			} );
-			_mutexLockLoader.unlock();
+					numBlocks = static_cast<uint32_t>(ceilf(static_cast<float>(dataSize) / _blockSize));
+					int32_t allocSlot = _FindSuitableAllocationSlot(numBlocks);
 
-			job->SetState(Resource::ResourceState::Waiting);
-			printf("Finished loading resource. GUID: %llu\n", job->GetGUID().data);
-			//Lock so we can insert the data to the resources
+					if (allocSlot == -1)
+					{
+						numBlocks = 0;
+					}
+					else
+					{
+						startBlock = allocSlot;
+						_Allocate(allocSlot, numBlocks);
+						data = _pool + allocSlot * _blockSize;
+					}
 
-			job->SetData(rawData, startBlock, numBlocks, [this]( RawData* data, uint32_t startBlock, uint32_t numBlocks )
+					return data;
+				});
+
+
+				_mutexLockLoader.unlock();
+
+				job->SetState(Resource::ResourceState::Waiting);
+				printf("Finished loading resource. GUID: %llu\n", job->GetGUID().data);
+				//Lock so we can insert the data to the resources
+
+				job->SetData(rawData, startBlock, numBlocks);
+
+				_mutexLockParserQueue.lock();
+				_parserQueue.push(job);
+				_mutexLockParserQueue.unlock();
+			}
+			catch (std::runtime_error& e)
 			{
-				//operator delete(((RawData*)data)->data);
-				_Free( startBlock, numBlocks );
-				delete data;
-			});
+				printf(e.what());
+				printf("\n");
 
-			_mutexLockParserQueue.lock();
-			_parserQueue.push(job);
-			_mutexLockParserQueue.unlock();
+				_mutexLockLoadingQueue.lock();
+				job->SetState(Resource::ResourceState::Waiting);
+				_loadingQueue.push(job);
+				_mutexLockLoadingQueue.unlock();
+
+				_mutexLockLoader.unlock();
+			}
+			
 
 		}
 		else
@@ -707,13 +711,10 @@ void ResourceManager::ShutDown()
 	delete _assetLoader;
 	_assetLoader = nullptr;
 
+
+	_RemoveAllResources();
 	MemoryManager::ReleasePoolAllocator(_resourcePool);
 	MemoryManager::Release(_pool);
 
-	auto r = _resources;
-	while(r)
-	{		
-		_RemoveResource(r);
-		r = _resources;
-	}
+
 }

@@ -44,8 +44,8 @@ int main(int argc, char** argv)
 		[](Resource& r) 
 	{
 		// Setup pointers
-		RawData* rdata = (RawData*)r.GetData();
-		ArfData::Data* data = (ArfData::Data*)rdata->data;
+		RawData rdata = r.GetData();
+		ArfData::Data* data = (ArfData::Data*)rdata.data;
 		ArfData::DataPointers _datap;
 		void* pdata = (void*)((size_t)data + sizeof(ArfData::Data)); 
 		_datap.positions = (ArfData::Position*)((size_t)pdata + data->PosStart);
@@ -94,15 +94,14 @@ int main(int argc, char** argv)
 
 	r.AddParser("obj", [](Resource& r)
 	{
-		MeshData::MeshData* pdata = new MeshData::MeshData;
-		RawData* rdata = (RawData*)r.GetData();
-		ParseObj(rdata->data, *pdata);
+		MeshData::MeshData pdata;
+		RawData rdata = r.GetData();
+		ParseObj(rdata.data, pdata);
 		
-		Core::GetInstance()->GetGraphics()->CreateMeshBuffers(r, pdata->vertices, pdata->NumVertices, pdata->Indices, pdata->IndexCount);
+		Core::GetInstance()->GetGraphics()->CreateMeshBuffers(r, pdata.vertices, pdata.NumVertices, pdata.Indices, pdata.IndexCount);
 
-		delete[] pdata->vertices;
-		delete[] pdata->Indices;
-		delete pdata;
+		delete[] pdata.vertices;
+		delete[] pdata.Indices;
 	});
 
 	r.Startup();

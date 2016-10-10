@@ -6,7 +6,6 @@
 #include "flags.h"
 #include "Types.h"
 #include "IAssetLoader.h"
-#include <functional>
 #include <mutex>
 
 class ResourceManager;
@@ -24,12 +23,6 @@ public:
 		LOAD_AND_WAIT = 1 << 3
 	);
 
-	enum ResourceType : uint32_t
-	{
-		MESH,
-		TEXTURE
-		
-	};
 
 	enum ResourceState : uint32_t
 	{
@@ -40,17 +33,9 @@ public:
 	};
 
 	friend ResourceManager;
-	friend AssetParser;
-	~Resource() 
-	{
-		_NotifyObserver(); 
-		if (_destroyFunction)
-			_destroyFunction(_data, _startBlock, _numBlocks);
-	}
 	
 private:
 	std::vector<Observer*> observers;
-	std::function<void(RawData* rawData, uint32_t startBlock, uint32_t numBlocks)> _destroyFunction;
 	SM_GUID ID;
 	Flag _flags;
 	uint16_t _refCount;
@@ -65,12 +50,11 @@ private:
 		ID = id;
 		_flags = flag;
 	}
-	ResourceType _resourceType;
-	RawData* _data;
+	~Resource() {}
+	RawData _rawData;
 	uint32_t _startBlock;
 	uint32_t _numBlocks;
 	void SetGUID(SM_GUID inID) { ID = inID; };
-	void _NotifyObserver() { for (auto &it : (observers)) { it->NotifyDelete(ID); } };
 	std::mutex _SetDataLock;
 	std::mutex _StateLock;
 	std::mutex _UnRefLock;
@@ -110,15 +94,13 @@ public:
 		}
 	}
 	SM_GUID GetGUID()const { return ID; };
-	RawData* GetData() 
+	RawData GetData() 
 	{
 		_SetDataLock.lock();
-		RawData* returnd = _data;
+		RawData returnd = _rawData;
 		_SetDataLock.unlock();
 		return returnd;
-		
 	};
-	void Destroy() { _SetDataLock.lock(); if (_destroyFunction) _destroyFunction(_data, _startBlock, _numBlocks); _SetDataLock.unlock(); };
 	void SetState(ResourceState state)
 	{
 		_StateLock.lock();
@@ -129,16 +111,14 @@ public:
 	{
 		return _state;
 	};
-	void SetData(RawData* data, uint32_t startBlock, uint32_t numBlocks, const std::function<void(RawData*, uint32_t, uint32_t)>& dfunc) 
+	void SetData(RawData data, uint32_t startBlock, uint32_t numBlocks) 
 	{
 		_SetDataLock.lock();
-		_data = data;
+		_rawData = data;
 		_startBlock = startBlock;
 		_numBlocks = numBlocks;
-		_destroyFunction = dfunc; 
 		_SetDataLock.unlock();
 	};
-	const ResourceType GetResourceType() const { return _resourceType; };
 
 	operator SM_GUID()const { return ID; }
 };

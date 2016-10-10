@@ -29,7 +29,7 @@ public:
 	IAssetLoader(const std::string &file) { compressedFile = file; };
 	virtual ~IAssetLoader() {};
 
-	virtual RawData* LoadResource(SM_GUID guid, std::function<char*(uint32_t dataSize)> allocCallback)=0;
+	virtual RawData LoadResource(SM_GUID guid, std::function<char*(uint32_t dataSize)> allocCallback)=0;
 	void AddType(uint32_t& type)
 	{
 		uint32_t t = _fileTypes.size();

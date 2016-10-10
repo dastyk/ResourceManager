@@ -35,10 +35,9 @@ ZipLoader::~ZipLoader()
 	// nothing to do here
 }
 
-RawData* ZipLoader::LoadResource(SM_GUID guid, std::function<char*(uint32_t dataSize)> allocCallback)
+RawData ZipLoader::LoadResource(SM_GUID guid, std::function<char*(uint32_t dataSize)> allocCallback)
 {
-	RawData* preturnData = new RawData;
-	RawData& returnData = *preturnData;
+	RawData returnData;
 	std::string fileName;
 
 	auto find = hashTable.find(guid.data);
@@ -56,6 +55,10 @@ RawData* ZipLoader::LoadResource(SM_GUID guid, std::function<char*(uint32_t data
 	{
 		uint32_t dataSize = zipFile.getEntrySize();
 		char* storageLocation = allocCallback( dataSize );
+		if (storageLocation == nullptr)
+		{
+			throw std::runtime_error("Chunky Pool Allocator out of memory.");
+		}
 		zipFile.getData( dataSize, storageLocation );
 		returnData.size = dataSize;
 		returnData.data = storageLocation;
@@ -75,5 +78,5 @@ RawData* ZipLoader::LoadResource(SM_GUID guid, std::function<char*(uint32_t data
 		// throw "NOW FOUND BITCH";
 	}
 	
-	return preturnData;
+	return returnData;
 }
