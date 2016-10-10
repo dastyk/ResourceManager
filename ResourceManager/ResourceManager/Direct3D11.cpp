@@ -386,9 +386,13 @@ void Direct3D11::NotifyDelete(SM_GUID guid)
 	{
 		auto& findIndexBuffer = _indexBuffers.find(guid);
 		if (findIndexBuffer != _indexBuffers.end())
+		{
 			SAFE_RELEASE(findIndexBuffer->second.buffer);
+			_indexBuffers.erase(guid);
+		}
 		SAFE_RELEASE(find->second.buffer);
 		_vertexBuffers.erase(guid);
+		
 	}
 	_bufferLock.unlock();
 	_textureLock.lock();
