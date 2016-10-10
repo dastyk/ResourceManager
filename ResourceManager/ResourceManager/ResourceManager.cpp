@@ -369,9 +369,6 @@ int32_t ResourceManager::_Allocate( uint32_t blocks )
 
 	_mutexAllocLock.lock();
 
-	printf("Before alloc with %d blocks\n", blocks);
-	PrintOccupancy();
-
 	if ( _firstFreeBlock == -1 )
 	{
 		_mutexAllocLock.unlock();
@@ -452,9 +449,6 @@ int32_t ResourceManager::_Allocate( uint32_t blocks )
 
 	_numFreeBlocks -= blocks;
 
-	printf("After alloc at slot %d (%d blocks)\n", allocSlot, blocks);
-	PrintOccupancy();
-
 	_mutexAllocLock.unlock();
 
 	return allocSlot;
@@ -465,8 +459,6 @@ void ResourceManager::_Free( int32_t firstBlock, uint32_t numBlocks )
 {
 	_mutexAllocLock.lock();
 
-	printf("Before freeing at slot %d (%d blocks)\n", firstBlock, numBlocks);
-	PrintOccupancy();
 
 	// If there is no list to insert into, just make the current ones the new list.
 	if ( _firstFreeBlock == -1 )
@@ -563,8 +555,6 @@ void ResourceManager::_Free( int32_t firstBlock, uint32_t numBlocks )
 
 	_numFreeBlocks += numBlocks;
 
-	printf("After freeing at slot %d (%d blocks)\n", firstBlock, numBlocks);
-	PrintOccupancy();
 
 	_mutexAllocLock.unlock();
 }
