@@ -20,13 +20,7 @@ ResourceManager& ResourceManager::Instance()
 
 ResourceManager::ResourceManager()
 {
-	_resourcePool = MemoryManager::CreatePoolAllocator(sizeof(ResourceList), 1337, 0);
-
-	_numFreeBlocks = _numBlocks = 20;
-	_pool = (char*)MemoryManager::Alloc(_numBlocks * _blockSize);
-
-	// Make blocks form a linked list (all of them at startup)
-	_SetupFreeBlockList();
+	
 }
 
 ResourceManager::~ResourceManager()
@@ -740,6 +734,19 @@ void ResourceManager::_ParserThread(uint16_t threadID)
 	_mutexLockGeneral.lock();
 	_threadRunningMap[threadID].inUse = false;
 	_mutexLockGeneral.unlock();
+}
+
+void ResourceManager::Init(uint64_t maxMemory)
+{
+	uint32_t nrb = maxMemory / (sizeof(ResourceList) + _blockSize);
+
+	_resourcePool = MemoryManager::CreatePoolAllocator(sizeof(ResourceList), nrb, 0);
+
+	_numFreeBlocks = _numBlocks = nrb;
+	_pool = (char*)MemoryManager::Alloc(_numBlocks * _blockSize);
+
+	// Make blocks form a linked list (all of them at startup)
+	_SetupFreeBlockList();
 }
 
 void ResourceManager::ShutDown()

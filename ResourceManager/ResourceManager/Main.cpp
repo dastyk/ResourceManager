@@ -30,7 +30,7 @@ int main(int argc, char** argv)
 	MemoryManager::CreateInstance();
 	MemoryManager::GetInstance()->Init(512U * 1024U * 1024U);
 	ResourceManager& r = ResourceManager::Instance(); // Kickstart at our will
-	
+	r.Init(256U * 1024U * 1024U);
 
 	r.SetAssetLoader(new ZipLoader("data.dat"));
 

@@ -40,6 +40,7 @@ public:
 	void SetAssetLoader(IAssetLoader* loader);
 	void AddParser(const std::string& fileend,const std::function<void(Resource& r)>& parseFunction);
 
+	void Init(uint64_t maxMemory);
 	void ShutDown();
 	void Startup();
 
