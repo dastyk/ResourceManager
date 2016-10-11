@@ -223,7 +223,7 @@ int main(int argc, char** argv)
 		};
 
 		uint32_t maxMemory = r.MaxMemory();
-		uint32_t freeMemory = r.MaxMemory() - r.FreeMemory();
+		uint32_t freeMemory = r.FreeMemory();
 		std::string maxMemoryStr = bytesToString(maxMemory);
 		std::string freeMemoryStr = bytesToString(freeMemory);
 

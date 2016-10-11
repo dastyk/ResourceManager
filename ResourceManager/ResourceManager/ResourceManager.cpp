@@ -373,7 +373,6 @@ int32_t ResourceManager::_Allocate( uint32_t blocks )
 	{
 		_mutexAllocLock.unlock();
 		return -1;
-		//throw runtime_error("No free blocks remaining!");
 	}
 
 	int32_t allocSlot = _firstFreeBlock;
@@ -390,7 +389,6 @@ int32_t ResourceManager::_Allocate( uint32_t blocks )
 		{
 			_mutexAllocLock.unlock();
 			return -1;
-			//throw runtime_error("Not enough contiguous free blocks to accomodate the allocation!");
 		}
 
 		// Not next contigious block; reset and keep trying
@@ -414,25 +412,12 @@ int32_t ResourceManager::_Allocate( uint32_t blocks )
 	{
 		_mutexAllocLock.unlock();
 		return -1;
-		//throw runtime_error( "Invalid allocation slot!" );
 	}
 
 	if ( allocSlot == _firstFreeBlock )
 	{
-		// REMOVE THIS LATER
-		if (_numFreeBlocks == 1)
-		{
-			FreeBlock* test = reinterpret_cast<FreeBlock*>(_pool + (allocSlot + blocks - 1) * _blockSize);
-		}
-
 		// Index of the block after the last one to allocate
 		_firstFreeBlock = reinterpret_cast<FreeBlock*>(_pool + (allocSlot + blocks - 1) * _blockSize)->Next;
-
-		// REMOVE THIS LATER
-		if (_firstFreeBlock > 100)
-		{
-			int hej = 0;
-		}
 
 		if ( _firstFreeBlock != -1 )
 			reinterpret_cast<FreeBlock*>(_pool + _firstFreeBlock * _blockSize)->Previous = -1;
@@ -458,7 +443,6 @@ int32_t ResourceManager::_Allocate( uint32_t blocks )
 void ResourceManager::_Free( int32_t firstBlock, uint32_t numBlocks )
 {
 	_mutexAllocLock.lock();
-
 
 	// If there is no list to insert into, just make the current ones the new list.
 	if ( _firstFreeBlock == -1 )
@@ -555,7 +539,6 @@ void ResourceManager::_Free( int32_t firstBlock, uint32_t numBlocks )
 
 	_numFreeBlocks += numBlocks;
 
-
 	_mutexAllocLock.unlock();
 }
 
@@ -563,7 +546,6 @@ void ResourceManager::_Free( int32_t firstBlock, uint32_t numBlocks )
 void ResourceManager::_Run()
 {
 	_mutexLockGeneral.lock();
-	
 
 	//Create threads and initialize them as "free"
 	for (uint16_t i = 0; i < NR_OF_LOADING_THREADS; i++)
