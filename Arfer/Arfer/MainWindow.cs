@@ -16,20 +16,12 @@ using System.Runtime.Serialization.Formatters.Binary;
 
 namespace Arfer
 {
-    class TreeData
-    {
-        public int offset;
-        public int size;
-        public bool compressed;
-        public string ext;
-        public string filePath;
-    }
 
     public partial class Arfer : Form
     {
         private string savePath = "";
         private string loadPath = "";
-        private int currentOffset = 0;
+        private long currentOffset = 0;
         public Arfer()
         {
             InitializeComponent();
@@ -48,6 +40,13 @@ namespace Arfer
 
             savePath = "";
             TreeNode node = new TreeNode();
+            TreeData data = new TreeData();
+            data.offset = 0;
+            data.size = 0;
+            data.compressed = false;
+            data.filePath = "asd";
+            data.ext = "";
+            node.Tag = data;
             node.Text = "new package";
             node.Name = "proot";
             node.ContextMenuStrip = itemTreeNodeRCCM;
@@ -82,20 +81,25 @@ namespace Arfer
             if (File.Exists(prom.FileName))
             {
                 itemTree.Nodes.Clear();
-                using (Stream file = File.Open(prom.FileName, FileMode.Open))
-                {
-                    BinaryFormatter bf = new BinaryFormatter();
-                    object obj = bf.Deserialize(file);
 
-                    TreeNode[] nodeList = (obj as IEnumerable<TreeNode>).ToArray();
-                    itemTree.Nodes.AddRange(nodeList);
-                }
+                jhTreeViewTools.LoadAndSave.loadTree(itemTree, prom.FileName);
+                //using (Stream file = File.Open(prom.FileName, FileMode.Open))
+                //{
+                //    BinaryFormatter bf = new BinaryFormatter();
+                //    object obj = bf.Deserialize(file);
+
+                //    TreeNode[] nodeList = (obj as IEnumerable<TreeNode>).ToArray();
+                //    itemTree.Nodes.AddRange(nodeList);
+                //}
 
                 saveToolStripMenuItem.Enabled = true;
                 saveAsToolStripMenuItem.Enabled = true;
                 exportToolStripMenuItem.Enabled = true;
 
                 setContextMenyStripForNode(itemTree.Nodes[0]);
+                TreeData data = (TreeData)itemTree.Nodes[0].Tag;
+                TreeData d2 = (TreeData)itemTree.Nodes[0].Nodes[0].Tag;
+                int i = 0;
             }
 
         }
@@ -117,11 +121,12 @@ namespace Arfer
 
             if (savePath != "")
             {
-                using (Stream file = File.Open(savePath, FileMode.Create))
-                {
-                    BinaryFormatter bf = new BinaryFormatter();
-                    bf.Serialize(file, itemTree.Nodes.Cast<TreeNode>().ToList());
-                }
+                jhTreeViewTools.LoadAndSave.saveTree(itemTree, savePath);
+                //using (Stream file = File.Open(savePath, FileMode.Create))
+                //{
+                //    BinaryFormatter bf = new BinaryFormatter();
+                //    bf.Serialize(file, itemTree.Nodes.Cast<TreeNode>().ToList());
+                //}
             }
         }
 
@@ -149,22 +154,24 @@ namespace Arfer
         }
 
 
-        private void writeFromTree(BinaryWriter writer, TreeNode tree)
+        private void writeToBinary(BinaryWriter writer, TreeNode tree)
         {
-            tree.Tag = new TreeData();
-            TreeData t =  (TreeData)tree.Tag;
+            TreeData data =  (TreeData)tree.Tag;
             
-            writer.Write(tree.Text.Length);
             writer.Write(tree.Text);
-            //writer.Write(offset to data in file) // From end of tree structure.
-            //writer.Write(lenght of extension)
-            //writer.Write(Extention)
+            writer.Write(data.ext);
+            writer.Write(data.size);
+            writer.Write(data.offset);
             writer.Write(tree.Nodes.Count);
             foreach(TreeNode n in tree.Nodes)
             {
-                writeFromTree(writer, n);
+                writeToBinary(writer, n);
             }
            
+        }
+        private void readFromBinary(BinaryReader reader, TreeNode tree)
+        {
+
         }
         private void exportToolStripMenuItem_Click(object sender, EventArgs e)
         {
@@ -174,9 +181,12 @@ namespace Arfer
             prom.InitialDirectory = Environment.CurrentDirectory;
             prom.ShowDialog();
 
-            if (prom.FileName != "")
+            using (BinaryWriter writer = new BinaryWriter(File.Open(prom.FileName, FileMode.OpenOrCreate)))
             {
+                writeToBinary(writer, itemTree.Nodes[0]);
             }
+
+
         }
 
         private void itemTree_AfterLabelEdit(object sender, NodeLabelEditEventArgs e)
@@ -233,6 +243,13 @@ namespace Arfer
             TreeNode newn = new TreeNode("new folder");
             newn.Name = "new folder";
             newn.ContextMenuStrip = itemTreeNodeRCCM;
+            TreeData data = new TreeData();
+            data.offset = 0;
+            data.size = 0;
+            data.compressed = false;
+            data.filePath = "";
+            data.ext = "";
+            newn.Tag = data;
             node.Nodes.Add(newn);
             itemTree.SelectedNode = newn;
             renameSelectedNode();
@@ -249,6 +266,7 @@ namespace Arfer
             prom.ShowDialog();
             if (File.Exists(prom.FileName))
             {
+                FileStream file = File.Open(prom.FileName, FileMode.Open);
                 loadPath = Path.GetDirectoryName(prom.FileName);
                 string fileName = Path.GetFileName(prom.FileName);
                 TreeNode node = itemTree.SelectedNode;
@@ -256,6 +274,14 @@ namespace Arfer
                 TreeNode newn = new TreeNode(fileName);
                 newn.Name = prom.FileName;
                 newn.ContextMenuStrip = itemTreeFileNodeRCCM;
+                TreeData data = new TreeData();
+                data.offset = currentOffset;
+                data.size = file.Length;
+                currentOffset += data.size;                
+                data.compressed = false;
+                data.filePath = prom.FileName;
+                data.ext = Path.GetExtension(prom.FileName);
+                newn.Tag = data;
                 node.Nodes.Add(newn);
                 itemTree.SelectedNode = newn;
             }
@@ -315,5 +341,14 @@ namespace Arfer
         {
             itemTree.SelectedNode.Collapse();
         }
+    }
+
+    class TreeData
+    {
+        public long offset;
+        public long size;
+        public bool compressed;
+        public string ext;
+        public string filePath;
     }
 }
