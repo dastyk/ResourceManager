@@ -29,6 +29,7 @@
         private void InitializeComponent()
         {
             this.components = new System.ComponentModel.Container();
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(Arfer));
             this.fileToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.newPackageToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.existingPackageToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -317,6 +318,7 @@
             this.Controls.Add(this.itemTree);
             this.Controls.Add(this.menuStrip1);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedSingle;
+            this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.MainMenuStrip = this.menuStrip1;
             this.MaximizeBox = false;
             this.Name = "Arfer";

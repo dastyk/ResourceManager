@@ -127,10 +127,9 @@ namespace Arfer
 
             if (savePath != "")
             {
-                using (BinaryWriter writer = new BinaryWriter(File.Open(savePath, FileMode.OpenOrCreate)))
-                {
-                    writeToBinary(writer, itemTree.Nodes[0]);
-                }
+
+                writeToBinary(savePath, itemTree);
+
             }
         }
 
@@ -148,22 +147,94 @@ namespace Arfer
 
             if (savePath != "")
             {
-                using (BinaryWriter writer = new BinaryWriter(File.Open(savePath, FileMode.OpenOrCreate)))
-                {
-                    writeToBinary(writer, itemTree.Nodes[0]);
-                }
+
+                writeToBinary(savePath, itemTree);
+
 
             }
         }
+        struct LoadData
+        {
+            public LoadData(string path, long size, long offset, long newOffset)
+            {
+                this.path = path;
+                this.size = size;
+                this.offset = offset;
+                this.newOffset = newOffset;
+            }
 
+            public string path;
+            public long size;
+            public long offset;
+            public long newOffset;
+        }
+        private List<LoadData> toLoad = new List<LoadData>();
+
+        private void writeToBinary(string path, TreeView tree)
+        {
+            using (BinaryWriter writer = new BinaryWriter(File.Open("temp", FileMode.Create)))
+            {
+                currentOffset = 0;
+                TreeData data = (TreeData)tree.Tag;
+                toLoad.Clear();
+                writer.Write(tree.Text);
+                writer.Write(false);
+                writer.Write("");
+                writer.Write((long)0);
+                writer.Write((long)0);
+                writer.Write(tree.Nodes.Count);
+                foreach (TreeNode n in tree.Nodes)
+                {
+                    writeToBinary(writer, n);
+                }
+
+                //char[] buffer = new char[10000];
+
+                //foreach (LoadData d in toLoad)
+                //{
+                //    if (d.path != "")
+                //    {
+                //        // This is a newly added file, use path
+                //        using (BinaryReader file = new BinaryReader(File.Open(d.path, FileMode.Open)))
+                //        {
+
+                //            long totSize = d.size;
+                //            long count = (long)Math.Ceiling(Convert.ToDouble(totSize) / 10000.0);
+                //            while (totSize > 0)
+                //            {
+                //                int ws = (totSize >= 10000) ? 10000 : (int)(totSize % 10000);
+                //                file.Read(buffer, 0, ws);
+                //                writer.Write(buffer, 0, ws);
+                //                totSize -= 10000;
+                //            }
+                //        }
+
+                //    }
+                //    else
+                //    {
+                //        // This file is in the .drf already, use the offset to find it.
+                     
+                //    }
+                //}
+            }
+            File.Replace("temp", path, "");
+        }
         private void writeToBinary(BinaryWriter writer, TreeNode tree)
         {
             TreeData data =  (TreeData)tree.Tag;
             
             writer.Write(tree.Text);
+            writer.Write(data.compressed);
             writer.Write(data.ext);
-            writer.Write(data.size);
+            writer.Write(data.size);            
             writer.Write(data.offset);
+            if(data.size != 0)
+            {
+                toLoad.Add(new LoadData(data.filePath, data.size,data.offset, currentOffset));
+                currentOffset += data.size;
+
+            }
+
             writer.Write(tree.Nodes.Count);
             foreach(TreeNode n in tree.Nodes)
             {
@@ -176,13 +247,15 @@ namespace Arfer
             TreeNode node = new TreeNode();
             TreeData data = new TreeData();
             node.Text = reader.ReadString();
-            node.ContextMenuStrip = itemTreeNodeRCCM;        
+            node.ContextMenuStrip = itemTreeNodeRCCM;
+            data.compressed = reader.ReadBoolean();      
             data.ext = reader.ReadString();
             data.size = reader.ReadInt64();
             data.offset = reader.ReadInt64();
             int count = reader.ReadInt32();
             node.Tag = data;
             tree.Nodes.Add(node);
+           
             for(int i = 0; i < count; i++)
             {
                 readFromBinary(reader, tree.Nodes[0]);
@@ -192,7 +265,8 @@ namespace Arfer
         {
             TreeNode node = new TreeNode();
             TreeData data = new TreeData();
-            node.Text = reader.ReadString();           
+            node.Text = reader.ReadString();
+            data.compressed = reader.ReadBoolean();
             data.ext = reader.ReadString();
             data.size = reader.ReadInt64();
             if (data.size == 0)
@@ -289,24 +363,27 @@ namespace Arfer
             prom.ShowDialog();
             if (File.Exists(prom.FileName))
             {
-                FileStream file = File.Open(prom.FileName, FileMode.Open);
-                loadPath = Path.GetDirectoryName(prom.FileName);
-                string fileName = Path.GetFileName(prom.FileName);
-                TreeNode node = itemTree.SelectedNode;
-                
-                TreeNode newn = new TreeNode(fileName);
-                newn.Name = prom.FileName;
-                newn.ContextMenuStrip = itemTreeFileNodeRCCM;
-                TreeData data = new TreeData();
-                data.offset = currentOffset;
-                data.size = file.Length;
-                currentOffset += data.size;                
-                data.compressed = false;
-                data.filePath = prom.FileName;
-                data.ext = Path.GetExtension(prom.FileName);
-                newn.Tag = data;
-                node.Nodes.Add(newn);
-                setSelectedNode(newn);
+                using (FileStream file = File.Open(prom.FileName, FileMode.Open))
+                {
+                    loadPath = Path.GetDirectoryName(prom.FileName);
+                    string fileName = Path.GetFileName(prom.FileName);
+                    TreeNode node = itemTree.SelectedNode;
+
+                    TreeNode newn = new TreeNode(fileName);
+                    newn.Name = prom.FileName;
+                    newn.ContextMenuStrip = itemTreeFileNodeRCCM;
+                    TreeData data = new TreeData();
+                    data.offset = currentOffset;
+                    data.size = file.Length;
+                    currentOffset += data.size;
+                    data.compressed = false;
+                    data.filePath = prom.FileName;
+                    data.ext = Path.GetExtension(prom.FileName);
+                    newn.Tag = data;
+                    node.Nodes.Add(newn);
+                    TreeData d = (TreeData)newn.Tag;
+                    setSelectedNode(newn);
+                }
             }
         }
 
