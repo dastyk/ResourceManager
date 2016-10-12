@@ -28,7 +28,6 @@ public:
 	const SM_GUID LoadResource(SM_GUID guid, const Resource::Flag& flag);
 	void UnloadResource(SM_GUID guid);
 	void EvictResource(SM_GUID guid);
-	void UpdatePriority(SM_GUID guid, const Resource::Flag& flag);
 	bool IsLoaded(SM_GUID guid);
 
 	void PrintOccupancy( void );
@@ -84,6 +83,7 @@ private:
 
 	void _LoadingThread(uint16_t threadID);
 	void _ParserThread(uint16_t threadID);
+	void _UpdatePriority(SM_GUID guid, const Resource::Flag& flag);
 	void _SetupFreeBlockList( void );
 	int32_t _Allocate( uint32_t blocks );
 	void _Free( int32_t firstBlock, uint32_t numBlocks );
