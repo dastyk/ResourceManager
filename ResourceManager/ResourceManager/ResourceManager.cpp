@@ -30,30 +30,29 @@ ResourceManager::~ResourceManager()
 
 const SM_GUID ResourceManager::LoadResource(SM_GUID guid, const Resource::Flag& flag)
 {
-	// Idea of this method:
-	// * If the resource already exists, don't do anything because we're done
-	// * If not, we have to load it, which means that we need to reserve memory.
-	// * We need the size to reserve, which means that we need to consult the asset loader for the file.
-	// * Either we store the compressed size or the parsed data. The latter case involved a trip to the asset parser.
-	// * When we have the final size it's time to allocate. If we find a suitable slot we can use it, otherwise something must be evicted.
-
+	//Lock the "general" lock so that we won't be able to change a resource before we're done with it. Unlocked right before a return
 	_mutexLockGeneral.lock();
+
+	//Check to see if the GUID is already loaded, in that case see if we can update the priority and then return the Load Resource
+	// (Simply put: if already loaded or in queue to be loaded, don't push it into the queue to be loaded.
 	auto find = _FindResource(guid);
 	if (find)
 	{
-		//printf("Resource already loaded. GUID: %llu \n", guid.data);
-		_mutexLockGeneral.unlock();
-		UpdatePriority(guid, flag);
-		_mutexLockGeneral.lock();
+		_UpdatePriority(guid, flag);
 		find->resource.IncRefCount();
 		_mutexLockGeneral.unlock();
 		return guid;
 	}
 	
+	//Create the resource
 	auto& r = _CreateResource(guid, flag)->resource;
 	r.IncRefCount();
+
+	//If we don't want to push it onto a thread, and instead want to have it loaded right the fuck now, we do so. 
+	//Someone else feel free to comment what's going on here. I have no idea, really.
 	if (flag & Resource::Flag::LOAD_AND_WAIT)
 	{
+		//TODO: Move this so we don't "find" a GUID that early have another flag, and now is LOAD_AND_WAIT, but not loaded and just in queue.
 		_mutexLockLoader.lock();
 		printf("Resource loading. GUID: %llu\n", r.GetGUID().data);
 
@@ -92,12 +91,19 @@ const SM_GUID ResourceManager::LoadResource(SM_GUID guid, const Resource::Flag& 
 	}
 	else
 	{
+		//Lock the loading queue so we can push our new resource to it.
 		_mutexLockLoadingQueue.lock();
+		
+		//Set the state of the resource to waiting (to be loaded), print out that it is on the stack and push it to the stack
 		r.SetState(Resource::ResourceState::Waiting);
 		printf("Adding resource to toLoad stack. GUID: %llu\n", r.GetGUID().data);
 		_loadingQueue.push(&r);
+
+		//Unlock the loading queue so we don't cause a deadlock
 		_mutexLockLoadingQueue.unlock();
 	}
+
+	//Unlock the general lock and return the function with the GUID.
 	_mutexLockGeneral.unlock();
 	return guid;
 }
@@ -129,45 +135,47 @@ void ResourceManager::EvictResource(SM_GUID guid)
 
 }
 
-void ResourceManager::UpdatePriority(SM_GUID guid,const Resource::Flag& flag)
+void ResourceManager::_UpdatePriority(SM_GUID guid,const Resource::Flag& flag)
 {
-	_mutexLockGeneral.lock();
 	auto find = _FindResource(guid);
 	if (find)
 	{
-		find->resource._flags = flag;
-
-
-		std::priority_queue<Resource*, std::vector<Resource*>, CompareResources> newQ;
-
-		_mutexLockLoadingQueue.lock();
-		_mutexLockParserQueue.lock();
-		size_t size = _loadingQueue.size();
-		for (size_t i = 0; i < size; i++)
+		//Only update the resource if it gets a HIGHER priorty.
+		//Pop the entire queue and reorder it. A lot of work, is it actually worth?
+		if (find->resource._flags < flag)
 		{
-			auto r = _loadingQueue.top();
-			_loadingQueue.pop();
-			newQ.push(r);
+			find->resource._flags = flag;
+
+
+			std::priority_queue<Resource*, std::vector<Resource*>, CompareResources> newQ;
+
+			_mutexLockLoadingQueue.lock();
+			_mutexLockParserQueue.lock();
+			size_t size = _loadingQueue.size();
+			for (size_t i = 0; i < size; i++)
+			{
+				auto r = _loadingQueue.top();
+				_loadingQueue.pop();
+				newQ.push(r);
+			}
+
+			_loadingQueue = std::move(newQ);
+
+
+
+			size = _parserQueue.size();
+			for (size_t i = 0; i < size; i++)
+			{
+				auto r = _parserQueue.top();
+				_parserQueue.pop();
+				newQ.push(r);
+			}
+
+			_parserQueue = std::move(newQ);
+			_mutexLockParserQueue.unlock();
+			_mutexLockLoadingQueue.unlock();
 		}
-
-		_loadingQueue = std::move(newQ);
-
-
-
-		size = _parserQueue.size();
-		for (size_t i = 0; i < size; i++)
-		{
-			auto r = _parserQueue.top();
-			_parserQueue.pop();
-			newQ.push(r);
-		}
-
-		_parserQueue = std::move(newQ);
-		_mutexLockParserQueue.unlock();
-		_mutexLockLoadingQueue.unlock();
 	}
-	_mutexLockGeneral.unlock();
-
 }
 
 bool ResourceManager::IsLoaded(SM_GUID guid)
@@ -537,11 +545,27 @@ void ResourceManager::_Free( int32_t firstBlock, uint32_t numBlocks )
 }
 
 
+/*===============================================================
+/*		The main "Run" thread for the Resource Manager
+/*	From here, we start the LoadingThread and the two ParserThreads
+/*	For as long as we haven't shut down this thread, it'll loop through
+/*	the resources and remove resources not "currently in use".
+/*	(Read: Loaded, non-persistent and without a _refCount)
+/*	When this function is closed, it makes sure that it's child
+/*	threads are terminated as well.
+/*
+/*	Between each loop, we'll wait for 17 ms before going again,
+/*	about 1 "frame".
+/*	=============================================================
+*/
+
 void ResourceManager::_Run()
 {
+	//Lock so we can initialize everything without any intereference.
 	_mutexLockGeneral.lock();
 
 	//Create threads and initialize them as "free"
+	//Both the loadingThread and the parserThread.
 	for (uint16_t i = 0; i < NR_OF_LOADING_THREADS; i++)
 	{
 		_threadIDMap.insert({ i, thread() });
@@ -566,7 +590,7 @@ void ResourceManager::_Run()
 	while (_running)
 	{
 		_mutexLockGeneral.lock();
-		//Loop through all resources, ticking them down
+		//Loop through all resources, removing the first, and only one, resource available to be removed.
 		uint64_t erased = 0;
 		auto r = _resources;
 		while (r)
@@ -580,9 +604,12 @@ void ResourceManager::_Run()
 			r = r->next;
 		}
 		_mutexLockGeneral.unlock();
+
+		//Taking a nap.
 		this_thread::sleep_for(std::chrono::milliseconds(17));
 	}
 
+	//When we're shutting down, we wait for our child-threads and join them in.
 	bool allThreadsJoined = false;
 	while (!allThreadsJoined)
 	{
@@ -606,33 +633,52 @@ void ResourceManager::_Run()
 		_mutexLockGeneral.unlock();
 	}
 }
-	
+
+
+/*===============================================================
+/*		The "Loading" thread for the Resource Manager
+/*	This thread is quite simple. Each iteration of the loop,
+/*	it checks if there's any job for it in the loading queue.
+/*	If so, it'll mark this job as "loading" and start loading it. 
+/*	Once done, it'll mark the job "waiting" again and push it onto
+/*	the parser queue.
+/*
+/*	Between each loop, we'll wait for 17 ms before going again,
+/*	about 1 "frame".
+/*	=============================================================
+*/
 void ResourceManager::_LoadingThread(uint16_t threadID)
 {
+
+	//Lock the general so we can change ourselves to "in use" and "not joined"
 	_mutexLockGeneral.lock();
 
 	_threadRunningMap.find(threadID)->second.inUse = true;
 	_threadRunningMap.find(threadID)->second.beenJoined = false;
 	_mutexLockGeneral.unlock();
+
 	while (_running)
 	{
-		//_mutexLockGeneral.lock();
+		//We don't wish for nasty surprises.
 		_mutexLockLoadingQueue.lock();
 		if(_loadingQueue.size())
 		{
+			//Get the job
 			Resource* job = _loadingQueue.top();
 			_loadingQueue.pop();
 			_mutexLockLoadingQueue.unlock();
+
+			//Proudly write out what GUID we have started working on.
 			ostringstream dataStream;
 			dataStream << job->GetGUID().data;
 
 			job->SetState(Resource::ResourceState::Loading);
 			printf("Started loading resource. GUID: %llu\n", job->GetGUID().data);
-			//DebugLogger::GetInstance()->AddMsg("Started Job: " + dataStream.str());
 
 
-
+			//Lock the loader so we can work in peace and quiet.
 			_mutexLockLoader.lock();
+
 			//Call asset loader to load the data we want
 			uint32_t startBlock = 0;
 			uint32_t numBlocks = 0;
@@ -661,24 +707,21 @@ void ResourceManager::_LoadingThread(uint16_t threadID)
 
 				_mutexLockLoader.unlock();
 
-				job->SetState(Resource::ResourceState::Waiting);
 				printf("Finished loading resource. GUID: %llu\n", job->GetGUID().data);
-				//Lock so we can insert the data to the resources
-
+				job->SetState(Resource::ResourceState::Waiting);
 				job->SetData(rawData, startBlock, numBlocks);
 
+				//Lock so we can insert the data to the resources
 				_mutexLockParserQueue.lock();
 				_parserQueue.push(job);
 				_mutexLockParserQueue.unlock();
 			}
 			catch (std::runtime_error& e)
 			{
-				printf(e.what());
-				printf("\n");
-
+				//We don't have enough memory. Wait one "sleep", but push the job back onto the queue for a new try.
 				_mutexLockLoadingQueue.lock();
 				job->SetState(Resource::ResourceState::Waiting);
-				//_loadingQueue.push(job);
+				_loadingQueue.push(job);
 				_mutexLockLoadingQueue.unlock();
 
 				_mutexLockLoader.unlock();
@@ -688,49 +731,67 @@ void ResourceManager::_LoadingThread(uint16_t threadID)
 		}
 		else
 			_mutexLockLoadingQueue.unlock();
-	//	_mutexLockGeneral.unlock();
+	
 		std::this_thread::sleep_for(std::chrono::milliseconds(17));
 	}
 
+	//Mark us "done", that is "not in use".
 	_mutexLockGeneral.lock();
 	_threadRunningMap.find(threadID)->second.inUse = false;
 	_mutexLockGeneral.unlock();
 }
 
+
+/*===============================================================
+/*		The "Parsing" thread for the Resource Manager
+/*	This thread is quite simple. Each iteration of the loop,
+/*	it checks if there's any job for it in the parsing queue.
+/*	If so, it'll mark this job as "Parsing" and start parsing it.
+/*	Once done, it'll mark the job "Loaded".
+/*
+/*	Between each loop, we'll wait for 17 ms before going again,
+/*	about 1 "frame".
+/*	=============================================================
+*/
 void ResourceManager::_ParserThread(uint16_t threadID)
 {
+	//Lock general so we can mark that we're in use.
 	_mutexLockGeneral.lock();
 
 	_threadRunningMap[threadID].inUse = true;
 	_threadRunningMap[threadID].beenJoined = false;
 	_mutexLockGeneral.unlock();
+
+
 	while (_running)
 	{
-		//_mutexLockGeneral.lock();
+		//Lock the parser queue so we can check for jobs and take them (no walls here)	
 		_mutexLockParserQueue.lock();
 		if (_parserQueue.size())
 		{
+
 			Resource* workingResource = _parserQueue.top();
 			_parserQueue.pop();
 			_mutexLockParserQueue.unlock();
-			// TODO: Create one thread for loading the resource and one, or multiple threads for parsing the data.
 
+			//Mark it as parsed, notify the user and start parsing it.
 			workingResource->SetState(Resource::ResourceState::Parsing);
 			printf("Starting parsing resource. GUID: %llu\n", workingResource->GetGUID().data);
-			//_mutexLockParser.lock();
-			//Let the parser make their magic. Should implement a "dummy" GUID at this point in time, that we "use as resource" for the frame that the parser might work
+			
 			_parser.ParseResource(*workingResource);
-			//_mutexLockParser.unlock();
-
+			
+			//The resource is now loaded and marked as such, the used is notified.
 			workingResource->SetState(Resource::ResourceState::Loaded);
 			printf("Finished parsing resource. GUID: %llu\n", workingResource->GetGUID().data);
 
 		}
 		else
 			_mutexLockParserQueue.unlock();
-	//	_mutexLockGeneral.unlock();
+	
 		std::this_thread::sleep_for(std::chrono::milliseconds(17));
 	}
+
+	//Let us join in the thread, mark us as "no longer in use"
 	_mutexLockGeneral.lock();
 	_threadRunningMap[threadID].inUse = false;
 	_mutexLockGeneral.unlock();
