@@ -43,6 +43,7 @@ namespace Arfer
             
             saveToolStripMenuItem.Enabled = true;
             saveAsToolStripMenuItem.Enabled = true;
+            exportToolStripMenuItem.Enabled = true;
 
         }
         private void existingPackageToolStripMenuItem_Click(object sender, EventArgs e)
@@ -65,6 +66,7 @@ namespace Arfer
 
                 saveToolStripMenuItem.Enabled = true;
                 saveAsToolStripMenuItem.Enabled = true;
+                exportToolStripMenuItem.Enabled = true;
             }
            
         }
@@ -76,7 +78,7 @@ namespace Arfer
                 
                 SaveFileDialog prom = new SaveFileDialog();
                 prom.Title = "Choose were to save";
-                prom.Filter = "Arfer Package|*.drf";
+                prom.Filter = "Arfer Package|*.drf.pak";
                 prom.InitialDirectory = Environment.CurrentDirectory;
                 prom.ShowDialog();
                 pathChoosen = prom.FileName;
@@ -96,7 +98,7 @@ namespace Arfer
         {
             SaveFileDialog prom = new SaveFileDialog();
             prom.Title = "Choose were to save";
-            prom.Filter = "Arfer Package|*.drf";
+            prom.Filter = "Arfer Package|*.drf.pak";
             prom.InitialDirectory = Environment.CurrentDirectory;
             prom.ShowDialog();
             pathChoosen = prom.FileName;
@@ -111,6 +113,20 @@ namespace Arfer
                 }
             }
         }
+
+        private void exportToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            SaveFileDialog prom = new SaveFileDialog();
+            prom.Title = "Choose were to export to";
+            prom.Filter = "Arfer data|*.drf";
+            prom.InitialDirectory = Environment.CurrentDirectory;
+            prom.ShowDialog();
+
+            if (prom.FileName != "")
+            {
+            }
+        }
+
         private void itemTree_AfterLabelEdit(object sender, NodeLabelEditEventArgs e)
         {
             if (e.Label != null)
@@ -145,6 +161,6 @@ namespace Arfer
             }
         }
 
-     
+      
     }
 }
