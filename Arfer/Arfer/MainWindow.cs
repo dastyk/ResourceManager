@@ -26,7 +26,15 @@ namespace Arfer
         {
             InitializeComponent();
         }
-
+        private void setSelectedNode(TreeNode node)
+        {
+            itemTree.SelectedNode = node;
+            nodeInfoBox.Text = node.Text;
+            TreeData data = (TreeData)node.Tag;
+            nodeComp.Text = "Compressed: " + ((data.compressed) ? "Yes" : "No");
+            nodeExt.Text = "Extension: " + data.ext;
+            nodeSize.Text = "File Size: " + data.size;
+        }
         private void exitToolStripMenuItem_Click(object sender, EventArgs e)
         {
             this.Close();
@@ -52,12 +60,11 @@ namespace Arfer
             node.ContextMenuStrip = itemTreeNodeRCCM;
             itemTree.Nodes.Add(node);
 
-            itemTree.SelectedNode = node;
+            setSelectedNode(node);
             renameSelectedNode();
 
             saveToolStripMenuItem.Enabled = true;
             saveAsToolStripMenuItem.Enabled = true;
-            exportToolStripMenuItem.Enabled = true;
 
 
 
@@ -74,32 +81,32 @@ namespace Arfer
 
         private void existingPackageToolStripMenuItem_Click(object sender, EventArgs e)
         {
+            
             OpenFileDialog prom = new OpenFileDialog();
             prom.Title = "Choose package to load";
-            prom.Filter = "Arfer Package|*.drf.pak";
+            prom.Filter = "Arfer Package|*.drf";
             prom.ShowDialog();
             if (File.Exists(prom.FileName))
             {
-                itemTree.Nodes.Clear();
+                DialogResult dialogResult = DialogResult.Yes;
+                if (itemTree.Nodes.Count != 0)
+                {
+                    dialogResult = MessageBox.Show("Are you sure you want to load this package? (All unsaved changes will be lost)", "Remove", MessageBoxButtons.YesNo);
+                    
+                }
+                if (dialogResult == DialogResult.Yes)
+                {
+                    itemTree.Nodes.Clear();
 
-                jhTreeViewTools.LoadAndSave.loadTree(itemTree, prom.FileName);
-                //using (Stream file = File.Open(prom.FileName, FileMode.Open))
-                //{
-                //    BinaryFormatter bf = new BinaryFormatter();
-                //    object obj = bf.Deserialize(file);
 
-                //    TreeNode[] nodeList = (obj as IEnumerable<TreeNode>).ToArray();
-                //    itemTree.Nodes.AddRange(nodeList);
-                //}
+                    using (BinaryReader reader = new BinaryReader(File.Open(prom.FileName, FileMode.Open)))
+                    {
+                        readFromBinary(reader, itemTree);
+                    }
+                    saveToolStripMenuItem.Enabled = true;
+                    saveAsToolStripMenuItem.Enabled = true;
+                }
 
-                saveToolStripMenuItem.Enabled = true;
-                saveAsToolStripMenuItem.Enabled = true;
-                exportToolStripMenuItem.Enabled = true;
-
-                setContextMenyStripForNode(itemTree.Nodes[0]);
-                TreeData data = (TreeData)itemTree.Nodes[0].Tag;
-                TreeData d2 = (TreeData)itemTree.Nodes[0].Nodes[0].Tag;
-                int i = 0;
             }
 
         }
@@ -108,11 +115,10 @@ namespace Arfer
         {
             if (savePath == "")
             {
-
                 SaveFileDialog prom = new SaveFileDialog();
                 prom.Title = "Choose were to save";
-                prom.Filter = "Arfer Package|*.drf.pak";
-                prom.DefaultExt = ".drf.pak";
+                prom.Filter = "Arfer Package|*.drf";
+                prom.DefaultExt = ".drf";
                 prom.FileName = itemTree.Nodes[0].Text;
                 prom.InitialDirectory = Environment.CurrentDirectory;
                 prom.ShowDialog();
@@ -121,12 +127,10 @@ namespace Arfer
 
             if (savePath != "")
             {
-                jhTreeViewTools.LoadAndSave.saveTree(itemTree, savePath);
-                //using (Stream file = File.Open(savePath, FileMode.Create))
-                //{
-                //    BinaryFormatter bf = new BinaryFormatter();
-                //    bf.Serialize(file, itemTree.Nodes.Cast<TreeNode>().ToList());
-                //}
+                using (BinaryWriter writer = new BinaryWriter(File.Open(savePath, FileMode.OpenOrCreate)))
+                {
+                    writeToBinary(writer, itemTree.Nodes[0]);
+                }
             }
         }
 
@@ -134,8 +138,8 @@ namespace Arfer
         {
             SaveFileDialog prom = new SaveFileDialog();
             prom.Title = "Choose were to save";
-            prom.Filter = "Arfer Package|*.drf.pak";
-            prom.DefaultExt = ".drf.pak";
+            prom.Filter = "Arfer Package|*.drf";
+            prom.DefaultExt = ".drf";
             prom.FileName = itemTree.Nodes[0].Text;
             prom.InitialDirectory = Environment.CurrentDirectory;
             prom.ShowDialog();
@@ -144,15 +148,13 @@ namespace Arfer
 
             if (savePath != "")
             {
-                using (Stream file = File.Open(savePath, FileMode.Create))
+                using (BinaryWriter writer = new BinaryWriter(File.Open(savePath, FileMode.OpenOrCreate)))
                 {
-                    BinaryFormatter bf = new BinaryFormatter();
-                    bf.Serialize(file, itemTree.Nodes.Cast<TreeNode>().ToList());
+                    writeToBinary(writer, itemTree.Nodes[0]);
                 }
 
             }
         }
-
 
         private void writeToBinary(BinaryWriter writer, TreeNode tree)
         {
@@ -169,25 +171,44 @@ namespace Arfer
             }
            
         }
+        private void readFromBinary(BinaryReader reader, TreeView tree)
+        {
+            TreeNode node = new TreeNode();
+            TreeData data = new TreeData();
+            node.Text = reader.ReadString();
+            node.ContextMenuStrip = itemTreeNodeRCCM;        
+            data.ext = reader.ReadString();
+            data.size = reader.ReadInt64();
+            data.offset = reader.ReadInt64();
+            int count = reader.ReadInt32();
+            node.Tag = data;
+            tree.Nodes.Add(node);
+            for(int i = 0; i < count; i++)
+            {
+                readFromBinary(reader, tree.Nodes[0]);
+            }
+        }
         private void readFromBinary(BinaryReader reader, TreeNode tree)
         {
-
-        }
-        private void exportToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            SaveFileDialog prom = new SaveFileDialog();
-            prom.Title = "Choose were to export to";
-            prom.Filter = "Arfer data|*.drf";
-            prom.InitialDirectory = Environment.CurrentDirectory;
-            prom.ShowDialog();
-
-            using (BinaryWriter writer = new BinaryWriter(File.Open(prom.FileName, FileMode.OpenOrCreate)))
+            TreeNode node = new TreeNode();
+            TreeData data = new TreeData();
+            node.Text = reader.ReadString();           
+            data.ext = reader.ReadString();
+            data.size = reader.ReadInt64();
+            if (data.size == 0)
+                node.ContextMenuStrip = itemTreeNodeRCCM;
+            else
+                node.ContextMenuStrip = itemTreeFileNodeRCCM;
+            data.offset = reader.ReadInt64();
+            int count = reader.ReadInt32();
+            node.Tag = data;
+            tree.Nodes.Add(node);
+            for (int i = 0; i < count; i++)
             {
-                writeToBinary(writer, itemTree.Nodes[0]);
+                readFromBinary(reader, tree.Nodes[0]);
             }
-
-
         }
+
 
         private void itemTree_AfterLabelEdit(object sender, NodeLabelEditEventArgs e)
         {
@@ -199,8 +220,9 @@ namespace Arfer
                     {
                         // Stop editing without canceling the label change.
 
-                        e.Node.Name = e.Label;
+                        e.Node.Name = e.Label;                    
                         e.Node.EndEdit(false);
+                        nodeInfoBox.Text = e.Label;
                     }
                     else
                     {
@@ -223,6 +245,7 @@ namespace Arfer
                     e.Node.BeginEdit();
                 }
             }
+
         }
 
         private void renameToolStripMenuItem_Click(object sender, EventArgs e)
@@ -233,7 +256,7 @@ namespace Arfer
 
         private void itemTree_NodeMouseClick(object sender, TreeNodeMouseClickEventArgs e)
         {
-            if (e.Button == MouseButtons.Right) itemTree.SelectedNode = e.Node;
+            setSelectedNode(e.Node);
         }
 
 
@@ -251,7 +274,7 @@ namespace Arfer
             data.ext = "";
             newn.Tag = data;
             node.Nodes.Add(newn);
-            itemTree.SelectedNode = newn;
+            setSelectedNode(newn);
             renameSelectedNode();
 
 
@@ -283,7 +306,7 @@ namespace Arfer
                 data.ext = Path.GetExtension(prom.FileName);
                 newn.Tag = data;
                 node.Nodes.Add(newn);
-                itemTree.SelectedNode = newn;
+                setSelectedNode(newn);
             }
         }
 
@@ -296,6 +319,8 @@ namespace Arfer
         {
             itemTree.LabelEdit = true;
             itemTree.SelectedNode.BeginEdit();
+           
+         
         }
         private void removeSelectedNode()
         {
@@ -306,7 +331,6 @@ namespace Arfer
                 {
                     saveToolStripMenuItem.Enabled = false;
                     saveAsToolStripMenuItem.Enabled = false;
-                    exportToolStripMenuItem.Enabled = false;
                 }
                 itemTree.Nodes.Remove(itemTree.SelectedNode);
             }
