@@ -76,6 +76,7 @@ namespace Arfer
                 {
                     saveToolStripMenuItem.Enabled = false;
                     saveAsToolStripMenuItem.Enabled = false;
+                    saveButton.Enabled = false;
                 }
                 checkedNodes.Remove(itemTree.SelectedNode);
                 itemTree.Nodes.Remove(itemTree.SelectedNode);
@@ -115,7 +116,7 @@ namespace Arfer
 
             saveToolStripMenuItem.Enabled = true;
             saveAsToolStripMenuItem.Enabled = true;
-
+            saveButton.Enabled = true;
 
 
         }
@@ -155,7 +156,7 @@ namespace Arfer
                     }
                     saveToolStripMenuItem.Enabled = true;
                     saveAsToolStripMenuItem.Enabled = true;
-
+                    saveButton.Enabled = true;
                     packOpenedPath = prom.FileName;
                 }
 
@@ -567,7 +568,7 @@ namespace Arfer
                             }
                             saveToolStripMenuItem.Enabled = true;
                             saveAsToolStripMenuItem.Enabled = true;
-
+                            saveButton.Enabled = true;
                             packOpenedPath = path;
                         }
                     }
@@ -692,6 +693,7 @@ namespace Arfer
                     {
                         saveToolStripMenuItem.Enabled = false;
                         saveAsToolStripMenuItem.Enabled = false;
+                        saveButton.Enabled = false;
                     }
 
                     itemTree.Nodes.Remove(itemTree.SelectedNode);
@@ -721,6 +723,28 @@ namespace Arfer
         private void delChecked_Click(object sender, EventArgs e)
         {
             delSel();
+        }
+
+        private void saveButton_Click(object sender, EventArgs e)
+        {
+            if (savePath == "")
+            {
+                SaveFileDialog prom = new SaveFileDialog();
+                prom.Title = "Choose were to save";
+                prom.Filter = "Arfer Package|*.drf";
+                prom.DefaultExt = ".drf";
+                prom.FileName = itemTree.Nodes[0].Text;
+                prom.InitialDirectory = Environment.CurrentDirectory;
+                prom.ShowDialog();
+                savePath = prom.FileName;
+            }
+
+            if (savePath != "")
+            {
+
+                writeToBinary(savePath, itemTree);
+                packOpenedPath = savePath;
+            }
         }
     }
 

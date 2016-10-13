@@ -66,8 +66,10 @@
             this.nodeComp = new System.Windows.Forms.Label();
             this.nodeSize = new System.Windows.Forms.Label();
             this.toolStrip1 = new System.Windows.Forms.ToolStrip();
+            this.saveButton = new System.Windows.Forms.ToolStripButton();
             this.checkBoxT = new System.Windows.Forms.ToolStripButton();
             this.delChecked = new System.Windows.Forms.ToolStripButton();
+            this.toolStripSeparator1 = new System.Windows.Forms.ToolStripSeparator();
             this.menuStrip1.SuspendLayout();
             this.itemTreeNodeRCCM.SuspendLayout();
             this.itemTreeFileNodeRCCM.SuspendLayout();
@@ -356,6 +358,8 @@
             // toolStrip1
             // 
             this.toolStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.saveButton,
+            this.toolStripSeparator1,
             this.checkBoxT,
             this.delChecked});
             this.toolStrip1.Location = new System.Drawing.Point(0, 24);
@@ -364,10 +368,22 @@
             this.toolStrip1.TabIndex = 4;
             this.toolStrip1.Text = "toolStrip1";
             // 
+            // saveButton
+            // 
+            this.saveButton.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Image;
+            this.saveButton.Enabled = false;
+            this.saveButton.Image = global::Arfer.Properties.Resources.Actions_document_save_as_icon;
+            this.saveButton.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.saveButton.Name = "saveButton";
+            this.saveButton.Size = new System.Drawing.Size(23, 22);
+            this.saveButton.Text = "toolStripButton1";
+            this.saveButton.ToolTipText = "Save changes";
+            this.saveButton.Click += new System.EventHandler(this.saveButton_Click);
+            // 
             // checkBoxT
             // 
             this.checkBoxT.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Image;
-            this.checkBoxT.Image = ((System.Drawing.Image)(resources.GetObject("checkBoxT.Image")));
+            this.checkBoxT.Image = global::Arfer.Properties.Resources.Logos_Register_Editor_icon;
             this.checkBoxT.ImageTransparentColor = System.Drawing.Color.Magenta;
             this.checkBoxT.Name = "checkBoxT";
             this.checkBoxT.Size = new System.Drawing.Size(23, 22);
@@ -378,13 +394,18 @@
             // delChecked
             // 
             this.delChecked.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Image;
-            this.delChecked.Image = ((System.Drawing.Image)(resources.GetObject("delChecked.Image")));
+            this.delChecked.Image = global::Arfer.Properties.Resources.delete_icon;
             this.delChecked.ImageTransparentColor = System.Drawing.Color.Magenta;
             this.delChecked.Name = "delChecked";
             this.delChecked.Size = new System.Drawing.Size(23, 22);
             this.delChecked.Text = "toolStripButton2";
             this.delChecked.ToolTipText = "Delete selected";
             this.delChecked.Click += new System.EventHandler(this.delChecked_Click);
+            // 
+            // toolStripSeparator1
+            // 
+            this.toolStripSeparator1.Name = "toolStripSeparator1";
+            this.toolStripSeparator1.Size = new System.Drawing.Size(6, 25);
             // 
             // Arfer
             // 
@@ -455,6 +476,8 @@
         private System.Windows.Forms.ToolStrip toolStrip1;
         private System.Windows.Forms.ToolStripButton checkBoxT;
         private System.Windows.Forms.ToolStripButton delChecked;
+        private System.Windows.Forms.ToolStripButton saveButton;
+        private System.Windows.Forms.ToolStripSeparator toolStripSeparator1;
     }
 }
 
