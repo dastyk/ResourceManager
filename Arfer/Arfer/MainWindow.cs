@@ -22,6 +22,7 @@ namespace Arfer
         private string savePath = "";
         private string loadPath = "";
         private long currentOffset = 0;
+        private long headerSize = 0;
         public Arfer()
         {
             InitializeComponent();
@@ -42,6 +43,10 @@ namespace Arfer
         private void addNodeToNode(TreeNode parent, TreeNode child)
         {
             parent.Nodes.Add(child);
+            headerSize += child.Text.Length;
+            TreeData data = (TreeData)child.Tag;
+            headerSize += data.ext.Length;
+            headerSize += 28;
         }
         private void addNodeToSelected(TreeNode node)
         {
@@ -53,6 +58,11 @@ namespace Arfer
             {
                 itemTree.SelectedNode.Nodes.Add(node);
             }
+
+            headerSize += node.Text.Length;
+            TreeData data = (TreeData)node.Tag;
+            headerSize += data.ext.Length;
+            headerSize += 28;
         }
 
         private void newPackageToolStripMenuItem_Click(object sender, EventArgs e)
@@ -231,7 +241,7 @@ namespace Arfer
             TreeData data =  (TreeData)tree.Tag;
             
             writer.Write(tree.Text);
-            writer.Write(data.compressed);
+            writer.Write(Convert.ToInt32(data.compressed));
             writer.Write(data.ext);
             writer.Write(data.size);            
             writer.Write(data.offset);
