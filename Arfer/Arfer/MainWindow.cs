@@ -327,8 +327,7 @@ namespace Arfer
                     if (e.Label.IndexOfAny(new char[] { '@', '.', ',', '!' }) == -1)
                     {
                         // Stop editing without canceling the label change.
-
-                        e.Node.Name = e.Label;                    
+                    
                         e.Node.EndEdit(false);
                         nodeInfoBox.Text = e.Label;
                     }
@@ -399,7 +398,7 @@ namespace Arfer
                 using (FileStream file = File.Open(prom.FileName, FileMode.Open))
                 {
                     loadPath = Path.GetDirectoryName(prom.FileName);
-                    string fileName = Path.GetFileName(prom.FileName);
+                    string fileName = Path.GetFileNameWithoutExtension(prom.FileName);
                     
                     TreeNode node = new TreeNode(fileName);
                     node.Name = prom.FileName;
