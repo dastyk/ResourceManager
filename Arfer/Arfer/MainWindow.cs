@@ -39,6 +39,21 @@ namespace Arfer
         {
             this.Close();
         }
+        private void addNodeToNode(TreeNode parent, TreeNode child)
+        {
+            parent.Nodes.Add(child);
+        }
+        private void addNodeToSelected(TreeNode node)
+        {
+            if(itemTree.Nodes.Count == 0)
+            {
+                itemTree.Nodes.Add(node);
+            }
+            else
+            {
+                itemTree.SelectedNode.Nodes.Add(node);
+            }
+        }
 
         private void newPackageToolStripMenuItem_Click(object sender, EventArgs e)
         {
@@ -58,8 +73,9 @@ namespace Arfer
             node.Text = "new package";
             node.Name = "proot";
             node.ContextMenuStrip = itemTreeNodeRCCM;
-            itemTree.Nodes.Add(node);
 
+
+            addNodeToSelected(node);
             setSelectedNode(node);
             renameSelectedNode();
 
@@ -172,21 +188,11 @@ namespace Arfer
 
         private void writeToBinary(string path, TreeView tree)
         {
-            using (BinaryWriter writer = new BinaryWriter(File.Open("temp", FileMode.Create)))
+            using (BinaryWriter writer = new BinaryWriter(File.Open(path, FileMode.Create)))
             {
                 currentOffset = 0;
-                TreeData data = (TreeData)tree.Tag;
-                toLoad.Clear();
-                writer.Write(tree.Text);
-                writer.Write(false);
-                writer.Write("");
-                writer.Write((long)0);
-                writer.Write((long)0);
-                writer.Write(tree.Nodes.Count);
-                foreach (TreeNode n in tree.Nodes)
-                {
-                    writeToBinary(writer, n);
-                }
+                writeToBinary(writer, itemTree.Nodes[0]);
+                
 
                 //char[] buffer = new char[10000];
 
@@ -217,7 +223,8 @@ namespace Arfer
                 //    }
                 //}
             }
-            File.Replace("temp", path, "");
+           // File.Replace("temp", path, "backup");
+           // File.Delete("backup");
         }
         private void writeToBinary(BinaryWriter writer, TreeNode tree)
         {
@@ -254,9 +261,8 @@ namespace Arfer
             data.offset = reader.ReadInt64();
             int count = reader.ReadInt32();
             node.Tag = data;
-            tree.Nodes.Add(node);
-           
-            for(int i = 0; i < count; i++)
+            addNodeToSelected(node);
+            for (int i = 0; i < count; i++)
             {
                 readFromBinary(reader, tree.Nodes[0]);
             }
@@ -276,10 +282,10 @@ namespace Arfer
             data.offset = reader.ReadInt64();
             int count = reader.ReadInt32();
             node.Tag = data;
-            tree.Nodes.Add(node);
+            addNodeToNode(tree, node);
             for (int i = 0; i < count; i++)
             {
-                readFromBinary(reader, tree.Nodes[0]);
+                readFromBinary(reader, node);
             }
         }
 
@@ -336,19 +342,18 @@ namespace Arfer
 
         private void addFolderToolStripMenuItem1_Click(object sender, EventArgs e)
         {
-            TreeNode node = itemTree.SelectedNode;
-            TreeNode newn = new TreeNode("new folder");
-            newn.Name = "new folder";
-            newn.ContextMenuStrip = itemTreeNodeRCCM;
+            TreeNode node = new TreeNode("new folder");
+            node.Name = "new folder";
+            node.ContextMenuStrip = itemTreeNodeRCCM;
             TreeData data = new TreeData();
             data.offset = 0;
             data.size = 0;
             data.compressed = false;
             data.filePath = "";
             data.ext = "";
-            newn.Tag = data;
-            node.Nodes.Add(newn);
-            setSelectedNode(newn);
+            node.Tag = data;
+            addNodeToSelected(node);
+            setSelectedNode(node);
             renameSelectedNode();
 
 
@@ -367,11 +372,10 @@ namespace Arfer
                 {
                     loadPath = Path.GetDirectoryName(prom.FileName);
                     string fileName = Path.GetFileName(prom.FileName);
-                    TreeNode node = itemTree.SelectedNode;
-
-                    TreeNode newn = new TreeNode(fileName);
-                    newn.Name = prom.FileName;
-                    newn.ContextMenuStrip = itemTreeFileNodeRCCM;
+                    
+                    TreeNode node = new TreeNode(fileName);
+                    node.Name = prom.FileName;
+                    node.ContextMenuStrip = itemTreeFileNodeRCCM;
                     TreeData data = new TreeData();
                     data.offset = currentOffset;
                     data.size = file.Length;
@@ -379,10 +383,9 @@ namespace Arfer
                     data.compressed = false;
                     data.filePath = prom.FileName;
                     data.ext = Path.GetExtension(prom.FileName);
-                    newn.Tag = data;
-                    node.Nodes.Add(newn);
-                    TreeData d = (TreeData)newn.Tag;
-                    setSelectedNode(newn);
+                    node.Tag = data;
+                    addNodeToSelected(node);
+                    setSelectedNode(node);
                 }
             }
         }
