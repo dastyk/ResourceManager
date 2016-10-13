@@ -404,7 +404,7 @@ namespace Arfer
                     node.Name = prom.FileName;
                     node.ContextMenuStrip = itemTreeFileNodeRCCM;
                     TreeData data = new TreeData();
-                    data.offset = currentOffset;
+                    data.offset = 0;
                     data.size = file.Length;
                     currentOffset += data.size;
                     data.compressed = false;
