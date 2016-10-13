@@ -42,6 +42,9 @@
             this.treeToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.expandAllToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.collapseAllToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.toolStripMenuItem5 = new System.Windows.Forms.ToolStripSeparator();
+            this.toggleCheckboxesToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.deleteSelectedToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.itemTree = new System.Windows.Forms.TreeView();
             this.itemTreeRCCM = new System.Windows.Forms.ContextMenuStrip(this.components);
             this.addFolderToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -58,13 +61,18 @@
             this.renameToolStripMenuItem1 = new System.Windows.Forms.ToolStripMenuItem();
             this.removeToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.nodeInfoBox = new System.Windows.Forms.GroupBox();
+            this.fileData = new System.Windows.Forms.Label();
             this.nodeExt = new System.Windows.Forms.Label();
             this.nodeComp = new System.Windows.Forms.Label();
             this.nodeSize = new System.Windows.Forms.Label();
+            this.toolStrip1 = new System.Windows.Forms.ToolStrip();
+            this.checkBoxT = new System.Windows.Forms.ToolStripButton();
+            this.delChecked = new System.Windows.Forms.ToolStripButton();
             this.menuStrip1.SuspendLayout();
             this.itemTreeNodeRCCM.SuspendLayout();
             this.itemTreeFileNodeRCCM.SuspendLayout();
             this.nodeInfoBox.SuspendLayout();
+            this.toolStrip1.SuspendLayout();
             this.SuspendLayout();
             // 
             // fileToolStripMenuItem
@@ -145,7 +153,10 @@
             // 
             this.treeToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.expandAllToolStripMenuItem,
-            this.collapseAllToolStripMenuItem});
+            this.collapseAllToolStripMenuItem,
+            this.toolStripMenuItem5,
+            this.toggleCheckboxesToolStripMenuItem,
+            this.deleteSelectedToolStripMenuItem});
             this.treeToolStripMenuItem.Name = "treeToolStripMenuItem";
             this.treeToolStripMenuItem.Size = new System.Drawing.Size(41, 24);
             this.treeToolStripMenuItem.Text = "Tree";
@@ -153,27 +164,51 @@
             // expandAllToolStripMenuItem
             // 
             this.expandAllToolStripMenuItem.Name = "expandAllToolStripMenuItem";
-            this.expandAllToolStripMenuItem.Size = new System.Drawing.Size(136, 22);
+            this.expandAllToolStripMenuItem.Size = new System.Drawing.Size(176, 22);
             this.expandAllToolStripMenuItem.Text = "Expand All";
             this.expandAllToolStripMenuItem.Click += new System.EventHandler(this.expandAllToolStripMenuItem_Click);
             // 
             // collapseAllToolStripMenuItem
             // 
             this.collapseAllToolStripMenuItem.Name = "collapseAllToolStripMenuItem";
-            this.collapseAllToolStripMenuItem.Size = new System.Drawing.Size(136, 22);
+            this.collapseAllToolStripMenuItem.Size = new System.Drawing.Size(176, 22);
             this.collapseAllToolStripMenuItem.Text = "Collapse All";
             this.collapseAllToolStripMenuItem.Click += new System.EventHandler(this.collapseAllToolStripMenuItem_Click);
             // 
+            // toolStripMenuItem5
+            // 
+            this.toolStripMenuItem5.Name = "toolStripMenuItem5";
+            this.toolStripMenuItem5.Size = new System.Drawing.Size(173, 6);
+            // 
+            // toggleCheckboxesToolStripMenuItem
+            // 
+            this.toggleCheckboxesToolStripMenuItem.Name = "toggleCheckboxesToolStripMenuItem";
+            this.toggleCheckboxesToolStripMenuItem.Size = new System.Drawing.Size(176, 22);
+            this.toggleCheckboxesToolStripMenuItem.Text = "Toggle Checkboxes";
+            this.toggleCheckboxesToolStripMenuItem.Click += new System.EventHandler(this.toggleCheckboxesToolStripMenuItem_Click);
+            // 
+            // deleteSelectedToolStripMenuItem
+            // 
+            this.deleteSelectedToolStripMenuItem.Name = "deleteSelectedToolStripMenuItem";
+            this.deleteSelectedToolStripMenuItem.Size = new System.Drawing.Size(176, 22);
+            this.deleteSelectedToolStripMenuItem.Text = "Delete Selected";
+            this.deleteSelectedToolStripMenuItem.Click += new System.EventHandler(this.deleteSelectedToolStripMenuItem_Click);
+            // 
             // itemTree
             // 
+            this.itemTree.AllowDrop = true;
             this.itemTree.ContextMenuStrip = this.itemTreeRCCM;
-            this.itemTree.Dock = System.Windows.Forms.DockStyle.Left;
-            this.itemTree.Location = new System.Drawing.Point(0, 24);
+            this.itemTree.Location = new System.Drawing.Point(0, 52);
             this.itemTree.Name = "itemTree";
-            this.itemTree.Size = new System.Drawing.Size(298, 536);
+            this.itemTree.Size = new System.Drawing.Size(310, 508);
             this.itemTree.TabIndex = 1;
             this.itemTree.AfterLabelEdit += new System.Windows.Forms.NodeLabelEditEventHandler(this.itemTree_AfterLabelEdit);
+            this.itemTree.AfterCheck += new System.Windows.Forms.TreeViewEventHandler(this.itemTree_AfterCheck);
+            this.itemTree.ItemDrag += new System.Windows.Forms.ItemDragEventHandler(this.itemTree_ItemDrag);
             this.itemTree.NodeMouseClick += new System.Windows.Forms.TreeNodeMouseClickEventHandler(this.itemTree_NodeMouseClick);
+            this.itemTree.DragDrop += new System.Windows.Forms.DragEventHandler(this.itemTree_DragDrop);
+            this.itemTree.DragEnter += new System.Windows.Forms.DragEventHandler(this.itemTree_DragEnter);
+            this.itemTree.DragOver += new System.Windows.Forms.DragEventHandler(this.itemTree_DragOver);
             // 
             // itemTreeRCCM
             // 
@@ -275,14 +310,24 @@
             // 
             // nodeInfoBox
             // 
+            this.nodeInfoBox.Controls.Add(this.fileData);
             this.nodeInfoBox.Controls.Add(this.nodeExt);
             this.nodeInfoBox.Controls.Add(this.nodeComp);
             this.nodeInfoBox.Controls.Add(this.nodeSize);
-            this.nodeInfoBox.Location = new System.Drawing.Point(310, 31);
+            this.nodeInfoBox.Location = new System.Drawing.Point(316, 53);
             this.nodeInfoBox.Name = "nodeInfoBox";
-            this.nodeInfoBox.Size = new System.Drawing.Size(290, 521);
+            this.nodeInfoBox.Size = new System.Drawing.Size(290, 500);
             this.nodeInfoBox.TabIndex = 3;
             this.nodeInfoBox.TabStop = false;
+            // 
+            // fileData
+            // 
+            this.fileData.AutoSize = true;
+            this.fileData.Location = new System.Drawing.Point(9, 175);
+            this.fileData.Name = "fileData";
+            this.fileData.Size = new System.Drawing.Size(35, 13);
+            this.fileData.TabIndex = 3;
+            this.fileData.Text = "label1";
             // 
             // nodeExt
             // 
@@ -308,12 +353,46 @@
             this.nodeSize.Size = new System.Drawing.Size(0, 13);
             this.nodeSize.TabIndex = 0;
             // 
+            // toolStrip1
+            // 
+            this.toolStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.checkBoxT,
+            this.delChecked});
+            this.toolStrip1.Location = new System.Drawing.Point(0, 24);
+            this.toolStrip1.Name = "toolStrip1";
+            this.toolStrip1.Size = new System.Drawing.Size(613, 25);
+            this.toolStrip1.TabIndex = 4;
+            this.toolStrip1.Text = "toolStrip1";
+            // 
+            // checkBoxT
+            // 
+            this.checkBoxT.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Image;
+            this.checkBoxT.Image = ((System.Drawing.Image)(resources.GetObject("checkBoxT.Image")));
+            this.checkBoxT.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.checkBoxT.Name = "checkBoxT";
+            this.checkBoxT.Size = new System.Drawing.Size(23, 22);
+            this.checkBoxT.Text = "toolStripButton1";
+            this.checkBoxT.ToolTipText = "Toggle check boxes";
+            this.checkBoxT.Click += new System.EventHandler(this.checkBoxT_Click);
+            // 
+            // delChecked
+            // 
+            this.delChecked.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Image;
+            this.delChecked.Image = ((System.Drawing.Image)(resources.GetObject("delChecked.Image")));
+            this.delChecked.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.delChecked.Name = "delChecked";
+            this.delChecked.Size = new System.Drawing.Size(23, 22);
+            this.delChecked.Text = "toolStripButton2";
+            this.delChecked.ToolTipText = "Delete selected";
+            this.delChecked.Click += new System.EventHandler(this.delChecked_Click);
+            // 
             // Arfer
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.SystemColors.Control;
             this.ClientSize = new System.Drawing.Size(613, 560);
+            this.Controls.Add(this.toolStrip1);
             this.Controls.Add(this.nodeInfoBox);
             this.Controls.Add(this.itemTree);
             this.Controls.Add(this.menuStrip1);
@@ -330,6 +409,8 @@
             this.itemTreeFileNodeRCCM.ResumeLayout(false);
             this.nodeInfoBox.ResumeLayout(false);
             this.nodeInfoBox.PerformLayout();
+            this.toolStrip1.ResumeLayout(false);
+            this.toolStrip1.PerformLayout();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -367,6 +448,13 @@
         private System.Windows.Forms.Label nodeSize;
         private System.Windows.Forms.Label nodeExt;
         private System.Windows.Forms.Label nodeComp;
+        private System.Windows.Forms.Label fileData;
+        private System.Windows.Forms.ToolStripMenuItem toggleCheckboxesToolStripMenuItem;
+        private System.Windows.Forms.ToolStripSeparator toolStripMenuItem5;
+        private System.Windows.Forms.ToolStripMenuItem deleteSelectedToolStripMenuItem;
+        private System.Windows.Forms.ToolStrip toolStrip1;
+        private System.Windows.Forms.ToolStripButton checkBoxT;
+        private System.Windows.Forms.ToolStripButton delChecked;
     }
 }
 
