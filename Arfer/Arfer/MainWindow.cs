@@ -64,7 +64,25 @@ namespace Arfer
             headerSize += data.ext.Length;
             headerSize += 28;
         }
+        private void removeSelectedNode()
+        {
+            DialogResult dialogResult = MessageBox.Show("Are you sure you want to remove the node?", "Remove", MessageBoxButtons.YesNo);
+            if (dialogResult == DialogResult.Yes)
+            {
+                if (itemTree.SelectedNode == itemTree.Nodes[0])
+                {
+                    saveToolStripMenuItem.Enabled = false;
+                    saveAsToolStripMenuItem.Enabled = false;
+                }
+                itemTree.Nodes.Remove(itemTree.SelectedNode);
 
+                headerSize -= itemTree.SelectedNode.Text.Length;
+                TreeData data = (TreeData)itemTree.SelectedNode.Tag;
+                headerSize -= data.ext.Length;
+                headerSize -= 28;
+            }
+
+        }
         private void newPackageToolStripMenuItem_Click(object sender, EventArgs e)
         {
 
@@ -412,20 +430,7 @@ namespace Arfer
            
          
         }
-        private void removeSelectedNode()
-        {
-            DialogResult dialogResult = MessageBox.Show("Are you sure you want to remove the node?", "Remove", MessageBoxButtons.YesNo);
-            if (dialogResult == DialogResult.Yes)
-            {
-                if (itemTree.SelectedNode == itemTree.Nodes[0])
-                {
-                    saveToolStripMenuItem.Enabled = false;
-                    saveAsToolStripMenuItem.Enabled = false;
-                }
-                itemTree.Nodes.Remove(itemTree.SelectedNode);
-            }
-           
-        }
+      
         private void removeToolStripMenuItem_Click(object sender, EventArgs e)
         {
             removeSelectedNode();
