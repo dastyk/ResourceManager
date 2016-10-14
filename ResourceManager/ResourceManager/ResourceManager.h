@@ -12,13 +12,11 @@
 #include "MemoryManager.h"
 #include <stack>
 #include <map>
+#include "ChunkyAllocator.h"
 
 // TODO:
 // The LoadResource function can not return a finished loaded thing, since we are going to multithread
 // stack _toLoad;
-
-
-
 
 class ResourceManager
 {
@@ -30,11 +28,10 @@ public:
 	void EvictResource(SM_GUID guid);
 	bool IsLoaded(SM_GUID guid);
 
-	void PrintOccupancy( void );
 	void TestAlloc( void );
 
-	uint32_t FreeMemory( void ) const { return _numFreeBlocks * _blockSize + _resourcePool->FreeMemory(); }
-	uint32_t MaxMemory( void ) const { return _numBlocks * _blockSize + _resourcePool->Size(); }
+	uint32_t FreeMemory(void) const { return _allocator->FreeMemory() + _resourcePool->FreeMemory(); }
+	uint32_t MaxMemory(void) const { return _allocator->MaxMemory() + _resourcePool->Size(); }
 
 	void SetAssetLoader(IAssetLoader* loader);
 	void AddParser(const std::string& fileend,const std::function<void(Resource& r)>& parseFunction);
@@ -44,12 +41,6 @@ public:
 	void Startup();
 
 private:
-	struct FreeBlock
-	{
-		int32_t Previous = -1;
-		int32_t Next = -1;
-	};
-
 	struct ThreadControl
 	{
 		bool inUse = false;
@@ -84,9 +75,6 @@ private:
 	void _LoadingThread(uint16_t threadID);
 	void _ParserThread(uint16_t threadID);
 	void _UpdatePriority(SM_GUID guid, const Resource::Flag& flag);
-	void _SetupFreeBlockList( void );
-	int32_t _Allocate( uint32_t blocks );
-	void _Free( int32_t firstBlock, uint32_t numBlocks );
 
 	struct ResourceList
 	{
@@ -158,7 +146,7 @@ private:
 		uint32_t numBlocks = rm->resource._numBlocks;
 		rm->~ResourceList();
 
-		_Free(startBlock, numBlocks);
+		_allocator->Free(startBlock, numBlocks);
 		_resourcePool->Free(rm);
 	}
 
@@ -173,12 +161,7 @@ private:
 		_resources = nullptr;
 	}
 private:
-	char* _pool = nullptr;
-	const uint32_t _blockSize = 512 * 1024;
-	uint32_t _numBlocks = 0;
-	uint32_t _numFreeBlocks = 0;
-	int32_t _firstFreeBlock = -1;
-
+	ChunkyAllocator* _allocator = nullptr;
 	PoolAllocator* _resourcePool = nullptr;
 	ResourceList* _resources = nullptr;
 	//std::map<uint64_t, Resource*> _resources;
@@ -187,14 +170,12 @@ private:
 	std::unordered_map<uint16_t, ThreadControl, KeyHasher> _threadRunningMap;
 	std::unordered_map<uint16_t, std::thread, KeyHasher> _threadIDMap;
 	IAssetLoader* _assetLoader = nullptr;
-	
 
 	bool _running;
 	AssetParser _parser;
 
 	std::thread _runningThread;
 	std::mutex _mutexLockGeneral;
-	std::mutex _mutexAllocLock;
 	//std::mutex _mutexLockResourceArr;
 	std::mutex _mutexLockLoader;
 	std::mutex _mutexLockParser;
