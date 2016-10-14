@@ -78,21 +78,22 @@ namespace Arfer
                     saveAsToolStripMenuItem.Enabled = false;
                     saveButton.Enabled = false;
                 }
-                checkedNodes.Remove(itemTree.SelectedNode);
-                itemTree.Nodes.Remove(itemTree.SelectedNode);
-
                 headerSize -= itemTree.SelectedNode.Text.Length;
                 TreeData data = (TreeData)itemTree.SelectedNode.Tag;
                 headerSize -= data.ext.Length;
                 headerSize -= 28;
 
+                checkedNodes.Remove(itemTree.SelectedNode);
+                itemTree.Nodes.Remove(itemTree.SelectedNode);
+
+                
+
 
             }
 
         }
-        private void newPackageToolStripMenuItem_Click(object sender, EventArgs e)
+        private void newPackage()
         {
-
             if (itemTree.Nodes.Count != 0)
                 itemTree.Nodes.Clear();
 
@@ -120,6 +121,11 @@ namespace Arfer
 
 
         }
+        private void newPackageToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+
+            newPackage();
+        }
 
         private void setContextMenyStripForNode(TreeNode node)
         {
@@ -129,8 +135,7 @@ namespace Arfer
                 setContextMenyStripForNode(n);
             }
         }
-
-        private void existingPackageToolStripMenuItem_Click(object sender, EventArgs e)
+        private void existingPackage()
         {
 
             OpenFileDialog prom = new OpenFileDialog();
@@ -161,6 +166,10 @@ namespace Arfer
                 }
 
             }
+        }
+        private void existingPackageToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            existingPackage();
 
         }
 
@@ -369,22 +378,46 @@ namespace Arfer
                 {
                     if (e.Label.IndexOfAny(new char[] { '@', '.', ',', '!' }) == -1)
                     {
-                        // Stop editing without canceling the label change.
+                        bool taken = false;
+                        if (e.Node.Parent != null)
+                        {
+                            foreach (TreeNode n in e.Node.Parent.Nodes)
+                            {
+                                if (e.Label == n.Text)
+                                {
+                                    taken = true;
+                                    break;
+                                }
+                            }
+                        }
+                        if (!taken)
+                        {
+                            // Stop editing without canceling the label change.
 
-                        e.Node.EndEdit(false);
-                        nodeInfoBox.Text = e.Label;
-                        headerSize -= e.Node.Text.Length;
-                        headerSize += e.Label.Length;
+                            e.Node.EndEdit(false);
+                            nodeInfoBox.Text = e.Label;
+                            headerSize -= e.Node.Text.Length;
+                            headerSize += e.Label.Length;
+                        }
+                        else
+                        {
+                            e.CancelEdit = true;
+                            MessageBox.Show("The name " + e.Label + " is already taken.",
+                               "Node Label Edit");
+                            e.Node.BeginEdit();
+                        }
                     }
                     else
                     {
-                        /* Cancel the label edit action, inform the user, and 
-                           place the node in edit mode again. */
-                        e.CancelEdit = true;
-                        MessageBox.Show("Invalid tree node label.\n" +
-                           "The invalid characters are: '@','.', ',', '!'",
-                           "Node Label Edit");
-                        e.Node.BeginEdit();
+                       
+                            /* Cancel the label edit action, inform the user, and 
+                               place the node in edit mode again. */
+                            e.CancelEdit = true;
+                            MessageBox.Show("Invalid tree node label.\n" +
+                               "The invalid characters are: '@','.', ',', '!'",
+                               "Node Label Edit");
+                            e.Node.BeginEdit();
+                        
                     }
                 }
                 else
@@ -444,7 +477,7 @@ namespace Arfer
                 data.offset = 0;
                 data.size = file.Length;
                 BinaryReader br = new BinaryReader(file);
-                data.data = System.Text.Encoding.UTF8.GetString(br.ReadBytes((int)data.size % 500));
+                data.data = System.Text.Encoding.UTF8.GetString(br.ReadBytes((int)(data.size % 500)));
                 //currentOffset += data.size;
                 data.compressed = false;
                 data.filePath = path;
@@ -660,7 +693,7 @@ namespace Arfer
 
             Point pt = ((TreeView)sender).PointToClient(new Point(e.X, e.Y));
             TreeNode DestinationNode = ((TreeView)sender).GetNodeAt(pt);
-            if (DestinationNode != null)
+            if (DestinationNode != null && DestinationNode != itemTree.SelectedNode)
                 setSelectedNode(DestinationNode);
 
         }
@@ -668,6 +701,7 @@ namespace Arfer
         private void toggleCheckboxesToolStripMenuItem_Click(object sender, EventArgs e)
         {
             itemTree.CheckBoxes = (itemTree.CheckBoxes) ? false : true;
+            checkedNodes.Clear();
         }
         private void itemTree_AfterCheck(object sender, TreeViewEventArgs e)
         {
@@ -679,6 +713,16 @@ namespace Arfer
             {
                 checkedNodes.Remove(e.Node);
             }
+            if(checkedNodes.Count == 0)
+            {
+                delChecked.Enabled = false;
+                deleteSelectedToolStripMenuItem.Enabled = false;
+            }
+            else
+            {
+                delChecked.Enabled = true;
+                deleteSelectedToolStripMenuItem.Enabled = true;
+            }
         }
         private void delSel()
         {
@@ -687,8 +731,6 @@ namespace Arfer
             {
                 foreach (TreeNode n in checkedNodes)
                 {
-                    setSelectedNode(n);
-
                     if (itemTree.SelectedNode == itemTree.Nodes[0])
                     {
                         saveToolStripMenuItem.Enabled = false;
@@ -696,16 +738,18 @@ namespace Arfer
                         saveButton.Enabled = false;
                     }
 
-                    itemTree.Nodes.Remove(itemTree.SelectedNode);
-
                     headerSize -= itemTree.SelectedNode.Text.Length;
                     TreeData data = (TreeData)itemTree.SelectedNode.Tag;
                     headerSize -= data.ext.Length;
                     headerSize -= 28;
+                    itemTree.Nodes.Remove(n);
+
 
 
                 }
                 checkedNodes.Clear();
+                delChecked.Enabled = false;
+                deleteSelectedToolStripMenuItem.Enabled = false;
             }
         }
         private void deleteSelectedToolStripMenuItem_Click(object sender, EventArgs e)
@@ -718,6 +762,7 @@ namespace Arfer
         private void checkBoxT_Click(object sender, EventArgs e)
         {
             itemTree.CheckBoxes = (itemTree.CheckBoxes) ? false : true;
+            checkedNodes.Clear();
         }
 
         private void delChecked_Click(object sender, EventArgs e)
@@ -738,13 +783,23 @@ namespace Arfer
                 prom.ShowDialog();
                 savePath = prom.FileName;
             }
-
+            
             if (savePath != "")
             {
 
                 writeToBinary(savePath, itemTree);
                 packOpenedPath = savePath;
             }
+        }
+
+        private void newPackButton_Click(object sender, EventArgs e)
+        {
+            newPackage();
+        }
+
+        private void loadButton_Click(object sender, EventArgs e)
+        {
+            existingPackage();
         }
     }
 
