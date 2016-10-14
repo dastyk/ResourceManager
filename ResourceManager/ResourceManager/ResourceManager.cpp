@@ -196,13 +196,16 @@ void ResourceManager::TestAlloc( void )
 {
 	//_allocator->PrintOccupancy();
 
-	//_allocator->Allocate(3);
+	//int32_t slot = _allocator->Allocate(3);
+	//memset(_allocator->Data(slot), 0, _allocator->BlockSize() * 3);
 	//_allocator->PrintOccupancy();
 
-	//_allocator->Allocate(2);
+	//slot = _allocator->Allocate(2);
+	//memset(_allocator->Data(slot), 0, _allocator->BlockSize() * 2);
 	//_allocator->PrintOccupancy();
 
-	//_allocator->Allocate(15);
+	//slot = _allocator->Allocate(15);
+	//memset(_allocator->Data(slot), 0, _allocator->BlockSize() * 15);
 	//_allocator->PrintOccupancy();
 
 	//_allocator->Free(2, 3);
@@ -220,7 +223,8 @@ void ResourceManager::TestAlloc( void )
 	//_allocator->Free(19, 1);
 	//_allocator->PrintOccupancy();
 
-	//_allocator->Allocate(2);
+	//slot = _allocator->Allocate(2);
+	//memset(_allocator->Data(slot), 0, _allocator->BlockSize() * 2);
 	//_allocator->PrintOccupancy();
 
 	//_allocator->Free(9, 3);
@@ -229,7 +233,8 @@ void ResourceManager::TestAlloc( void )
 	//_allocator->Free(14, 3);
 	//_allocator->PrintOccupancy();
 
-	//_allocator->Allocate(3);
+	//slot = _allocator->Allocate(3);
+	//memset(_allocator->Data(slot), 0, _allocator->BlockSize() * 3);
 	//_allocator->PrintOccupancy();
 }
 

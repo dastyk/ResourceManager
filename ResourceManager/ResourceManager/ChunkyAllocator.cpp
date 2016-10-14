@@ -24,53 +24,49 @@ int32_t ChunkyAllocator::Allocate(uint32_t blocks)
 
 	_allocLock.lock();
 
-	// Empty
-	if (_root->Next == _end)
+	FreeChunk* walker = _root->Next;
+
+	// Keep trying until we find a free chunk with enough blocks in.
+	while (walker != _end)
+	{
+		if (walker->Blocks >= blocks)
+			break;
+
+		walker = walker->Next;
+	}
+
+	if (walker == _end)
 	{
 		_allocLock.unlock();
 		return -1;
 	}
 
-	FreeBlock* allocSlot = _root->Next;
-	FreeBlock* walker = _root->Next;
-	uint32_t numContiguous = 1;
-
-	// Keep searching until we found enough blocks. The case of not enough
-	// contiguous blocks is taken care of inside the loop.
-	while (numContiguous < blocks)
-	{
-		if (walker->Next == _end)
-		{
-			_allocLock.unlock();
-			return -1;
-		}
-
-		// Not next contiguous block; reset and keep trying
-		if (reinterpret_cast<char*>(walker->Next) != reinterpret_cast<char*>(walker) + _blockSize)
-		{
-			allocSlot = walker = walker->Next;
-			numContiguous = 1;
-		}
-		// Contiguous
-		else
-		{
-			walker = walker->Next;
-			numContiguous++;
-		}
-	}
-
 	// Given a valid allocation slot and number of blocks -- extract those blocks
-	// from the list of free blocks and fix the broken links.
-	FreeBlock* lastBlock = reinterpret_cast<FreeBlock*>(reinterpret_cast<char*>(allocSlot) + (blocks - 1) * _blockSize);
-	allocSlot->Previous->Next = lastBlock->Next;
-	lastBlock->Next->Previous = allocSlot->Previous;
+	// from the list of free blocks and fix the broken links. In case the chunk
+	// has more blocks than required, it's split to keep the remaining ones.
+	FreeChunk* nextChunk;
+	if (walker->Blocks > blocks)
+	{
+		nextChunk = reinterpret_cast<FreeChunk*>(reinterpret_cast<char*>(walker) + blocks * _blockSize);
+		nextChunk->Blocks = walker->Blocks - blocks;
+		nextChunk->Previous = walker->Previous;
+		nextChunk->Next = walker->Next;
+		walker->Previous->Next = nextChunk;
+		walker->Next->Previous = nextChunk;
+	}
+	else
+	{
+		nextChunk = walker->Next;
+		nextChunk->Previous = walker->Previous;
+		walker->Previous->Next = nextChunk;
+	}
 
 	_numFreeBlocks -= blocks;
 
 	_allocLock.unlock();
 
 	// Convert pointer to slot index
-	return (reinterpret_cast<char*>(allocSlot) - _pool) / _blockSize;
+	return (reinterpret_cast<char*>(walker) - _pool) / _blockSize;
 }
 
 // Frees certain blocks by inserting them into the free block list.
@@ -78,36 +74,45 @@ void ChunkyAllocator::Free(int32_t first, uint32_t numBlocks)
 {
 	_allocLock.lock();
 
-	FreeBlock* firstBlock = reinterpret_cast<FreeBlock*>(_pool + first * _blockSize);
-	FreeBlock* lastBlock = reinterpret_cast<FreeBlock*>(_pool + (first + numBlocks - 1) * _blockSize);
+	FreeChunk* returnChunk = reinterpret_cast<FreeChunk*>(_pool + first * _blockSize);
+	returnChunk->Blocks = numBlocks;
 
 	// We must find where in the list to insert and properly update the blocks
 	// before and after those we are returning (if existing).
-	FreeBlock* before = _root;
-	while (before->Next != _end && before->Next < firstBlock)
+	FreeChunk* before = _root;
+	while (before->Next != _end && before->Next < returnChunk)
 	{
 		before = before->Next;
 	}
+	FreeChunk* after = before->Next;
 
-	// Could assert that this pointer is indeed larger than lastBlock or _end.
-	FreeBlock* after = before->Next;
-
-	// Setup links for the first returned block
-	before->Next = firstBlock;
-	firstBlock->Previous = before;
-
-	// Chain the returned blocks together
-	FreeBlock* walker = firstBlock;
-	while (walker != lastBlock)
+	// If we return blocks at the end of a chunk we merge it right away.
+	if ((reinterpret_cast<char*>(before) + before->Blocks * _blockSize) == reinterpret_cast<char*>(returnChunk))
 	{
-		walker->Next = reinterpret_cast<FreeBlock*>(reinterpret_cast<char*>(walker) + _blockSize);
-		walker->Next->Previous = walker;
-		walker = walker->Next;
+		before->Blocks += numBlocks;
+		returnChunk = before; // We do this to simplify potential two-way merge later
+	}
+	// Otherwise they must be linked together
+	else
+	{
+		before->Next = returnChunk;
+		returnChunk->Previous = before;
 	}
 
-	// Setup links for the last returned block (walker is lastBlock)
-	walker->Next = after;
-	after->Previous = walker;
+	// If the end of the returned chunk coincides with the next free chunk we
+	// can merge that way as well.
+	if (after != _end && (reinterpret_cast<char*>(returnChunk) + returnChunk->Blocks * _blockSize) == reinterpret_cast<char*>(after))
+	{
+		returnChunk->Blocks += after->Blocks;
+		returnChunk->Next = after->Next;
+		returnChunk->Next->Previous = returnChunk;
+	}
+	// Otherwise they must be linked together
+	else
+	{
+		returnChunk->Next = after;
+		returnChunk->Next->Previous = returnChunk;
+	}
 
 	_numFreeBlocks += numBlocks;
 
@@ -124,25 +129,28 @@ void ChunkyAllocator::PrintOccupancy(void)
 	}
 
 	char* walker = _pool;
-	FreeBlock* free = _root->Next; // Should not be end
+	FreeChunk* free = _root->Next; // Should not be end
 
 	// As long as walker hasn't reached the end
 	while (walker < (_pool + _numBlocks * _blockSize))
 	{
-		if (reinterpret_cast<FreeBlock*>(walker) == free)
+		if (reinterpret_cast<FreeChunk*>(walker) == free)
 		{
-			free = free->Next;
+			for (uint32_t i = 0; i < free->Blocks; ++i)
+			{
+				//OutputDebugStringA( "[O]" );
+				printf("[O]");
+			}
 
-			//OutputDebugStringA( "[O]" );
-			printf("[O]");
+			walker += free->Blocks * _blockSize;
+			free = free->Next;
 		}
 		else
 		{
 			//OutputDebugStringA( "[X]" );
 			printf("[X]");
+			walker += _blockSize;
 		}
-
-		walker += _blockSize;
 	}
 
 	//OutputDebugStringA( "\n" );
@@ -161,20 +169,10 @@ void ChunkyAllocator::_SetupFreeBlockList(void)
 	if (_numBlocks == 0)
 		return;
 
-	// Link to first block
-	FreeBlock* walker = reinterpret_cast<FreeBlock*>(_pool);
+	FreeChunk* walker = reinterpret_cast<FreeChunk*>(_pool);
+	walker->Blocks = _numBlocks;
 	_root->Next = walker;
 	walker->Previous = _root;
-
-	// Link blocks together
-	for (uint32_t i = 1; i < _numBlocks; ++i)
-	{
-		walker->Next = reinterpret_cast<FreeBlock*>(_pool + i * _blockSize);
-		walker->Next->Previous = walker;
-		walker = walker->Next;
-	}
-
-	// Links to last block
 	walker->Next = _end;
 	_end->Previous = walker;
 

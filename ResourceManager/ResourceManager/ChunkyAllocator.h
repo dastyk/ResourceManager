@@ -22,10 +22,11 @@ public:
 	void PrintOccupancy(void);
 
 private:
-	struct FreeBlock
+	struct FreeChunk
 	{
-		FreeBlock* Previous = nullptr;
-		FreeBlock* Next = nullptr;
+		FreeChunk* Previous = nullptr;
+		FreeChunk* Next = nullptr;
+		uint32_t Blocks = 0;
 	};
 
 private:
@@ -40,9 +41,9 @@ private:
 	uint32_t _numBlocks = 0;
 	uint32_t _numFreeBlocks = 0;
 
-	FreeBlock _rootBlock, _endBlock; // Really just for stack storage, I actually use the pointers instead
-	FreeBlock* _root = &_rootBlock;
-	FreeBlock* _end = &_endBlock;
+	FreeChunk _rootChunk, _endChunk; // Really just for stack storage, I actually use the pointers instead
+	FreeChunk* _root = &_rootChunk;
+	FreeChunk* _end = &_endChunk;
 
 	std::mutex _allocLock;
 };
