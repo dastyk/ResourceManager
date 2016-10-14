@@ -24,8 +24,8 @@ public:
 private:
 	struct FreeBlock
 	{
-		int32_t Previous = -1;
-		int32_t Next = -1;
+		FreeBlock* Previous = nullptr;
+		FreeBlock* Next = nullptr;
 	};
 
 private:
@@ -39,7 +39,7 @@ private:
 	static const uint32_t _blockSize = 512 * 1024;
 	uint32_t _numBlocks = 0;
 	uint32_t _numFreeBlocks = 0;
-	int32_t _firstFreeBlock = -1;
+	FreeBlock* _firstFreeBlock = nullptr;
 
 	std::mutex _allocLock;
 };

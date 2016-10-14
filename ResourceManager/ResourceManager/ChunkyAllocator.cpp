@@ -24,38 +24,36 @@ int32_t ChunkyAllocator::Allocate(uint32_t blocks)
 
 	_allocLock.lock();
 
-	if (_firstFreeBlock == -1)
+	if (!_firstFreeBlock)
 	{
 		_allocLock.unlock();
 		return -1;
 	}
 
-	int32_t allocSlot = _firstFreeBlock;
-	int32_t walker = _firstFreeBlock;
+	FreeBlock* allocSlot = _firstFreeBlock;
+	FreeBlock* walker = _firstFreeBlock;
 	uint32_t numContiguous = 1;
 
 	// Keep searching until we found enough blocks. The case of not enough
 	// contiguous blocks is taken care of inside the loop.
 	while (numContiguous < blocks)
 	{
-		FreeBlock* lastFree = reinterpret_cast<FreeBlock*>(_pool + walker * _blockSize);
-
-		if (lastFree->Next == -1)
+		if (!walker->Next)
 		{
 			_allocLock.unlock();
 			return -1;
 		}
 
-		// Not next contigious block; reset and keep trying
-		if (lastFree->Next != walker + 1)
+		// Not next contiguous block; reset and keep trying
+		if (reinterpret_cast<char*>(walker->Next) != reinterpret_cast<char*>(walker) + _blockSize)
 		{
-			allocSlot = walker = lastFree->Next;
+			allocSlot = walker = walker->Next;
 			numContiguous = 1;
 		}
 		// Contiguous
 		else
 		{
-			walker = lastFree->Next;
+			walker = walker->Next;
 			numContiguous++;
 		}
 	}
@@ -63,7 +61,7 @@ int32_t ChunkyAllocator::Allocate(uint32_t blocks)
 	// Given a valid allocation slot and number of blocks -- extract those blocks
 	// from the list of free blocks.
 
-	if (allocSlot == -1)
+	if (!allocSlot)
 	{
 		_allocLock.unlock();
 		return -1;
@@ -71,27 +69,33 @@ int32_t ChunkyAllocator::Allocate(uint32_t blocks)
 
 	if (allocSlot == _firstFreeBlock)
 	{
-		// Index of the block after the last one to allocate
-		_firstFreeBlock = reinterpret_cast<FreeBlock*>(_pool + (allocSlot + blocks - 1) * _blockSize)->Next;
+		// The last of the blocks to allocate (offset allocSlot correct number of
+		// bytes and treat as FreeBlock*).
+		FreeBlock* lastBlock = reinterpret_cast<FreeBlock*>(reinterpret_cast<char*>(allocSlot) + (blocks - 1) * _blockSize);
 
-		if (_firstFreeBlock != -1)
-			reinterpret_cast<FreeBlock*>(_pool + _firstFreeBlock * _blockSize)->Previous = -1;
+		// Index of the block after the last one to allocate
+		_firstFreeBlock = lastBlock->Next;
+
+		if (_firstFreeBlock)
+			_firstFreeBlock->Previous = nullptr;
 	}
 	else
 	{
-		FreeBlock* firstToAlloc = reinterpret_cast<FreeBlock*>(_pool + allocSlot * _blockSize);
-		int32_t nextFree = reinterpret_cast<FreeBlock*>(_pool + (allocSlot + blocks - 1) * _blockSize)->Next;
-		reinterpret_cast<FreeBlock*>(_pool + firstToAlloc->Previous * _blockSize)->Next = nextFree;
+		FreeBlock* firstToAlloc = allocSlot;
+		FreeBlock* lastToAlloc = reinterpret_cast<FreeBlock*>(reinterpret_cast<char*>(allocSlot) + (blocks - 1) * _blockSize);
+		FreeBlock* nextFree = lastToAlloc->Next;
+		firstToAlloc->Previous->Next = nextFree;
 
-		if (nextFree != -1)
-			reinterpret_cast<FreeBlock*>(_pool + nextFree * _blockSize)->Previous = firstToAlloc->Previous;
+		if (nextFree)
+			nextFree->Previous = firstToAlloc->Previous;
 	}
 
 	_numFreeBlocks -= blocks;
 
 	_allocLock.unlock();
 
-	return allocSlot;
+	// Convert pointer to slot index
+	return (reinterpret_cast<char*>(allocSlot) - _pool) / _blockSize;
 }
 
 // Frees certain blocks by inserting them into the free block list.
@@ -100,96 +104,93 @@ void ChunkyAllocator::Free(int32_t firstBlock, uint32_t numBlocks)
 	_allocLock.lock();
 
 	// If there is no list to insert into, just make the current ones the new list.
-	if (_firstFreeBlock == -1)
+	if (!_firstFreeBlock)
 	{
-		_firstFreeBlock = firstBlock;
-
 		// Set up previous link on the first block
-		FreeBlock* b = reinterpret_cast<FreeBlock*>(_pool + firstBlock * _blockSize);
-		b->Previous = -1;
+		_firstFreeBlock = reinterpret_cast<FreeBlock*>(_pool + firstBlock * _blockSize);
+		FreeBlock* b = _firstFreeBlock;
+		b->Previous = nullptr;
 
 		// For any other blocks we correctly set up the next link BEFORE actually
 		// getting the next block, after which we set up the previous link.
 		for (uint32_t block = firstBlock + 1; block < firstBlock + numBlocks; ++block)
 		{
-			b->Next = block;
-			b = reinterpret_cast<FreeBlock*>(_pool + block * _blockSize);
-			b->Previous = block - 1;
+			b->Next = reinterpret_cast<FreeBlock*>(_pool + block * _blockSize);
+			b->Next->Previous = b;
+			b = b->Next;
 		}
 
 		// The last block will now indicate the end of the list
-		b->Next = -1;
+		b->Next = nullptr;
 	}
 	// First free block is after the ones we are returning
-	else if (_firstFreeBlock > firstBlock + numBlocks - 1)
+	else if (_firstFreeBlock > reinterpret_cast<FreeBlock*>(_pool + (firstBlock + numBlocks - 1) * _blockSize))
 	{
-		int32_t oldFirst = _firstFreeBlock;
+		FreeBlock* oldFirst = _firstFreeBlock;
 
 		// Insert at head of list (like above), with the exception that the last
 		// block points to the former first free block.
-		_firstFreeBlock = firstBlock;
+		_firstFreeBlock = reinterpret_cast<FreeBlock*>(_pool + firstBlock * _blockSize);
 
 		// Set up previous link on the first block
-		FreeBlock* b = reinterpret_cast<FreeBlock*>(_pool + firstBlock * _blockSize);
-		b->Previous = -1;
+		FreeBlock* b = _firstFreeBlock;
+		b->Previous = nullptr;
 
 		// For any other blocks we correctly set up the next link BEFORE actually
 		// getting the next block, after which we set up the previous link.
 		for (uint32_t block = firstBlock + 1; block < firstBlock + numBlocks; ++block)
 		{
-			b->Next = block;
-			b = reinterpret_cast<FreeBlock*>(_pool + block * _blockSize);
-			b->Previous = block - 1;
+			b->Next = reinterpret_cast<FreeBlock*>(_pool + block * _blockSize);
+			b->Next->Previous = b;
+			b = b->Next;
 		}
 
 		// The last block will now point to the former head of the list
 		b->Next = oldFirst;
-		reinterpret_cast<FreeBlock*>(_pool + oldFirst * _blockSize)->Previous = firstBlock + numBlocks - 1;
+
+		// Old first block has its previous pointer set to the last freed block
+		oldFirst->Previous = reinterpret_cast<FreeBlock*>(_pool + (firstBlock + numBlocks - 1) * _blockSize);
 	}
 	// Existing free blocks before the ones we are returning. This means that
 	// we must find where in the list to insert and properly update the blocks
 	// before and after (if existing).
 	else
 	{
-		int32_t lastFree = _firstFreeBlock;
-		FreeBlock* lastFreeBlock = reinterpret_cast<FreeBlock*>(_pool + lastFree * _blockSize);
-		int32_t currFree = _firstFreeBlock;
-		FreeBlock* currFreeBlock = reinterpret_cast<FreeBlock*>(_pool + currFree * _blockSize);
+		FreeBlock* lastFreeBlock = _firstFreeBlock;
+		FreeBlock* currFreeBlock = _firstFreeBlock;
 
 		// Keep trying until we found correct spot (where the slot changed from immediately before to after)
-		while (currFree < firstBlock) // Less than comparison should be valid for entire range due to allocation list housekeeping
+		while (currFreeBlock < reinterpret_cast<FreeBlock*>(_pool + firstBlock * _blockSize)) // Less than comparison should be valid for entire range due to allocation list housekeeping
 		{
-			lastFree = currFree;
 			lastFreeBlock = currFreeBlock;
 
-			currFree = lastFreeBlock->Next;
-			if (currFree == -1)
-				break;
+			currFreeBlock = lastFreeBlock->Next;
 
-			currFreeBlock = reinterpret_cast<FreeBlock*>(_pool + currFree * _blockSize);
+			if (!currFreeBlock)
+				break;
 		}
 
-		lastFreeBlock->Next = firstBlock;
+		lastFreeBlock->Next = reinterpret_cast<FreeBlock*>(_pool + firstBlock * _blockSize);
 
 		// Set up previous link on the first block
-		FreeBlock* b = reinterpret_cast<FreeBlock*>(_pool + firstBlock * _blockSize);
-		b->Previous = lastFree;
+		FreeBlock* b = lastFreeBlock->Next;
+		b->Previous = lastFreeBlock;
 
 		// For any other blocks we correctly set up the next link BEFORE actually
 		// getting the next block, after which we set up the previous link.
 		for (uint32_t block = firstBlock + 1; block < firstBlock + numBlocks; ++block)
 		{
-			b->Next = block;
-			b = reinterpret_cast<FreeBlock*>(_pool + block * _blockSize);
-			b->Previous = block - 1;
+			b->Next = reinterpret_cast<FreeBlock*>(_pool + block * _blockSize);
+			b->Next->Previous = b;
+			b = b->Next;
 		}
 
-		// Link to the next block (will be -1 as appropriate if end of pool)
-		b->Next = currFree;
+		// Link to the next block (will be nullptr as appropriate if end of pool)
+		b->Next = currFreeBlock;
 
-		// If we have another block, get it as link to the last returned block
-		if (currFree != -1)
-			reinterpret_cast<FreeBlock*>(_pool + currFree * _blockSize)->Previous = firstBlock + numBlocks - 1;
+		// If we have another block, get it to link to the last returned block
+		if (currFreeBlock)
+			currFreeBlock->Previous = reinterpret_cast<FreeBlock*>(_pool + (firstBlock + numBlocks - 1) * _blockSize);
 	}
 
 	_numFreeBlocks += numBlocks;
@@ -206,15 +207,15 @@ void ChunkyAllocator::PrintOccupancy(void)
 		return;
 	}
 
-	int32_t walker = 0;
-	int32_t free = _firstFreeBlock;
+	char* walker = _pool;
+	FreeBlock* free = _firstFreeBlock;
 
-	while (walker < _numBlocks)
+	// As long as walker hasn't reached the ned
+	while (walker < (_pool + _numBlocks * _blockSize))
 	{
-		if (walker == free)
+		if (reinterpret_cast<FreeBlock*>(walker) == free)
 		{
-			FreeBlock* f = reinterpret_cast<FreeBlock*>(_pool + free * _blockSize);
-			free = f->Next;
+			free = free->Next;
 
 			//OutputDebugStringA( "[O]" );
 			printf("[O]");
@@ -225,7 +226,7 @@ void ChunkyAllocator::PrintOccupancy(void)
 			printf("[X]");
 		}
 
-		walker++;
+		walker += _blockSize;
 	}
 
 	//OutputDebugStringA( "\n" );
@@ -242,34 +243,30 @@ void ChunkyAllocator::_SetupFreeBlockList(void)
 
 	if (_numBlocks == 0)
 	{
-		_firstFreeBlock = -1;
+		_firstFreeBlock = nullptr;
 	}
 	// Special case because both previous and next are non-existant.
 	else if (_numBlocks == 1)
 	{
-		_firstFreeBlock = 0;
 		FreeBlock* b = reinterpret_cast<FreeBlock*>(_pool);
-		b->Previous = -1;
-		b->Next = -1;
+		b->Previous = nullptr;
+		b->Next = nullptr;
+		_firstFreeBlock = b;
 	}
 	else
 	{
-		_firstFreeBlock = 0;
+		_firstFreeBlock = reinterpret_cast<FreeBlock*>(_pool);
+		FreeBlock* b = _firstFreeBlock;
+		b->Previous = nullptr;
 
-		for (uint32_t i = 1; i < _numBlocks - 1; ++i)
+		for (uint32_t i = 1; i < _numBlocks; ++i)
 		{
-			FreeBlock* b = reinterpret_cast<FreeBlock*>(_pool + i * _blockSize);
-			b->Previous = i - 1;
-			b->Next = i + 1;
+			b->Next = reinterpret_cast<FreeBlock*>(_pool + i * _blockSize);
+			b->Next->Previous = b;
+			b = b->Next;
 		}
 
-		FreeBlock* first = reinterpret_cast<FreeBlock*>(_pool);
-		first->Previous = -1;
-		first->Next = 1;
-
-		FreeBlock* last = reinterpret_cast<FreeBlock*>(_pool + (_numBlocks - 1) * _blockSize);
-		last->Previous = _numBlocks - 2; // Zero based and one before this
-		last->Next = -1;
+		b->Next = nullptr;
 	}
 
 	_allocLock.unlock();
