@@ -194,43 +194,43 @@ bool ResourceManager::IsLoaded(SM_GUID guid)
 
 void ResourceManager::TestAlloc( void )
 {
-	_allocator->PrintOccupancy();
+	//_allocator->PrintOccupancy();
 
-	_allocator->Allocate(3);
-	_allocator->PrintOccupancy();
+	//_allocator->Allocate(3);
+	//_allocator->PrintOccupancy();
 
-	_allocator->Allocate(2);
-	_allocator->PrintOccupancy();
+	//_allocator->Allocate(2);
+	//_allocator->PrintOccupancy();
 
-	_allocator->Allocate(15);
-	_allocator->PrintOccupancy();
+	//_allocator->Allocate(15);
+	//_allocator->PrintOccupancy();
 
-	_allocator->Free(2, 3);
-	_allocator->PrintOccupancy();
+	//_allocator->Free(2, 3);
+	//_allocator->PrintOccupancy();
 
-	_allocator->Free(7, 1);
-	_allocator->PrintOccupancy();
+	//_allocator->Free(7, 1);
+	//_allocator->PrintOccupancy();
 
-	_allocator->Free(5, 1);
-	_allocator->PrintOccupancy();
+	//_allocator->Free(5, 1);
+	//_allocator->PrintOccupancy();
 
-	_allocator->Free(0, 1);
-	_allocator->PrintOccupancy();
+	//_allocator->Free(0, 1);
+	//_allocator->PrintOccupancy();
 
-	_allocator->Free(19, 1);
-	_allocator->PrintOccupancy();
+	//_allocator->Free(19, 1);
+	//_allocator->PrintOccupancy();
 
-	_allocator->Allocate(2);
-	_allocator->PrintOccupancy();
+	//_allocator->Allocate(2);
+	//_allocator->PrintOccupancy();
 
-	_allocator->Free(9, 3);
-	_allocator->PrintOccupancy();
+	//_allocator->Free(9, 3);
+	//_allocator->PrintOccupancy();
 
-	_allocator->Free(14, 3);
-	_allocator->PrintOccupancy();
+	//_allocator->Free(14, 3);
+	//_allocator->PrintOccupancy();
 
-	_allocator->Allocate(3);
-	_allocator->PrintOccupancy();
+	//_allocator->Allocate(3);
+	//_allocator->PrintOccupancy();
 }
 
 void ResourceManager::Startup()
