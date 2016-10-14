@@ -194,77 +194,43 @@ bool ResourceManager::IsLoaded(SM_GUID guid)
 
 void ResourceManager::TestAlloc( void )
 {
-	//int32_t allocSlot = -1;
-	////_mutexLock.lock();
-	////_mutexLock.unlock();
-	//PrintOccupancy();
-	//allocSlot = _FindSuitableAllocationSlot(3);
-	//_Allocate(allocSlot, 3);
-	//PrintOccupancy();
-	//allocSlot = _FindSuitableAllocationSlot(2);
-	//_Allocate(allocSlot, 2);
-	//PrintOccupancy();
-	//allocSlot = _FindSuitableAllocationSlot(15);
-	//_Allocate(allocSlot, 15);
-	//PrintOccupancy();
-	//_Free(2, 3);
-	//PrintOccupancy();
-	//_Free(7, 1);
-	//PrintOccupancy();
-	//_Free(5, 1);
-	//PrintOccupancy();
-	//_Free(0, 1);
-	//PrintOccupancy();
-	//_Free(19, 1);
-	//PrintOccupancy();
-	//allocSlot = _FindSuitableAllocationSlot(2);
-	//_Allocate(allocSlot, 2);
-	//PrintOccupancy();
-	//_Free(9, 3);
-	//PrintOccupancy();
-	//_Free(14, 3);
-	//PrintOccupancy();
-	//allocSlot = _FindSuitableAllocationSlot(3);
-	//_Allocate(allocSlot, 3);
-	//PrintOccupancy();
+	_allocator->PrintOccupancy();
 
-	//int32_t allocSlot = _Allocate(6);
-	//PrintOccupancy();
+	_allocator->Allocate(3);
+	_allocator->PrintOccupancy();
 
-	//allocSlot = _Allocate(14);
-	//PrintOccupancy();
+	_allocator->Allocate(2);
+	_allocator->PrintOccupancy();
 
-	//_Free(6, 1);
-	//PrintOccupancy();
+	_allocator->Allocate(15);
+	_allocator->PrintOccupancy();
 
-	//allocSlot = _Allocate(1);
-	//PrintOccupancy();
+	_allocator->Free(2, 3);
+	_allocator->PrintOccupancy();
 
-	//_Free(18, 2);
-	//PrintOccupancy();
+	_allocator->Free(7, 1);
+	_allocator->PrintOccupancy();
 
-	//_Free(19, 1);
-	//PrintOccupancy();
+	_allocator->Free(5, 1);
+	_allocator->PrintOccupancy();
 
-	//_Free(9, 2);
-	//PrintOccupancy();
+	_allocator->Free(0, 1);
+	_allocator->PrintOccupancy();
 
-	//int32_t allocSlot = _Allocate(18);
-	//allocSlot = _Allocate(1);
-	//allocSlot = _Allocate(1);
-	//allocSlot = _Allocate(1);
+	_allocator->Free(19, 1);
+	_allocator->PrintOccupancy();
 
+	_allocator->Allocate(2);
+	_allocator->PrintOccupancy();
 
-	//int32_t a1 = _Allocate(1);
-	//int32_t a2 = _Allocate(1);
-	//int32_t a3 = _Allocate(1);
-	//int32_t a4 = _Allocate(1);
-	//int32_t a5 = _Allocate(1);
+	_allocator->Free(9, 3);
+	_allocator->PrintOccupancy();
 
-	//_Free(a4, 1);
-	//_Free(a5, 1);
+	_allocator->Free(14, 3);
+	_allocator->PrintOccupancy();
 
-	//int i = 0;
+	_allocator->Allocate(3);
+	_allocator->PrintOccupancy();
 }
 
 void ResourceManager::Startup()

@@ -39,7 +39,10 @@ private:
 	static const uint32_t _blockSize = 512 * 1024;
 	uint32_t _numBlocks = 0;
 	uint32_t _numFreeBlocks = 0;
-	FreeBlock* _firstFreeBlock = nullptr;
+
+	FreeBlock _rootBlock, _endBlock; // Really just for stack storage, I actually use the pointers instead
+	FreeBlock* _root = &_rootBlock;
+	FreeBlock* _end = &_endBlock;
 
 	std::mutex _allocLock;
 };
