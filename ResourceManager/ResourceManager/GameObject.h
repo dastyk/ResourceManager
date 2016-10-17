@@ -46,79 +46,57 @@ public:
 				render = true;
 				level = -1;
 			}
-			
-			level--;
-		}
-
-		if (!render)
-		{
-
-			level = (int32_t)_currentLOD;
-			while (level <= 5)
+			else
 			{
-				if (ResourceManager::Instance().IsLoaded(_MeshLODs[level].second))
-				{
-					mesh = _MeshLODs[level].second;
-					render = true;
-					level = 6;
-				}
-
-				level++;
-			}
-			if (!render)
-			{
-				if (!_MeshLODs[0].first)
-				{
-					_MeshLODs[0].first = true;
-					ResourceManager::Instance().LoadResource(_MeshLODs[0].second, Resource::Flag::NEEDED_NOW);
-				}
 				if (!_MeshLODs[_currentLOD].first)
 				{
 					_MeshLODs[_currentLOD].first = true;
 					ResourceManager::Instance().LoadResource(_MeshLODs[_currentLOD].second, Resource::Flag::NEEDED_NOW);
 				}
-
+				if (!_MeshLODs[0].first)
+				{
+					_MeshLODs[0].first = true;
+					ResourceManager::Instance().LoadResource(_MeshLODs[0].second, Resource::Flag::NEEDED_NOW);
+				}
 				
-			}
-		}
 
-		level = (int32_t)_currentLOD;
-		while (level >= 0)
-		{
-			if (ResourceManager::Instance().IsLoaded(_TextureLODs[level].second))
-			{
-				texture = _TextureLODs[level].second;
-				
-				return render;
 			}
-
+			
 			level--;
 		}
-		level = (int32_t)_currentLOD;
-		while (level <= 5)
+		
+		if (render)
 		{
-			if (ResourceManager::Instance().IsLoaded(_TextureLODs[level].second))
+			render = false;
+			level = (int32_t)_currentLOD;
+			while (level >= 0)
 			{
-				texture = _TextureLODs[level].second;
+				if (ResourceManager::Instance().IsLoaded(_TextureLODs[level].second))
+				{
+					texture = _TextureLODs[level].second;
+					render = true;
+					level = -1;
+				}
+				else
+				{
+					if (!_TextureLODs[_currentLOD].first)
+					{
+						_TextureLODs[_currentLOD].first = true;
+						ResourceManager::Instance().LoadResource(_TextureLODs[_currentLOD].second, Resource::Flag::NEEDED_NOW);
+					}
+					if (!_TextureLODs[0].first)
+					{
+						_TextureLODs[0].first = true;
+						ResourceManager::Instance().LoadResource(_TextureLODs[0].second, Resource::Flag::NEEDED_NOW);
+					}
+					
+				}
 
-				return render;
+				level--;
 			}
-
-			level++;
-		}
-		if (!_TextureLODs[0].first)
-		{
-			_TextureLODs[0].first = true;
-			ResourceManager::Instance().LoadResource(_TextureLODs[0].second, Resource::Flag::NEEDED_NOW);
-		}	
-		if (!_TextureLODs[_currentLOD].first)
-		{
-			_TextureLODs[_currentLOD].first = true;
-			ResourceManager::Instance().LoadResource(_TextureLODs[_currentLOD].second, Resource::Flag::NEEDED_NOW);
 		}
 
-
-		return false;
+		return render;
 			
 	}
 	int32_t GetCurrentLOD() { return _currentLOD; }
