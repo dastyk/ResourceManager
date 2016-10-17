@@ -32,6 +32,17 @@ namespace Arfer
             nodeSize.Text = "File Size: ";
             fileData.Text = "";
         }
+        private void changed()
+        {
+            saveToolStripMenuItem.Enabled = true;
+            saveAsToolStripMenuItem.Enabled = true;
+            saveButton.Enabled = true;
+        }
+        private void saved()
+        {
+            saveToolStripMenuItem.Enabled = false;
+            saveButton.Enabled = false;
+        }
         private void setSelectedNode(TreeNode node)
         {
             itemTree.SelectedNode = node;
@@ -52,13 +63,81 @@ namespace Arfer
                 fileData.Text = "";
             }
         }
+
         private void exitToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            this.Close();
+            if (saveButton.Enabled)
+            {
+                DialogResult dialogResult = MessageBox.Show("Save changes?", "Exit", MessageBoxButtons.YesNoCancel);
+                if (dialogResult == DialogResult.Yes)
+                {
+
+                    if (savePath == "")
+                    {
+                        SaveFileDialog prom = new SaveFileDialog();
+                        prom.Title = "Choose were to save";
+                        prom.Filter = "Arfer Package|*.drf";
+                        prom.DefaultExt = ".drf";
+                        prom.FileName = itemTree.Nodes[0].Text;
+                        prom.InitialDirectory = Environment.CurrentDirectory;
+                        prom.ShowDialog();
+                        savePath = prom.FileName;
+                    }
+
+                    if (savePath != "")
+                    {
+
+                        writeToBinary(savePath, itemTree);
+                        packOpenedPath = savePath;
+                        saved();
+                    }
+
+                }
+                else if (dialogResult == DialogResult.No)
+                    this.Close();
+            }
+            else
+                this.Close();
+        }
+        private void Arfer_FormClosing(object sender, FormClosingEventArgs e)
+        {
+            if (saveButton.Enabled)
+            {
+                DialogResult dialogResult = MessageBox.Show("Save changes?", "Exit", MessageBoxButtons.YesNoCancel);
+                if (dialogResult == DialogResult.Yes)
+                {
+
+                    if (savePath == "")
+                    {
+                        SaveFileDialog prom = new SaveFileDialog();
+                        prom.Title = "Choose were to save";
+                        prom.Filter = "Arfer Package|*.drf";
+                        prom.DefaultExt = ".drf";
+                        prom.FileName = itemTree.Nodes[0].Text;
+                        prom.InitialDirectory = Environment.CurrentDirectory;
+                        prom.ShowDialog();
+                        savePath = prom.FileName;
+                    }
+
+                    if (savePath != "")
+                    {
+
+                        writeToBinary(savePath, itemTree);
+                        packOpenedPath = savePath;
+                        saved();
+                    }
+
+                }
+                else if (dialogResult == DialogResult.Cancel)
+
+                    e.Cancel = true;
+            }
+
         }
         private void addNodeToNode(TreeNode parent, TreeNode child)
         {
             parent.Nodes.Add(child);
+            changed();
         }
         private void addNodeToSelected(TreeNode node)
         {
@@ -70,7 +149,7 @@ namespace Arfer
             {
                 itemTree.SelectedNode.Nodes.Add(node);
             }
-
+            changed();
         }
         private void removeSelectedNode()
         {
@@ -79,9 +158,8 @@ namespace Arfer
             {
                 if (itemTree.SelectedNode == itemTree.Nodes[0])
                 {
-                    saveToolStripMenuItem.Enabled = false;
+                    saved();
                     saveAsToolStripMenuItem.Enabled = false;
-                    saveButton.Enabled = false;
                 }
 
                 checkedNodes.Remove(itemTree.SelectedNode);
@@ -110,10 +188,7 @@ namespace Arfer
             setSelectedNode(node);
             renameSelectedNode();
 
-            saveToolStripMenuItem.Enabled = true;
-            saveAsToolStripMenuItem.Enabled = true;
-            saveButton.Enabled = true;
-
+            changed();
 
         }
         private void newPackageToolStripMenuItem_Click(object sender, EventArgs e)
@@ -154,10 +229,10 @@ namespace Arfer
                     {
                         readFromBinary(reader, itemTree);
                     }
-                    saveToolStripMenuItem.Enabled = true;
-                    saveAsToolStripMenuItem.Enabled = true;
-                    saveButton.Enabled = true;
+                    
                     packOpenedPath = prom.FileName;
+                    savePath = prom.FileName;
+                    saved();
                 }
 
             }
@@ -187,6 +262,7 @@ namespace Arfer
 
                 writeToBinary(savePath, itemTree);
                 packOpenedPath = savePath;
+                saved();
             }
         }
 
@@ -207,7 +283,7 @@ namespace Arfer
 
                 writeToBinary(savePath, itemTree);
                 packOpenedPath = savePath;
-
+                saved();
             }
         }
         struct LoadData
@@ -361,7 +437,9 @@ namespace Arfer
                 node.Tag = data;
 
             }
-            
+            else
+                node.ContextMenuStrip = itemTreeNodeRCCM;
+
             int count = reader.ReadInt32();           
             addNodeToNode(tree, node);
             for (int i = 0; i < count; i++)
@@ -397,6 +475,7 @@ namespace Arfer
 
                             e.Node.EndEdit(false);
                             nodeInfoBox.Text = e.Label;
+                            changed();
                         }
                         else
                         {
@@ -546,6 +625,32 @@ namespace Arfer
 
 
         }
+        private bool CanAdd(TreeNode node, TreeNode dest, bool f = false)
+        {
+            if (node == dest)
+                return false;
+            bool canAdd = true;
+            if (f)
+            {
+                foreach (TreeNode n in dest.Nodes)
+                {
+                    if (n.Text == node.Text)
+                        return false;
+                }
+            }
+            foreach (TreeNode n in node.Nodes)
+            {
+
+                if (n == dest)
+                {
+                    return false;
+                }
+                canAdd = CanAdd(n, dest);
+                if (!canAdd)
+                    return false;
+            }
+            return canAdd;
+        }
 
         private void itemTree_DragDrop(object sender, DragEventArgs e)
         {
@@ -555,14 +660,20 @@ namespace Arfer
                 Point pt = ((TreeView)sender).PointToClient(new Point(e.X, e.Y));
                 TreeNode DestinationNode = ((TreeView)sender).GetNodeAt(pt);
 
-                if (DestinationNode.Tag == null)
+                if (DestinationNode != null)
                 {
                     NewNode = (TreeNode)e.Data.GetData("System.Windows.Forms.TreeNode");
 
-                    DestinationNode.Nodes.Add((TreeNode)NewNode.Clone());
-                    DestinationNode.Expand();
-                    //Remove Original Node
-                    NewNode.Remove();
+
+                    if (CanAdd(NewNode, DestinationNode, true))
+                    {
+                       
+                        DestinationNode.Nodes.Add((TreeNode)NewNode.Clone());
+                        DestinationNode.Expand();
+                        //Remove Original Node
+                        NewNode.Remove();
+                        changed();
+                    }
                 }
 
 
@@ -592,10 +703,8 @@ namespace Arfer
                             {
                                 readFromBinary(reader, itemTree);
                             }
-                            saveToolStripMenuItem.Enabled = true;
-                            saveAsToolStripMenuItem.Enabled = true;
-                            saveButton.Enabled = true;
                             packOpenedPath = path;
+                            changed();
                         }
                     }
                     else if (itemTree.Nodes.Count > 0)
@@ -716,13 +825,14 @@ namespace Arfer
             DialogResult dialogResult = MessageBox.Show("Are you sure you want to remove the selected nodes?", "Remove", MessageBoxButtons.YesNo);
             if (dialogResult == DialogResult.Yes)
             {
+                bool last = true;
                 foreach (TreeNode n in checkedNodes)
                 {
                     if (itemTree.SelectedNode == itemTree.Nodes[0])
                     {
-                        saveToolStripMenuItem.Enabled = false;
+                        saved();
+                        last = false;
                         saveAsToolStripMenuItem.Enabled = false;
-                        saveButton.Enabled = false;
                     }
 
                     itemTree.Nodes.Remove(n);
@@ -733,6 +843,8 @@ namespace Arfer
                 checkedNodes.Clear();
                 delChecked.Enabled = false;
                 deleteSelectedToolStripMenuItem.Enabled = false;
+                if(last)
+                    changed();
             }
         }
         private void deleteSelectedToolStripMenuItem_Click(object sender, EventArgs e)
@@ -772,6 +884,7 @@ namespace Arfer
 
                 writeToBinary(savePath, itemTree);
                 packOpenedPath = savePath;
+                saved();
             }
         }
 
@@ -784,6 +897,8 @@ namespace Arfer
         {
             existingPackage();
         }
+
+    
     }
 
     class TreeData
