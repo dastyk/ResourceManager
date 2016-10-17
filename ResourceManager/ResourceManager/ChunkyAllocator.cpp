@@ -3,6 +3,8 @@
 #include <stdio.h>
 #include "MemoryManager.h"
 
+using namespace std;
+
 ChunkyAllocator::ChunkyAllocator(uint32_t blocks)
 {
 	_numFreeBlocks = _numBlocks = blocks;
@@ -117,6 +119,60 @@ void ChunkyAllocator::Free(int32_t first, uint32_t numBlocks)
 	_numFreeBlocks += numBlocks;
 
 	_allocLock.unlock();
+}
+
+// Performs one defragmentation iteration and returns true if something was done.
+bool ChunkyAllocator::Defrag(vector<pair<uint32_t, uint32_t>>& allocs)
+{
+	// Remember:
+	// Overwriting (or otherwise moving) free chunks must update them accordingly
+	// Moved allocations must be propagated back to the user
+	// Idea for now is to just put this method call in a while-loop to defrag until nothing remains
+
+	FreeChunk* free = _root->Next;
+
+	// No free chunks, nothing to defrag
+	if (free == _end)
+	{
+		return false;
+	}
+
+	// Naïve defragmentation that just stuffs upcoming occupied blocks into the free one.
+	for (auto& alloc : allocs)
+	{
+		// Found an allocation that comes after the free block (defrag left)
+		if (reinterpret_cast<char*>(free) + free->Blocks * _blockSize == _pool + alloc.first)
+		{
+			// Make a copy of the old free block before overwriting data
+			FreeChunk oldFree;
+			oldFree = *free;
+
+			// Copy data into the free chunk (memmove supports overlaps, so even
+			// if the free chunk is just one block, we can still move 2 blocks)
+			memmove(free, _pool + alloc.first * _blockSize, alloc.second * _blockSize);
+
+			// Move start of free chunk to accomodate the newly inserted data and
+			// incorporate the newly freed slots when we're at it
+			FreeChunk* newFree = reinterpret_cast<FreeChunk*>(reinterpret_cast<char*>(free) + alloc.second * _blockSize);
+			newFree->Blocks = oldFree.Blocks;
+			newFree->Previous = oldFree.Previous;
+			newFree->Next = oldFree.Next;
+			newFree->Previous->Next = newFree;
+			newFree->Next->Previous = newFree;
+
+			// If the next free block comes immediately after we merge
+			if (newFree->Next == reinterpret_cast<FreeChunk*>(reinterpret_cast<char*>(newFree) + newFree->Blocks * _blockSize))
+			{
+				newFree->Blocks += newFree->Next->Blocks;
+				newFree->Next = newFree->Next->Next;
+				newFree->Next->Previous = newFree;
+			}
+
+			return true;
+		}
+	}
+
+	return false;
 }
 
 // Little debug function that outputs occupancy of blocks where O indicates open
