@@ -209,6 +209,41 @@ private:
 
 				return false;
 			}
+			static bool FirstCumulativeFit(uint32_t sizeOfLoadRequest, ResourceManager* rm)
+			{
+				uint32_t foundTot = 0;
+				std::vector<ResourceList*> found;
+				auto r = rm->_resources;
+				while (r)
+				{
+					if (r->resource._flags != Resource::Flag::PERSISTENT && r->resource._refCount == 0 && r->resource.GetState() == Resource::ResourceState::Loaded)
+					{
+						if (r->resource._numBlocks >= sizeOfLoadRequest)
+						{
+							printf("\tEvicting resource, GUID: %llu.\n\n", r->resource.ID.data);
+							rm->_RemoveResource(r);
+							return true;
+						}
+						else
+						{
+						found.push_back(r);
+						foundTot += r->resource.GetData().size;
+						}
+					}
+
+					if (foundTot >= sizeOfLoadRequest)
+					{
+						for (auto re : found)
+							rm->_RemoveResource(re);
+						// IF THIS HAPPENS YOU MUST DEFRAG!!!!
+						//rm->_allocator->Defrag()
+						return true;
+					}
+					r = r->next;
+				}
+
+				return false;
+			}
 			static bool LRU(uint32_t sizeOfLoadRequest, ResourceManager* rm)
 			{
 				auto found = std::pair<uint64_t, ResourceList*>(UINT64_MAX, nullptr);
