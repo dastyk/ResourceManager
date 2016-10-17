@@ -43,3 +43,18 @@ HWND Window::GetHandle()
 {
 	return _hwnd;
 }
+
+void Window::LockMouseToScreen(bool lock)
+{
+	SDL_SetRelativeMouseMode((SDL_bool)lock);
+}
+
+void Window::ToggleLockMouseToScreen()
+{
+	SDL_SetRelativeMouseMode((SDL_bool)!((bool)SDL_GetRelativeMouseMode()));
+}
+
+//void Window::KeepMouseCentered(bool center)
+//{
+//	
+//}

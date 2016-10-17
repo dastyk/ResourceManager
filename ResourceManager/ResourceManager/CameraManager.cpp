@@ -103,15 +103,32 @@ void CameraManager::RotateActiveCamera(float degX, float degY, float degZ)
 
 void CameraManager::RotatePitch(float degrees)
 {
-	float rad = degrees * 180.0f / XM_PI;
+	XMVECTOR horizontal = XMVectorSet(1.0f, 0.0f, 0.0f, 0.0f);
+	XMVECTOR vertical = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
 	XMVECTOR up = XMLoadFloat3(&_cameras[_activeCamera].up);
+	
 	XMVECTOR forward = XMLoadFloat3(&_cameras[_activeCamera].forward);
 	XMVECTOR r = XMVector3Cross(up, forward);
+
+	float rad = degrees * 180.0f / XM_PI;
 	XMMATRIX rot = XMMatrixRotationAxis(r, rad);
 	up = XMVector3Transform(up, rot);
 	forward = XMVector3Transform(forward, rot);
 	XMStoreFloat3(&_cameras[_activeCamera].up, up);
 	XMStoreFloat3(&_cameras[_activeCamera].forward, forward);
+}
+
+void CameraManager::RotateYaw(float degrees)
+{
+	float rad = degrees * 180.0f / XM_PI;
+	XMVECTOR up = XMLoadFloat3(&_cameras[_activeCamera].up);
+	XMVECTOR forward = XMLoadFloat3(&_cameras[_activeCamera].forward);
+	XMMATRIX rot = XMMatrixRotationY(rad);
+	up = XMVector3Transform(up, rot);
+	forward = XMVector3Transform(forward, rot);
+	XMStoreFloat3(&_cameras[_activeCamera].up, up);
+	XMStoreFloat3(&_cameras[_activeCamera].forward, forward);
+	
 }
 
 void CameraManager::TranslateActiveCamera(float offsetX, float offsetY, float offsetZ)
