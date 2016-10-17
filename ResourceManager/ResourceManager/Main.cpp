@@ -18,6 +18,29 @@
 
 void ArfParser(Resource& r);
 void Objarser(Resource& r);
+
+
+
+std::string bytesToString(uint32_t freeMemory)
+{
+	// http://stackoverflow.com/questions/3758606
+	std::stringstream ss;
+	const uint32_t base = 1024;
+
+	if (freeMemory < base)
+	{
+		ss << freeMemory << " B";
+	}
+	else
+	{
+		uint32_t exp = static_cast<uint32_t>(log(freeMemory) / log(base));
+		char unit = std::string("kMGTPE").at(exp - 1);
+		ss << std::setprecision(1) << std::fixed << freeMemory / pow(base, exp) << " " << unit << "B";
+	}
+
+	return std::move(ss.str());
+}
+
 int main(int argc, char** argv)
 {
 	srand(time(NULL));
@@ -135,33 +158,8 @@ int main(int argc, char** argv)
 			core->GetGraphics()->AddToRenderQueue(renderObjects[i]);
 		}
 
-		//core->GetGraphics()->AddToRenderQueue(gg);
 		core->Update();
 
-	//	ResourceManager::Instance().LoadResource("Sphere5.arf", Resource::Flag::NEEDED_NOW);
-		//ResourceManager::Instance().LoadResource("Sphere4.arf", Resource::Flag::NEEDED_NOW);
-		//ResourceManager::Instance().LoadResource("Sphere3.arf", Resource::Flag::NEEDED_NOW);
-		//ResourceManager::Instance().LoadResource("Sphere2.arf", Resource::Flag::NEEDED_NOW);
-		//ResourceManager::Instance().LoadResource("Sphere1.arf", Resource::Flag::NEEDED_NOW);
-
-		auto bytesToString = [](uint32_t freeMemory) -> std::string {
-			// http://stackoverflow.com/questions/3758606
-			std::stringstream ss;
-			const uint32_t base = 1024;
-
-			if (freeMemory < base)
-			{
-				ss << freeMemory << " B";
-			}
-			else
-			{
-				uint32_t exp = static_cast<uint32_t>(log(freeMemory) / log(base));
-				char unit = std::string("kMGTPE").at(exp - 1);
-				ss << std::setprecision(1) << std::fixed << freeMemory / pow(base, exp) << " " << unit << "B";
-			}
-
-			return std::move(ss.str());
-		};
 
 		uint32_t maxMemory = r.MaxMemory();
 		uint32_t freeMemory = r.FreeMemory();
