@@ -20,6 +20,10 @@ public:
 	uint32_t GetHeight();
 	bool GetWindowedMode();
 	HWND GetHandle();
+
+	void LockMouseToScreen(bool lock);
+	void ToggleLockMouseToScreen();
+	//void KeepMouseCentered(bool center);
 	
 
 };

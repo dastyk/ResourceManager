@@ -117,12 +117,13 @@ int main(int argc, char** argv)
 	printf("<----||Starting Game loop||---->\n\n");
 	InputManager* input = core->GetInputManager();
 	std::vector<GameObject> renderObjects;
+	core->GetWindow()->LockMouseToScreen(true);
 	while(!input->WasKeyPressed(SDLK_ESCAPE))
 	{
 		
 		//Check event to handle input
 		if (input->WasKeyPressed(SDLK_k))
-			printf("jim was here");
+			core->GetWindow()->ToggleLockMouseToScreen();
 
 		if (input->IsKeyDown(SDLK_w))
 			core->GetCameraManager()->MoveForward(4.0f * core->GetTimer()->GetDeltaTime());
@@ -136,6 +137,12 @@ int main(int argc, char** argv)
 		if (input->IsKeyDown(SDLK_a))
 			core->GetCameraManager()->RotateActiveCamera(0.0f, -0.01f * core->GetTimer()->GetDeltaTime(), 0.0f);
 
+		float xrotation = input->GetMouseXMovement() * core->GetTimer()->GetDeltaTime() * 0.01f;
+		float yrotation = input->GetMouseYMovement() * core->GetTimer()->GetDeltaTime() * 0.01f;
+
+		core->GetCameraManager()->RotatePitch(yrotation);
+		core->GetCameraManager()->RotateYaw(xrotation);
+		
 		if (input->WasKeyPressed(SDLK_1))
 		{
 			gg.pos = DirectX::XMFLOAT3(rand()%20 -10, rand() % 20 - 10, rand() % 20 - 10);

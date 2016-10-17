@@ -23,6 +23,7 @@ public:
 	void FillPerFrameBuffer(PerFrameBuffer& pfb, int cameraID = -1);
 	void RotateActiveCamera(float degX, float degY, float degZ);
 	void RotatePitch(float degrees);
+	void RotateYaw(float degrees);
 	void TranslateActiveCamera(float offsetX, float offsetY, float offsetZ);
 	void MoveForward(float amount);
 	void MoveRight(float amount);
