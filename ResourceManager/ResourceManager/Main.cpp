@@ -16,7 +16,8 @@
 
 #include "Scene.h"
 
-
+void ArfParser(Resource& r);
+void Objarser(Resource& r);
 int main(int argc, char** argv)
 {
 	srand(time(NULL));
@@ -40,69 +41,9 @@ int main(int argc, char** argv)
 		Core::GetInstance()->GetGraphics()->CreateShaderResource(r);
 	});
 
-	r.AddParser("arf",
-		[](Resource& r) 
-	{
-		// Setup pointers
-		RawData rdata = r.GetData();
-		ArfData::Data* data = (ArfData::Data*)rdata.data;
-		ArfData::DataPointers _datap;
-		void* pdata = (void*)((size_t)data + sizeof(ArfData::Data)); 
-		_datap.positions = (ArfData::Position*)((size_t)pdata + data->PosStart);
-		_datap.texCoords = (ArfData::TexCoord*)((size_t)pdata + data->TexStart);
-		_datap.normals = (ArfData::Normal*)((size_t)pdata + data->NormStart);
-		_datap.faces = (ArfData::Face*)((size_t)pdata + data->FaceStart);
-		_datap.subMesh = (ArfData::SubMesh*)((size_t)pdata + data->SubMeshStart);
+	r.AddParser("arf", ArfParser);
 
-		// Interleave data
-		uint32_t numVertices = data->NumFace * 3;
-		MeshData::Vertex* vertices = new MeshData::Vertex[numVertices];
-		uint32_t index = 0;
-		for (uint32_t i = 0; i < data->NumSubMesh; i++)
-		{
-			for (uint32_t j = _datap.subMesh[i].faceStart; j < _datap.subMesh[i].faceCount; j++)
-			{
-				auto& face = _datap.faces[j];
-
-				for (uint8_t r = 0; r < face.indexCount; r++)
-				{
-					auto& ind = face.indices[r];
-					// Positions
-					memcpy(&vertices[index].pos, &_datap.positions[ind.index[0]-1], sizeof(MeshData::Position));
-					// Normals
-					memcpy(&vertices[index].norm, &_datap.normals[ind.index[2]-1], sizeof(MeshData::Normal));
-					// TexCoords
-					memcpy(&vertices[index].tex, &_datap.texCoords[ind.index[1]-1], sizeof(MeshData::TexCoord));
-					
-					index++;
-				}
-			}
-		}
-
-		uint32_t indexCount = data->NumFace * 3;
-		uint32_t* indices = new uint32_t[indexCount];
-		for (uint32_t i = 0; i < indexCount; i++)
-		{
-			indices[i] = i;
-		}
-
-		Core::GetInstance()->GetGraphics()->CreateMeshBuffers(r, vertices, numVertices, indices, indexCount);
-
-		delete[] vertices;
-		delete[] indices;
-	});
-
-	r.AddParser("obj", [](Resource& r)
-	{
-		MeshData::MeshData pdata;
-		RawData rdata = r.GetData();
-		ParseObj(rdata.data, pdata);
-		
-		Core::GetInstance()->GetGraphics()->CreateMeshBuffers(r, pdata.vertices, pdata.NumVertices, pdata.Indices, pdata.IndexCount);
-
-		delete[] pdata.vertices;
-		delete[] pdata.Indices;
-	});
+	r.AddParser("obj", Objarser);
 
 	r.Startup();
 
@@ -246,4 +187,68 @@ int main(int argc, char** argv)
 	getchar();
 	DebugLogger::GetInstance()->Dump();
 	return 0;
+}
+
+
+void ArfParser(Resource& r)
+{
+	// Setup pointers
+	RawData rdata = r.GetData();
+	ArfData::Data* data = (ArfData::Data*)rdata.data;
+	ArfData::DataPointers _datap;
+	void* pdata = (void*)((size_t)data + sizeof(ArfData::Data));
+	_datap.positions = (ArfData::Position*)((size_t)pdata + data->PosStart);
+	_datap.texCoords = (ArfData::TexCoord*)((size_t)pdata + data->TexStart);
+	_datap.normals = (ArfData::Normal*)((size_t)pdata + data->NormStart);
+	_datap.faces = (ArfData::Face*)((size_t)pdata + data->FaceStart);
+	_datap.subMesh = (ArfData::SubMesh*)((size_t)pdata + data->SubMeshStart);
+
+	// Interleave data
+	uint32_t numVertices = data->NumFace * 3;
+	MeshData::Vertex* vertices = new MeshData::Vertex[numVertices];
+	uint32_t index = 0;
+	for (uint32_t i = 0; i < data->NumSubMesh; i++)
+	{
+		for (uint32_t j = _datap.subMesh[i].faceStart; j < _datap.subMesh[i].faceCount; j++)
+		{
+			auto& face = _datap.faces[j];
+
+			for (uint8_t r = 0; r < face.indexCount; r++)
+			{
+				auto& ind = face.indices[r];
+				// Positions
+				memcpy(&vertices[index].pos, &_datap.positions[ind.index[0] - 1], sizeof(MeshData::Position));
+				// Normals
+				memcpy(&vertices[index].norm, &_datap.normals[ind.index[2] - 1], sizeof(MeshData::Normal));
+				// TexCoords
+				memcpy(&vertices[index].tex, &_datap.texCoords[ind.index[1] - 1], sizeof(MeshData::TexCoord));
+
+				index++;
+			}
+		}
+	}
+
+	uint32_t indexCount = data->NumFace * 3;
+	uint32_t* indices = new uint32_t[indexCount];
+	for (uint32_t i = 0; i < indexCount; i++)
+	{
+		indices[i] = i;
+	}
+
+	Core::GetInstance()->GetGraphics()->CreateMeshBuffers(r, vertices, numVertices, indices, indexCount);
+
+	delete[] vertices;
+	delete[] indices;
+}
+
+void Objarser(Resource& r)
+{
+	MeshData::MeshData pdata;
+	RawData rdata = r.GetData();
+	ParseObj(rdata.data, pdata);
+
+	Core::GetInstance()->GetGraphics()->CreateMeshBuffers(r, pdata.vertices, pdata.NumVertices, pdata.Indices, pdata.IndexCount);
+
+	delete[] pdata.vertices;
+	delete[] pdata.Indices;
 }
