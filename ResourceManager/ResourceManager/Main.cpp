@@ -54,8 +54,8 @@ int main(int argc, char** argv)
 	MemoryManager::CreateInstance();
 	MemoryManager::GetInstance()->Init(512U * 1024U * 1024U);
 	ResourceManager& r = ResourceManager::Instance(); // Kickstart at our will
-	r.Init(256U * 1024U * 1024U);
-
+	r.Init(12U * 1024U * 1024U);
+	r.SetEvictPolicy(ResourceManager::EvictPolicies::FirstFit);
 	r.SetAssetLoader(new ZipLoader("data.dat"));
 
 	r.AddParser("jpg",
@@ -168,7 +168,6 @@ int main(int argc, char** argv)
 
 		std::stringstream ss;
 		ss << "Free memory: " << freeMemoryStr.c_str() << " / " << maxMemoryStr.c_str() << " (" << std::setprecision(1) << std::fixed << 100.0f * freeMemory / maxMemory << "%)";
-		//printf("Free memory: %s / %s (%.1f%%)\n", freeMemoryStr.c_str(), maxMemoryStr.c_str(), 100.0f * freeMemory / maxMemory);
 
 		HWND hwnd = core->GetWindow()->GetHandle();
 		SetWindowTextA(hwnd, ss.str().c_str());

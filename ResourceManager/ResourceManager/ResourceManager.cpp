@@ -257,6 +257,13 @@ void ResourceManager::AddParser(const std::string& fileend, const std::function<
 	
 }
 
+void ResourceManager::SetEvictPolicy(const std::function<bool(uint32_t sizeOfLoadRequest, ResourceManager*rm)>& evictPolicy)
+{
+	_mutexLockGeneral.lock();
+	_WhatToEvict = evictPolicy;
+	_mutexLockGeneral.unlock();
+}
+
 /*===============================================================
 /*		The main "Run" thread for the Resource Manager
 /*	From here, we start the LoadingThread and the two ParserThreads
@@ -301,24 +308,24 @@ void ResourceManager::_Run()
 
 	while (_running)
 	{
-		_mutexLockGeneral.lock();
-		//Loop through all resources, removing the first, and only one, resource available to be removed.
-		uint64_t erased = 0;
-		auto r = _resources;
-		while (r)
-		{
-			if (r->resource._refCount == 0 && r->resource.GetState() == Resource::ResourceState::Loaded && !(r->resource._flags & Resource::Flag::PERSISTENT))
-			{
-				printf("Unloading resource. GUID: %llu.\n", r->resource.ID.data);
-				_RemoveResource(r);
-				break;
-			}
-			r = r->next;
-		}
-		_mutexLockGeneral.unlock();
+		//_mutexLockGeneral.lock();
+		////Loop through all resources, removing the first, and only one, resource available to be removed.
+		//uint64_t erased = 0;
+		//auto r = _resources;
+		//while (r)
+		//{
+		//	if (r->resource._refCount == 0 && r->resource.GetState() == Resource::ResourceState::Loaded && !(r->resource._flags & Resource::Flag::PERSISTENT))
+		//	{
+		//		printf("Unloading resource. GUID: %llu.\n", r->resource.ID.data);
+		//		_RemoveResource(r);
+		//		break;
+		//	}
+		//	r = r->next;
+		//}
+		//_mutexLockGeneral.unlock();
 
 		//Taking a nap.
-		this_thread::sleep_for(std::chrono::milliseconds(17));
+		//this_thread::sleep_for(std::chrono::milliseconds(17));
 	}
 
 	//When we're shutting down, we wait for our child-threads and join them in.
@@ -404,11 +411,7 @@ void ResourceManager::_LoadingThread(uint16_t threadID)
 					numBlocks = static_cast<uint32_t>(ceilf(static_cast<float>(dataSize) / _allocator->BlockSize()));
 					startBlock = _allocator->Allocate(numBlocks);
 
-					if (startBlock == -1)
-					{
-						numBlocks = 0;
-					}
-					else
+					if (startBlock != -1)
 					{
 						data = _allocator->Data(startBlock);
 					}
@@ -431,11 +434,23 @@ void ResourceManager::_LoadingThread(uint16_t threadID)
 			catch (std::runtime_error& e)
 			{
 				//We don't have enough memory. Wait one "sleep", but push the job back onto the queue for a new try.
-				_mutexLockLoadingQueue.lock();
-				job->SetState(Resource::ResourceState::Waiting);
-				_loadingQueue.push(job);
-				_mutexLockLoadingQueue.unlock();
+				printf("Resource Manager out of memory...\n");
 
+
+				if (_WhatToEvict(numBlocks, this))
+				{
+					_mutexLockLoadingQueue.lock();
+					job->SetState(Resource::ResourceState::Waiting);
+					_loadingQueue.push(job);
+					_mutexLockLoadingQueue.unlock();
+				}
+				else
+				{
+					_RemoveResource(_FindResource(job->ID));
+					printf("\tCould not find a resource to evict.\n\n");
+				}
+					
+								
 				_mutexLockLoader.unlock();
 			}
 			
@@ -516,6 +531,8 @@ void ResourceManager::Init(uint64_t maxMemory)
 	_resourcePool = MemoryManager::CreatePoolAllocator(sizeof(ResourceList), nrb, 0);
 
 	_allocator = new ChunkyAllocator(nrb);
+
+	_WhatToEvict = EvictPolicies::NoEvict;
 }
 
 void ResourceManager::ShutDown()
