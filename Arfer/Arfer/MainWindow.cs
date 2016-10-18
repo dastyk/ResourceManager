@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 using System.IO;
 using System.Runtime.Serialization.Formatters.Binary;
-
+using System.IO.Compression;
 
 
 
@@ -37,6 +37,7 @@ namespace Arfer
             saveToolStripMenuItem.Enabled = true;
             saveAsToolStripMenuItem.Enabled = true;
             saveButton.Enabled = true;
+            exportToToolStripMenuItem.Enabled = true;
         }
         private void saved()
         {
@@ -76,7 +77,7 @@ namespace Arfer
                     {
                         SaveFileDialog prom = new SaveFileDialog();
                         prom.Title = "Choose were to save";
-                        prom.Filter = "Arfer Package|*.drf";
+                        prom.Filter = "Arfer Package (*.drf)|*.drf|All files (*.*)|*.*";
                         prom.DefaultExt = ".drf";
                         prom.FileName = itemTree.Nodes[0].Text;
                         prom.InitialDirectory = Environment.CurrentDirectory;
@@ -111,7 +112,7 @@ namespace Arfer
                     {
                         SaveFileDialog prom = new SaveFileDialog();
                         prom.Title = "Choose were to save";
-                        prom.Filter = "Arfer Package|*.drf";
+                        prom.Filter = "Arfer Package (*.drf)|*.drf|All files (*.*)|*.*";
                         prom.DefaultExt = ".drf";
                         prom.FileName = itemTree.Nodes[0].Text;
                         prom.InitialDirectory = Environment.CurrentDirectory;
@@ -139,17 +140,47 @@ namespace Arfer
             parent.Nodes.Add(child);
             changed();
         }
-        private void addNodeToSelected(TreeNode node)
+        private void addNodeToSelected(ref TreeNode node)
         {
             if (itemTree.Nodes.Count == 0)
             {
                 itemTree.Nodes.Add(node);
+                changed();
             }
             else
             {
-                itemTree.SelectedNode.Nodes.Add(node);
+                bool canAdd = true;
+
+                foreach (TreeNode n in itemTree.SelectedNode.Nodes)
+                {
+
+                    if (n.Text == node.Text)
+                    {
+                        if (n.Tag == null && node.Tag == null)
+                        {
+                            node = n;
+                            canAdd = false;
+                            break;
+                        }
+                        else if (n.Tag != null && node.Tag != null)
+                        {
+                            if (((TreeData)n.Tag).ext == ((TreeData)node.Tag).ext)
+                            {
+                                node = n;
+                                canAdd = false;
+                                break;
+                            }
+                        }
+                    }
+                }
+                if (canAdd)
+                {
+                    itemTree.SelectedNode.Nodes.Add(node);
+                    changed();
+                }
+
             }
-            changed();
+
         }
         private void removeSelectedNode()
         {
@@ -184,7 +215,7 @@ namespace Arfer
             node.ContextMenuStrip = itemTreeNodeRCCM;
 
 
-            addNodeToSelected(node);
+            addNodeToSelected(ref node);
             setSelectedNode(node);
             renameSelectedNode();
 
@@ -210,7 +241,7 @@ namespace Arfer
 
             OpenFileDialog prom = new OpenFileDialog();
             prom.Title = "Choose package to load";
-            prom.Filter = "Arfer Package|*.drf";
+            prom.Filter = "Arfer Package (*.drf)|*.drf|All files (*.*)|*.*";
             prom.ShowDialog();
             if (File.Exists(prom.FileName))
             {
@@ -223,7 +254,7 @@ namespace Arfer
                 if (dialogResult == DialogResult.Yes)
                 {
                     itemTree.Nodes.Clear();
-
+                    checkedNodes.Clear();
 
                     using (BinaryReader reader = new BinaryReader(File.Open(prom.FileName, FileMode.Open)))
                     {
@@ -249,7 +280,7 @@ namespace Arfer
             {
                 SaveFileDialog prom = new SaveFileDialog();
                 prom.Title = "Choose were to save";
-                prom.Filter = "Arfer Package|*.drf";
+                prom.Filter = "Arfer Package (*.drf)|*.drf|All files (*.*)|*.*";
                 prom.DefaultExt = ".drf";
                 prom.FileName = itemTree.Nodes[0].Text;
                 prom.InitialDirectory = Environment.CurrentDirectory;
@@ -270,7 +301,7 @@ namespace Arfer
         {
             SaveFileDialog prom = new SaveFileDialog();
             prom.Title = "Choose were to save";
-            prom.Filter = "Arfer Package|*.drf";
+            prom.Filter = "Arfer Package (*.drf)|*.drf|All files (*.*)|*.*";
             prom.DefaultExt = ".drf";
             prom.FileName = itemTree.Nodes[0].Text;
             prom.InitialDirectory = Environment.CurrentDirectory;
@@ -288,96 +319,114 @@ namespace Arfer
         }
         struct LoadData
         {
-            public LoadData(string path, long size, long offset, long newOffset)
+            public LoadData(string path, long size, long offset, long newOffset, string zipP = null)
             {
                 this.path = path;
                 this.size = size;
                 this.offset = offset;
                 this.newOffset = newOffset;
+                this.zipPath = zipP;
             }
 
             public string path;
             public long size;
             public long offset;
             public long newOffset;
+            public string zipPath;
         }
         private List<LoadData> toLoad = new List<LoadData>();
 
         private void writeToBinary(string path, TreeView tree)
         {
-            FileStream fileStream;
-            if (path != packOpenedPath)
-            {
-                fileStream = File.Open(path, FileMode.Create);
-            }
-            else
-            {
-                fileStream = File.Open("temp", FileMode.Create);
-            }
 
-            BinaryWriter writer = new BinaryWriter(fileStream);
-
-            currentOffset = 0;
-            toLoad.Clear();
-            // Write potential other info about package.
-            // Start writing the nodes.
-            writeToBinary(writer, itemTree.Nodes[0]);
-
-            // Write all the files.
-            byte[] buffer = new byte[2048];
-            toLoad.Reverse();
-            foreach (LoadData d in toLoad)
+            using (FileStream fileStream = File.Open("temp", FileMode.Create))
             {
-                FileStream file;
-                if (d.path == "")
+
+                BinaryWriter writer = new BinaryWriter(fileStream);
+                currentOffset = 0;
+                toLoad.Clear();
+                // Write potential other info about package.
+                // Start writing the nodes.
+                writeToBinary(writer, itemTree.Nodes[0]);
+
+                // Write all the files.
+                byte[] buffer = new byte[2048];
+                toLoad.Reverse();
+                foreach (LoadData d in toLoad)
                 {
-                    // This file is located in a previous packfile. (At location d.offset back from end of file.)
-                    file = File.Open(packOpenedPath, FileMode.Open);
-                    file.Seek(-d.offset, SeekOrigin.End);
-                }
-                else
-                {
-                    // This file is located in the path.
-                    file = File.Open(d.path, FileMode.Open);
-                }
-                int bytesRead;
-                long sizeToRead = d.size;
-                while (sizeToRead > 0 && (bytesRead = file.Read(buffer, 0, (int)Math.Min(buffer.Length, d.size))) > 0)
-                {
-                    writer.Write(buffer, 0, bytesRead);
-                    sizeToRead -= bytesRead;
-                }
+                    if (d.zipPath == null)
+                    {
+                        FileStream file;
+                        if (d.path == "")
+                        {
+                            // This file is located in a previous packfile. (At location d.offset back from end of file.)
+                            file = File.Open(packOpenedPath, FileMode.Open);
+                            file.Seek(-d.offset, SeekOrigin.End);
+                        }
+                        else
+                        {
+                            // This file is located in the path.
+                            file = File.Open(d.path, FileMode.Open);
+                        }
+                        int bytesRead;
+                        long sizeToRead = d.size;
+                        while (sizeToRead > 0 && (bytesRead = file.Read(buffer, 0, (int)Math.Min(buffer.Length, d.size))) > 0)
+                        {
+                            fileStream.Write(buffer, 0, bytesRead);
+                            sizeToRead -= bytesRead;
+                        }
 
-                file.Close();
+                        file.Close();
+                    }
+                    else
+                    {
+                        using (ZipArchive archive = ZipFile.OpenRead(d.zipPath))
+                        {
+                            ZipArchiveEntry entry = archive.GetEntry(d.path);
+                            if (entry != null)
+                            {
+                                using (BinaryReader file = new BinaryReader(entry.Open()))
+                                {
+                                    int bytesRead;
+                                    long sizeToRead = d.size;
+                                    while (sizeToRead > 0 && (bytesRead = file.Read(buffer, 0, (int)Math.Min(buffer.Length, d.size))) > 0)
+                                    {
+                                        fileStream.Write(buffer,0 , bytesRead);
+                                        sizeToRead -= bytesRead;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
             }
+            File.Create(path).Close();
+            File.Replace("temp", path, "backup");
+            File.Delete("backup");
+            File.Delete("temp");
 
-            fileStream.Close();
-            if (path == packOpenedPath)
-            {
-                File.Replace("temp", path, "backup");
-                File.Delete("backup");
-                File.Delete("temp");
-            }
         }
         private void writeToBinary(BinaryWriter writer, TreeNode tree)
         {
-            writer.Write(tree.Text);
+            
             if (tree.Tag == null)
             {
-                writer.Write(0);
+                writer.Write(tree.Text);
+                writer.Write(false);
             }
             else
             {
-                writer.Write(1);
+                writer.Write(tree.Text + ((TreeData)tree.Tag).ext);
+                writer.Write(true);
                 TreeData data = (TreeData)tree.Tag;
 
 
-                writer.Write(Convert.ToInt32(data.compressed));
-                writer.Write(data.ext);
+                writer.Write(data.compressed);
                 if (data.size != 0)
                 {
                     writer.Write(currentOffset + data.size);
-                    toLoad.Add(new LoadData(data.filePath, data.size, data.offset, currentOffset + data.size));
+                   
+                    toLoad.Add(new LoadData(data.filePath, data.size, data.offset, currentOffset + data.size, data.zip));
                     data.filePath = "";
                     data.offset = currentOffset + data.size;
                     currentOffset += data.size;
@@ -399,13 +448,13 @@ namespace Arfer
             TreeNode node = new TreeNode();
             node.Text = reader.ReadString();
             node.ContextMenuStrip = itemTreeNodeRCCM;
-            reader.ReadInt32(); // File or folder (always a folder here)
+            reader.ReadBoolean(); // File or folder (always a folder here)
 
 
 
             int count = reader.ReadInt32();
             node.Tag = null;
-            addNodeToSelected(node);
+            addNodeToSelected(ref node);
             for (int i = 0; i < count; i++)
             {
                 readFromBinary(reader, tree.Nodes[0]);
@@ -419,12 +468,15 @@ namespace Arfer
             TreeNode node = new TreeNode();
            
             node.Text = reader.ReadString();
-            if (Convert.ToBoolean(reader.ReadInt32()))
+            if (reader.ReadBoolean())
             {
+                        
                 TreeData data = new TreeData();
-                data.compressed = Convert.ToBoolean(reader.ReadInt32());
+                data.ext = Path.GetExtension(node.Text);
+                node.Text = Path.GetFileNameWithoutExtension(node.Text);
+                data.compressed = reader.ReadBoolean();
                 data.filePath = "";
-                data.ext = reader.ReadString();
+                
                 data.offset = reader.ReadInt64();
                 data.size = reader.ReadInt64();
 
@@ -529,16 +581,15 @@ namespace Arfer
             node.Name = "new folder";
             node.ContextMenuStrip = itemTreeNodeRCCM;
             node.Tag = null;
-            addNodeToSelected(node);
+            addNodeToSelected(ref node);
             setSelectedNode(node);
             renameSelectedNode();
 
 
         }
-        private void addFile(string path)
+        private void addFile(string path, string zipPath = null, ZipArchiveEntry entry = null)
         {
-            using (FileStream file = File.Open(path, FileMode.Open))
-            {
+           
                 loadPath = Path.GetDirectoryName(path);
                 string fileName = Path.GetFileNameWithoutExtension(path);
 
@@ -547,17 +598,35 @@ namespace Arfer
                 node.ContextMenuStrip = itemTreeFileNodeRCCM;
                 TreeData data = new TreeData();
                 data.offset = 0;
-                data.size = file.Length;
-                BinaryReader br = new BinaryReader(file);
-                data.data = System.Text.Encoding.UTF8.GetString(br.ReadBytes((int)(data.size % 500)));
+            if (entry == null)
+            {
+                data.zip = null;
+                using (FileStream file = File.Open(path, FileMode.Open))
+                {
+                    data.size = file.Length;
+                    BinaryReader br = new BinaryReader(file);
+                    data.data = System.Text.Encoding.UTF8.GetString(br.ReadBytes((int)(data.size % 500)));
+                }
+            }
+            else
+            {
+                data.zip = zipPath;
+                data.size = entry.Length;
+                using (StreamReader file = new StreamReader(entry.Open()))
+                {
+                    char[] buffer = new char[500];
+                    file.ReadBlock(buffer, 0, (int)(data.size % 500));
+                    data.data = new string(buffer, 0, (int)(data.size % 500));
+                }
+            }
                 //currentOffset += data.size;
                 data.compressed = false;
                 data.filePath = path;
                 data.ext = Path.GetExtension(path);
                 node.Tag = data;
-                addNodeToSelected(node);
+                addNodeToSelected(ref node);
                 setSelectedNode(node);
-            }
+            
         }
         private void addFileToolStripMenuItem_Click(object sender, EventArgs e)
         {
@@ -697,7 +766,7 @@ namespace Arfer
                         if (dialogResult == DialogResult.Yes)
                         {
                             itemTree.Nodes.Clear();
-
+                            checkedNodes.Clear();
 
                             using (BinaryReader reader = new BinaryReader(File.Open(path, FileMode.Open)))
                             {
@@ -739,7 +808,7 @@ namespace Arfer
                                 data.filePath = path;
                                 data.ext = Path.GetExtension(path);
                                 node.Tag = data;
-                                addNodeToSelected(node);
+                                addNodeToSelected(ref node);
                                 itemTree.SelectedNode.Expand();
                             }
                         }
@@ -752,25 +821,25 @@ namespace Arfer
                 }
             }
         }
-        private void addFolder(string path)
+        private void addFolder(string path,  string zipPath = "", ZipArchiveEntry entry = null)
         {
             string name = Path.GetFileName(path);
             TreeNode node = new TreeNode(name);
             node.Name = name;
             node.ContextMenuStrip = itemTreeNodeRCCM;
             node.Tag = null;
-            addNodeToSelected(node);
+            addNodeToSelected(ref node);
             setSelectedNode(node);
             List<string> dirs = new List<string>(Directory.EnumerateDirectories(path));
             foreach (string sc in dirs)
             {
-                addFolder(sc);
+                addFolder(sc, zipPath, entry);
                 setSelectedNode(node);
             }
             List<string> files = new List<string>(Directory.EnumerateFiles(path));
             foreach (string f in files)
             {
-                addFile(f);
+                addFile(f, zipPath, entry);
                 setSelectedNode(node);
             }
 
@@ -813,11 +882,13 @@ namespace Arfer
             {
                 delChecked.Enabled = false;
                 deleteSelectedToolStripMenuItem.Enabled = false;
+                exportToToolStripMenuItem.Enabled = false;
             }
             else
             {
                 delChecked.Enabled = true;
                 deleteSelectedToolStripMenuItem.Enabled = true;
+                exportToToolStripMenuItem.Enabled = true;
             }
         }
         private void delSel()
@@ -871,7 +942,7 @@ namespace Arfer
             {
                 SaveFileDialog prom = new SaveFileDialog();
                 prom.Title = "Choose were to save";
-                prom.Filter = "Arfer Package|*.drf";
+                prom.Filter = "Arfer Package (*.drf)|*.drf|All files (*.*)|*.*";
                 prom.DefaultExt = ".drf";
                 prom.FileName = itemTree.Nodes[0].Text;
                 prom.InitialDirectory = Environment.CurrentDirectory;
@@ -898,7 +969,172 @@ namespace Arfer
             existingPackage();
         }
 
-    
+
+        private void zipToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            // Import
+            OpenFileDialog prom = new OpenFileDialog();
+            prom.Title = "Choose Archive to load";
+            prom.Filter = "Zip Archive (*.zip)|*.zip|All files (*.*)|*.*";
+            prom.DefaultExt = ".zip";
+            prom.ShowDialog();
+            if (File.Exists(prom.FileName))
+            {
+                DialogResult dialogResult = DialogResult.Yes;
+                if (itemTree.Nodes.Count != 0)
+                {
+                    dialogResult = MessageBox.Show("Are you sure you want to import this archive? (All unsaved changes will be lost)", "Import Zip", MessageBoxButtons.YesNo);
+
+                }
+                if (dialogResult == DialogResult.Yes)
+                {
+
+                    if (itemTree.Nodes.Count != 0)
+                        itemTree.Nodes.Clear();
+
+                    savePath = "";
+                    TreeNode node = new TreeNode();
+                    node.Tag = null;
+                    node.Text = Path.GetFileNameWithoutExtension(prom.FileName);
+                    node.Name = "proot";
+                    node.ContextMenuStrip = itemTreeNodeRCCM;
+
+                    addNodeToSelected(ref node);
+                    setSelectedNode(node);
+
+                   
+
+                    using (ZipArchive archive = ZipFile.OpenRead(prom.FileName))
+                    {
+                        foreach (ZipArchiveEntry entry in archive.Entries)
+                        {
+                            setSelectedNode(itemTree.Nodes[0]);
+                            string[] directory = entry.FullName.Split('/');
+                            for(int i = 0; i < directory.Length -1; i++)
+                            {
+                                node = new TreeNode(directory[0]);
+                                node.Name = directory[0];
+                                node.ContextMenuStrip = itemTreeNodeRCCM;
+                                node.Tag = null;
+                                addNodeToSelected(ref node);
+                                setSelectedNode(node);
+                            }
+                            addFile(entry.FullName, prom.FileName, entry);
+                        }
+                    }
+
+                    savePath = "";
+                    changed();
+                }
+
+            }
+
+
+
+        }
+
+        private void WriteAllFiles(string path, TreeNode node, ZipArchive zip)
+        {
+            string tpath = path + node.Text;
+            if (node.Nodes.Count == 0)
+            {
+                if (node.Tag == null)
+                {
+                    zip.CreateEntry(tpath + "/");
+                }
+                else
+                {
+                    
+                    TreeData data = (TreeData)node.Tag;
+                    tpath += data.ext;
+                    if (String.IsNullOrEmpty(data.zip))
+                    {
+                        if (data.offset == 0)
+                        {
+                            zip.CreateEntryFromFile(data.filePath, tpath);
+                        }
+                        else
+                        {
+                            ZipArchiveEntry entry = zip.CreateEntry(tpath);
+                            using (BinaryWriter writer = new BinaryWriter(entry.Open()))
+                            {
+
+                                using (FileStream file = File.Open(packOpenedPath, FileMode.Open))
+                                {
+                                    file.Seek(-data.offset, SeekOrigin.End);
+                                    byte[] buffer = new byte[2048];
+                                    int bytesRead;
+                                    long sizeToRead = data.size;
+                                    while (sizeToRead > 0 && (bytesRead = file.Read(buffer, 0, (int)Math.Min(buffer.Length, data.size))) > 0)
+                                    {
+                                        writer.Write(buffer, 0, bytesRead);
+                                        sizeToRead -= bytesRead;
+                                    }
+                                }
+
+                            }
+                        }
+                    }
+                    else
+                    {
+                        using (ZipArchive archive = ZipFile.OpenRead(data.zip))
+                        {
+                            ZipArchiveEntry entry = archive.GetEntry(tpath);
+                            if (entry != null)
+                            {
+                                using (BinaryReader file = new BinaryReader(entry.Open()))
+                                {
+
+
+                                    ZipArchiveEntry newEntry = zip.CreateEntry(tpath);
+                                    using (BinaryWriter writer = new BinaryWriter(newEntry.Open()))
+                                    {
+                                        byte[] buffer = new byte[2048];
+                                        int bytesRead;
+                                        long sizeToRead = data.size;
+                                        while (sizeToRead > 0 && (bytesRead = file.Read(buffer, 0, (int)Math.Min(buffer.Length, data.size))) > 0)
+                                        {
+                                            writer.Write(buffer, 0, bytesRead);
+                                            sizeToRead -= bytesRead;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+            }
+            else
+            {
+                foreach (TreeNode n in node.Nodes)
+                {
+                    WriteAllFiles(tpath + "/", n, zip);
+                }
+            }
+        }
+        private void zipToolStripMenuItem1_Click(object sender, EventArgs e)
+        {
+            // Export
+            SaveFileDialog prom = new SaveFileDialog();
+            prom.Title = "Choose were to export to";
+            prom.Filter = "Zip Archive (*.zip)|*.zip|All files (*.*)|*.*";
+            prom.DefaultExt = ".zip";
+            prom.FileName = itemTree.Nodes[0].Text;
+            prom.ShowDialog();
+
+            if (!String.IsNullOrEmpty(prom.FileName))
+            {
+                using (FileStream zipToOpen = new FileStream(prom.FileName, FileMode.OpenOrCreate))
+                {
+                    using (ZipArchive archive = new ZipArchive(zipToOpen, ZipArchiveMode.Create))
+                    {
+                        foreach (TreeNode n in itemTree.Nodes[0].Nodes)
+                            WriteAllFiles("", n, archive);
+                    }
+                }
+            }
+        }
     }
 
     class TreeData
@@ -909,5 +1145,6 @@ namespace Arfer
         public string ext;
         public string filePath;
         public string data;
+        public string zip;
     }
 }

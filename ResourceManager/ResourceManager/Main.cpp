@@ -13,7 +13,7 @@
 #include "TextureData.h"
 #include "flexbison\ObjParser.h"
 #include "ArfData.h"
-
+#include "DarferLoader.h"
 #include "Scene.h"
 
 void ArfParser(Resource& r);
@@ -81,7 +81,7 @@ int main(int argc, char** argv)
 
 	r.TestAlloc();
 
-
+	DarferLoader drfLoader("test.drf");
 
 
 
