@@ -21,6 +21,9 @@
 class ResourceManager
 {
 public:
+
+
+
 	static ResourceManager& Instance();
 	
 	const SM_GUID LoadResource(SM_GUID guid, const Resource::Flag& flag);
@@ -35,12 +38,13 @@ public:
 
 	void SetAssetLoader(IAssetLoader* loader);
 	void AddParser(const std::string& fileend,const std::function<void(Resource& r)>& parseFunction);
-
+	void SetEvictPolicy(const std::function<bool(uint32_t sizeOfLoadRequest, ResourceManager* rm)>& evictPolicy);
 	void Init(uint64_t maxMemory);
 	void ShutDown();
 	void Startup();
 
 private:
+
 	struct ThreadControl
 	{
 		bool inUse = false;
@@ -160,6 +164,140 @@ private:
 		}
 		_resources = nullptr;
 	}
+
+	std::function<bool(uint32_t sizeOfLoadRequest, ResourceManager* rm) > _WhatToEvict;
+
+	public:
+		struct EvictPolicies
+		{
+		public:
+			static bool NoEvict(uint32_t sizeOfLoadRequest, ResourceManager* rm)
+			{
+				return false;
+			}
+			static bool FirstFit(uint32_t sizeOfLoadRequest, ResourceManager* rm)
+			{
+				uint32_t foundTot = 0;
+				//std::vector<ResourceList*> found;
+				auto r = rm->_resources;
+				while (r)
+				{
+					if (r->resource._flags != Resource::Flag::PERSISTENT && r->resource._refCount == 0 && r->resource.GetState() == Resource::ResourceState::Loaded)
+					{
+						if (r->resource._numBlocks >= sizeOfLoadRequest)
+						{
+							printf("\tEvicting resource, GUID: %llu.\n\n", r->resource.ID.data);
+							rm->_RemoveResource(r);
+							return true;
+						}
+						/*else
+						{
+							found.push_back(r);
+							foundTot += r->resource.GetData().size;
+						}*/
+					}
+
+					//if (foundTot >= sizeOfLoadRequest)
+					//{
+					//	for (auto re : found)
+					//		rm->_RemoveResource(re);
+					//	// IF THIS HAPPENS YOU MUST DEFRAG!!!!
+					//	return true;
+					//}
+					r = r->next;
+				}
+
+				return false;
+			}
+			static bool FirstCumulativeFit(uint32_t sizeOfLoadRequest, ResourceManager* rm)
+			{
+				uint32_t foundTot = 0;
+				std::vector<ResourceList*> found;
+				auto r = rm->_resources;
+				while (r)
+				{
+					if (r->resource._flags != Resource::Flag::PERSISTENT && r->resource._refCount == 0 && r->resource.GetState() == Resource::ResourceState::Loaded)
+					{
+						if (r->resource._numBlocks >= sizeOfLoadRequest)
+						{
+							printf("\tEvicting resource, GUID: %llu.\n\n", r->resource.ID.data);
+							rm->_RemoveResource(r);
+							return true;
+						}
+						else
+						{
+						found.push_back(r);
+						foundTot += r->resource.GetData().size;
+						}
+					}
+
+					if (foundTot >= sizeOfLoadRequest)
+					{
+						for (auto re : found)
+							rm->_RemoveResource(re);
+						// IF THIS HAPPENS YOU MUST DEFRAG!!!!
+						//rm->_allocator->Defrag()
+						return true;
+					}
+					r = r->next;
+				}
+
+				return false;
+			}
+			static bool LRU(uint32_t sizeOfLoadRequest, ResourceManager* rm)
+			{
+				auto found = std::pair<uint64_t, ResourceList*>(UINT64_MAX, nullptr);
+				auto r = rm->_resources;
+				while (r)
+				{
+					if (r->resource._flags != Resource::Flag::PERSISTENT && r->resource._refCount == 0 && r->resource.GetState() == Resource::ResourceState::Loaded )
+					{
+						//if (found.first < r->resource.TimeStamp)
+						{
+							//found.first = r->resource.TimeStamp;
+							found.second = r;
+						}
+					}
+					r = r->next;
+				}
+
+				if (found.second)
+				{
+					printf("\tEvicting resource, GUID: %llu.\n\n", r->resource.ID.data);
+					rm->_RemoveResource(found.second);
+					return true;
+				}
+
+				return false;
+			}
+			static bool MRU(uint32_t sizeOfLoadRequest, ResourceManager* rm)
+			{
+				auto found = std::pair<uint64_t, ResourceList*>(0, nullptr);
+				auto r = rm->_resources;
+				while (r)
+				{
+					if (r->resource._flags != Resource::Flag::PERSISTENT && r->resource._refCount == 0 && r->resource.GetState() == Resource::ResourceState::Loaded)
+					{
+						//if (found.first > r->resource.TimeStamp)
+						{
+							//found.first = r->resource.TimeStamp;
+							found.second = r;
+						}
+					}
+					r = r->next;
+				}
+
+				if (found.second)
+				{
+					printf("\tEvicting resource, GUID: %llu.\n\n", r->resource.ID.data);
+					rm->_RemoveResource(found.second);
+					return true;
+				}
+
+				return false;
+			}
+		};
+
 private:
 	ChunkyAllocator* _allocator = nullptr;
 	PoolAllocator* _resourcePool = nullptr;

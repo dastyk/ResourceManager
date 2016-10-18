@@ -449,6 +449,7 @@
             this.Name = "Arfer";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "Arfer";
+            this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.Arfer_FormClosing);
             this.menuStrip1.ResumeLayout(false);
             this.menuStrip1.PerformLayout();
             this.itemTreeNodeRCCM.ResumeLayout(false);
