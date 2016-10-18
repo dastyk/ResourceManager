@@ -144,12 +144,39 @@ namespace Arfer
             if (itemTree.Nodes.Count == 0)
             {
                 itemTree.Nodes.Add(node);
+                changed();
             }
             else
             {
-                itemTree.SelectedNode.Nodes.Add(node);
+                bool canAdd = true;
+
+                foreach (TreeNode n in itemTree.SelectedNode.Nodes)
+                {
+
+                    if (n.Text == node.Text)
+                    {
+                        if (n.Tag == null && node.Tag == null)
+                        {
+                            canAdd = false;
+                            break;
+                        }
+                        else if (n.Tag != null && node.Tag != null)
+                        {
+                            if (((TreeData)n.Tag).ext == ((TreeData)node.Tag).ext)
+                            {
+                                canAdd = false;
+                                break;
+                            }
+                        }
+                    }
+                }
+                if (canAdd)
+                {
+                    itemTree.SelectedNode.Nodes.Add(node);
+                    changed();
+                }
             }
-            changed();
+
         }
         private void removeSelectedNode()
         {
