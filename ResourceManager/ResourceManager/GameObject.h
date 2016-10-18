@@ -15,7 +15,9 @@ class GameObject
 	
 	std::vector<std::pair<bool, SM_GUID>> _MeshLODs;
 	std::vector<std::pair<bool, SM_GUID>> _TextureLODs;
-	uint32_t _currentLOD;
+	//uint32_t _currentLOD;
+	uint32_t _currentTextureLOD;
+	uint32_t _currentMeshLOD;
 public:
 	SM_GUID mesh;
 	SM_GUID texture;
@@ -36,7 +38,7 @@ public:
 	}
 	bool GetLODGUIDToRender()
 	{
-		int32_t level = (int32_t)_currentLOD;
+		int32_t level = (int32_t)_currentMeshLOD;
 		bool render = false;
 		while (level >= 0)
 		{
@@ -48,10 +50,10 @@ public:
 			}
 			else
 			{
-				if (!_MeshLODs[_currentLOD].first)
+				if (!_MeshLODs[_currentMeshLOD].first)
 				{
-					_MeshLODs[_currentLOD].first = true;
-					ResourceManager::Instance().LoadResource(_MeshLODs[_currentLOD].second, Resource::Flag::NEEDED_NOW);
+					_MeshLODs[_currentMeshLOD].first = true;
+					ResourceManager::Instance().LoadResource(_MeshLODs[_currentMeshLOD].second, Resource::Flag::NEEDED_NOW);
 				}
 				if (!_MeshLODs[0].first)
 				{
@@ -68,7 +70,7 @@ public:
 		if (render)
 		{
 			render = false;
-			level = (int32_t)_currentLOD;
+			level = (int32_t)_currentTextureLOD;
 			while (level >= 0)
 			{
 				if (ResourceManager::Instance().IsLoaded(_TextureLODs[level].second))
@@ -79,10 +81,10 @@ public:
 				}
 				else
 				{
-					if (!_TextureLODs[_currentLOD].first)
+					if (!_TextureLODs[_currentTextureLOD].first)
 					{
-						_TextureLODs[_currentLOD].first = true;
-						ResourceManager::Instance().LoadResource(_TextureLODs[_currentLOD].second, Resource::Flag::NEEDED_NOW);
+						_TextureLODs[_currentTextureLOD].first = true;
+						ResourceManager::Instance().LoadResource(_TextureLODs[_currentTextureLOD].second, Resource::Flag::NEEDED_NOW);
 					}
 					if (!_TextureLODs[0].first)
 					{
@@ -99,12 +101,13 @@ public:
 		return render;
 			
 	}
-	int32_t GetCurrentLOD() { return _currentLOD; }
-	void SetCurrentLOD(uint32_t LOD) 
+	int32_t GetCurrentMeshLOD() { return _currentMeshLOD; }
+	int32_t GetCurrentTextureLOD() { return _currentTextureLOD; }
+	void SetCurrentMeshLOD(uint32_t LOD) 
 	{ 
-		if (_currentLOD != LOD)
+		if (_currentMeshLOD != LOD)
 		{
-			for (uint8_t i = 0; i < 6; i++)
+			for (uint8_t i = 0; i < _MeshLODs.size(); i++)
 			{
 				if (i == LOD)
 				{
@@ -115,11 +118,6 @@ public:
 						ResourceManager::Instance().LoadResource(_MeshLODs[i].second, Resource::Flag::NEEDED_NOW);
 						
 					}
-					if (!_TextureLODs[i].first)
-					{
-						_TextureLODs[i].first = true;
-						ResourceManager::Instance().LoadResource(_TextureLODs[i].second, Resource::Flag::NEEDED_NOW);
-					}
 				}
 				else if ((i == LOD - 1 || i == LOD + 1))
 				{
@@ -127,11 +125,6 @@ public:
 					{
 						_MeshLODs[i].first = true;
 						ResourceManager::Instance().LoadResource(_MeshLODs[i].second, Resource::Flag::NOT_URGENT);
-					}
-					if (!_TextureLODs[i].first)
-					{
-						_TextureLODs[i].first = true;					
-						ResourceManager::Instance().LoadResource(_TextureLODs[i].second, Resource::Flag::NOT_URGENT);
 					}
 				}
 				else
@@ -141,6 +134,37 @@ public:
 						_MeshLODs[i].first = false;
 						ResourceManager::Instance().UnloadResource(_MeshLODs[i].second);
 					}
+				}
+
+			}
+			_currentMeshLOD = LOD;
+		}
+	}
+
+	void SetCurrentTextureLOD(uint32_t LOD)
+	{
+		if (_currentTextureLOD != LOD)
+		{
+			for (uint8_t i = 0; i < _TextureLODs.size(); i++)
+			{
+				if (i == LOD)
+				{
+					if (!_TextureLODs[i].first)
+					{
+						_TextureLODs[i].first = true;
+						ResourceManager::Instance().LoadResource(_TextureLODs[i].second, Resource::Flag::NEEDED_NOW);
+					}
+				}
+				else if ((i == LOD - 1 || i == LOD + 1))
+				{
+					if (!_TextureLODs[i].first)
+					{
+						_TextureLODs[i].first = true;
+						ResourceManager::Instance().LoadResource(_TextureLODs[i].second, Resource::Flag::NOT_URGENT);
+					}
+				}
+				else
+				{
 					if (_TextureLODs[i].first)
 					{
 						_TextureLODs[i].first = false;
@@ -149,11 +173,13 @@ public:
 				}
 
 			}
-			_currentLOD = LOD;
+			_currentTextureLOD = LOD;
 		}
 	}
 	float GetRadius() { return radius; }
 	float GetScale() { return scale; }
+	uint32_t GetNrOfMeshLODLevels() const { return _MeshLODs.size(); }
+	uint32_t GetNrOfTextureLODLevels() const { return _TextureLODs.size(); }
 	DirectX::XMFLOAT3& GetPos() { return pos; }
 	void AddLODMesh(SM_GUID guid)
 	{

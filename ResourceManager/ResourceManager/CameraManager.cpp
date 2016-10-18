@@ -167,6 +167,11 @@ void CameraManager::SetCameraPosition(float posX, float posY, float posZ)
 	_cameras[_activeCamera].position = XMFLOAT3(posX, posY, posZ);
 }
 
+float CameraManager::GetFarPlaneDistance() const
+{
+	return _cameras[_activeCamera].farPlane;
+}
+
 DirectX::XMMATRIX CameraManager::GetView() const
 {
 	return XMMatrixLookToLH(XMLoadFloat3(&_cameras[_activeCamera].position),
