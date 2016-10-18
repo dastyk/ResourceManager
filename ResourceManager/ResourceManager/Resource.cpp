@@ -16,22 +16,21 @@ uint32_t Resource::Find(const SM_GUID & guid)
 void Resource::Remove(const uint32_t index)
 {
 	Resource::DataPointers& data = instance->data;
-	uint32_t& count = instance->count;
 	data.pinned[index] = true;
-	while (data.pinned[count]);
-	data.pinned[count] = true;
+	uint32_t last = instance->count - 1;
+	data.pinned[last] = true;
 
-	data.guid[index] = data.guid[count];
-	data.flags[index] = data.flags[count];
-	data.refCount[index] = data.refCount[count];
-	data.observer[index] = data.observer[count];
-	data.rawData[index] = data.rawData[count];
-	data.type[index] = data.type[count];
-	data.size[index] = data.size[count];
-	data.startBlock[index] = data.startBlock[count];
-	data.numBlocks[index] = data.numBlocks[count];
-	data.pinned[count] = false;
-	count--;
+	data.guid[index] = data.guid[last];
+	data.flags[index] = data.flags[last];
+	data.refCount[index] = data.refCount[last];
+	data.observer[index] = data.observer[last];
+	data.rawData[index] = data.rawData[last];
+	data.type[index] = data.type[last];
+	data.size[index] = data.size[last];
+	data.startBlock[index] = data.startBlock[last];
+	data.numBlocks[index] = data.numBlocks[last];
+	data.pinned[index] = false;
+	instance->count--;
 
 }
 

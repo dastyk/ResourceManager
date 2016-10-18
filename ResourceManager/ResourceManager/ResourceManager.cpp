@@ -45,7 +45,7 @@ const SM_GUID ResourceManager::LoadResource(SM_GUID guid, const Resource::Flag& 
 	}
 	
 	//Create the resource
-	const Resource::DataPointers& data = Resource::Data();
+ 	const Resource::DataPointers& data = Resource::Data();
 	uint32_t& count = Resource::Count();
 	data.pinned[count] = true;
 	data.flags[count] = flag;
@@ -92,9 +92,8 @@ const SM_GUID ResourceManager::LoadResource(SM_GUID guid, const Resource::Flag& 
 
 		_mutexLockLoader.unlock();
 
-		_mutexLockParser.lock();
 		_parser.ParseResource(Resource::MakePtr(count));
-		_mutexLockParser.unlock();
+
 
 		data.pinned[count] = false;
 		printf("Resource finished loading. GUID: %llu\n", guid.data);
@@ -121,17 +120,19 @@ const SM_GUID ResourceManager::LoadResource(SM_GUID guid, const Resource::Flag& 
 
 void ResourceManager::UnloadResource(SM_GUID guid)
 {
-	_mutexLockGeneral.lock();
+
 	auto found = Resource::Find(guid);
 
 	if (found != Resource::NotFound)
 	{
+		_mutexLockGeneral.lock();
 		auto& refCount = Resource::Data().refCount[found];
-		refCount = (refCount > 0) ? refCount-- : 0;
+		refCount = (refCount > 0) ? refCount-1 : 0;
+		_mutexLockGeneral.unlock();
 		printf("Unreferencing resource. GUID: %llu. RefCount: %d\n", guid.data, refCount);
 		
 	}
-	_mutexLockGeneral.unlock();
+	
 }
 
 //
@@ -180,15 +181,15 @@ void ResourceManager::UnloadResource(SM_GUID guid)
 
 bool ResourceManager::IsLoaded(SM_GUID guid)
 {
-	_mutexLockGeneral.lock();
+	//_mutexLockGeneral.lock();
 	auto find = Resource::Find(guid);
 	if (find != Resource::NotFound)
 	{
 		bool ret = !Resource::Data().pinned[find];
-		_mutexLockGeneral.unlock();
+	//	_mutexLockGeneral.unlock();
 		return ret;
 	}
-	_mutexLockGeneral.unlock();
+	//_mutexLockGeneral.unlock();
 	return false;
 }
 

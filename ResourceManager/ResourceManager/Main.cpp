@@ -61,8 +61,8 @@ int main(int argc, char** argv)
 	MemoryManager::CreateInstance();
 	MemoryManager::GetInstance()->Init(512U * 1024U * 1024U);
 	ResourceManager& r = ResourceManager::Instance(); // Kickstart at our will
-	r.Init(22U * 1024U * 1024U);
-	//r.SetEvictPolicy(ResourceManager::EvictPolicies::FirstFit);
+	r.Init(12U * 1024U * 1024U);
+	r.SetEvictPolicy(ResourceManager::EvictPolicies::FirstFit);
 	r.SetAssetLoader(new ZipLoader("data.dat"));
 
 	r.AddParser("jpg",
