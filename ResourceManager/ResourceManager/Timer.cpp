@@ -31,3 +31,10 @@ float Timer::GetDeltaTime() const
 	return (float)_deltaTime;
 }
 
+uint64_t Timer::GetTimeStamp() const
+{
+	uint64_t timestamp;
+	QueryPerformanceCounter((LARGE_INTEGER*)&timestamp);
+	return timestamp;
+}
+

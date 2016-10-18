@@ -2,7 +2,7 @@
 #define _TIMER_H_
 
 #include <Windows.h>
-
+#include <stdint.h>
 class Timer
 {
 public:
@@ -10,6 +10,8 @@ public:
 	~Timer();
 	void Update();
 	float GetDeltaTime() const;
+	uint64_t GetTimeStamp() const;
+
 
 private:
 	double _secondsPerCount;
