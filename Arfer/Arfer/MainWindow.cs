@@ -361,19 +361,20 @@ namespace Arfer
         }
         private void writeToBinary(BinaryWriter writer, TreeNode tree)
         {
-            writer.Write(tree.Text);
+            
             if (tree.Tag == null)
             {
-                writer.Write(0);
+                writer.Write(tree.Text);
+                writer.Write(false);
             }
             else
             {
-                writer.Write(1);
+                writer.Write(tree.Text + ((TreeData)tree.Tag).ext);
+                writer.Write(true);
                 TreeData data = (TreeData)tree.Tag;
 
 
-                writer.Write(Convert.ToInt32(data.compressed));
-                writer.Write(data.ext);
+                writer.Write(data.compressed);
                 if (data.size != 0)
                 {
                     writer.Write(currentOffset + data.size);
@@ -399,7 +400,7 @@ namespace Arfer
             TreeNode node = new TreeNode();
             node.Text = reader.ReadString();
             node.ContextMenuStrip = itemTreeNodeRCCM;
-            reader.ReadInt32(); // File or folder (always a folder here)
+            reader.ReadBoolean(); // File or folder (always a folder here)
 
 
 
@@ -419,12 +420,15 @@ namespace Arfer
             TreeNode node = new TreeNode();
            
             node.Text = reader.ReadString();
-            if (Convert.ToBoolean(reader.ReadInt32()))
+            if (reader.ReadBoolean())
             {
+                        
                 TreeData data = new TreeData();
-                data.compressed = Convert.ToBoolean(reader.ReadInt32());
+                data.ext = Path.GetExtension(node.Text);
+                node.Text = Path.GetFileNameWithoutExtension(node.Text);
+                data.compressed = reader.ReadBoolean();
                 data.filePath = "";
-                data.ext = reader.ReadString();
+                
                 data.offset = reader.ReadInt64();
                 data.size = reader.ReadInt64();
 

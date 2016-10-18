@@ -4,16 +4,6 @@
 
 ZipLoader::ZipLoader(const std::string & file)
 {
-	uint64_t data[6];
-
-	data[0] = std::hash<std::string>{} ("Sphere0.arf");
-	data[1] = std::hash<std::string>{} ("Sphere1.arf");
-	data[2] = std::hash<std::string>{} ("Sphere2.arf");
-	data[3] = std::hash<std::string>{} ("Sphere3.arf");
-	data[4] = std::hash<std::string>{} ("Sphere4.arf");
-	data[5] = std::hash<std::string>{} ("Sphere5.arf");
-	compressedFile = file;
-
 	if (!zipFile.open(file.c_str()))
 	{
 		// THROW ERRORS AND SHIT BROZKY, TIME TO ABANDON SHIP CAUSE THIS AIN'T MY FUCKING FAULT!
