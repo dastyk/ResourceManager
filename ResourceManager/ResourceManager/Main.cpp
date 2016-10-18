@@ -45,6 +45,13 @@ int main(int argc, char** argv)
 {
 	srand(time(NULL));
 
+	if (!AllocConsole()) throw std::runtime_error("Failed to alloc console.");
+	freopen("conin$", "r", stdin);
+	freopen("conout$", "w", stdout);
+	freopen("conout$", "w", stderr);
+
+	printf("<----||Console Initialized||---->\n\n");
+
 	_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
 	// Flex/Bison causes 3 memory leaks per run time, does not increase during runtime.
 	//_crtBreakAlloc = 312;
@@ -70,12 +77,7 @@ int main(int argc, char** argv)
 
 	r.Startup();
 
-	if (!AllocConsole()) throw std::runtime_error("Failed to alloc console.");
-	freopen("conin$", "r", stdin);
-	freopen("conout$", "w", stdout);
-	freopen("conout$", "w", stderr);
 
-	printf("<----||Console Initialized||---->\n\n");
 
 	r.TestAlloc();
 
