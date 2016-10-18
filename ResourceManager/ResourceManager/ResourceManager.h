@@ -91,28 +91,28 @@ private:
 		ResourceList* next;
 	};
 
-	ResourceList* _CreateResource(SM_GUID guid, const Resource::Flag& flag)
+	ResourceList* _CreateResource(SM_GUID guid, const Resource::Flag& flag, ResourceList*& start)
 	{
-		if (_resources)
+		if (start)
 		{
-			auto& newR = _resources->prev->next = (ResourceList*)_resourcePool->Malloc();
-			new (_resources->prev->next) ResourceList(guid, flag);
-			_resources->prev->next->prev = _resources->prev;
-			_resources->prev = _resources->prev->next;
+			auto& newR = start->prev->next = (ResourceList*)_resourcePool->Malloc();
+			new (start->prev->next) ResourceList(guid, flag);
+			start->prev->next->prev = start->prev;
+			start->prev = start->prev->next;
 			return newR;
 		}
 		else
 		{
-			_resources = (ResourceList*)_resourcePool->Malloc();
-			new (_resources) ResourceList(guid, flag);
-			_resources->prev = _resources;
-			return _resources;
+			start = (ResourceList*)_resourcePool->Malloc();
+			new (start) ResourceList(guid, flag);
+			start->prev = start;
+			return start;
 		}
 	}
 
-	ResourceList* _FindResource(SM_GUID guid)
+	ResourceList* _FindResource(SM_GUID guid, ResourceList*& start)
 	{
-		auto n = _resources;
+		auto n = start;
 		while (n)
 		{
 			if (n->resource.ID == guid)
@@ -125,15 +125,13 @@ private:
 
 	}
 
-	void _RemoveResource(ResourceList* rm)
+	void _RemoveResource(ResourceList* rm, ResourceList*& start)
 	{
-
-
-		if (rm == _resources)
+		if (rm == start)
 		{
-			if(_resources->next)
-				_resources->next->prev = _resources->prev;
-			_resources = _resources->next;		
+			if(start->next)
+				start->next->prev = start->prev;
+			start = start->next;
 		}
 		else
 		{
@@ -142,7 +140,7 @@ private:
 			if (rm->next)
 				rm->next->prev = rm->prev;
 			else
-				_resources->prev = rm->prev;
+				start->prev = rm->prev;
 		
 		}
 
@@ -153,16 +151,36 @@ private:
 		_allocator->Free(startBlock, numBlocks);
 		_resourcePool->Free(rm);
 	}
-
-	void _RemoveAllResources()
+	void _RemoveResourceNoDelete(ResourceList* rm, ResourceList*& start)
 	{
-		auto r = _resources;
+
+		if (rm == start)
+		{
+			if (start->next)
+				start->next->prev = start->prev;
+			start = start->next;
+		}
+		else
+		{
+			rm->prev->next = rm->next;
+
+			if (rm->next)
+				rm->next->prev = rm->prev;
+			else
+				start->prev = rm->prev;
+
+		}
+
+	}
+	void _RemoveAllResources(ResourceList*& start)
+	{
+		auto r = start;
 		while (r)
 		{
 			r->~ResourceList();
 			r = r->next;
 		}
-		_resources = nullptr;
+		start = nullptr;
 	}
 
 	std::function<bool(uint32_t sizeOfLoadRequest, ResourceManager* rm) > _WhatToEvict;
@@ -187,7 +205,7 @@ private:
 						if (r->resource._numBlocks >= sizeOfLoadRequest)
 						{
 							printf("\tEvicting resource, GUID: %llu.\n\n", r->resource.ID.data);
-							rm->_RemoveResource(r);
+							rm->_RemoveResource(r, rm->_resources);
 							return true;
 						}
 						/*else
@@ -221,7 +239,7 @@ private:
 						if (r->resource._numBlocks >= sizeOfLoadRequest)
 						{
 							printf("\tEvicting resource, GUID: %llu.\n\n", r->resource.ID.data);
-							rm->_RemoveResource(r);
+							rm->_RemoveResource(r, rm->_resources);
 							return true;
 						}
 						else
@@ -234,7 +252,7 @@ private:
 					if (foundTot >= sizeOfLoadRequest)
 					{
 						for (auto re : found)
-							rm->_RemoveResource(re);
+							rm->_RemoveResource(re, rm->_resources);
 						// IF THIS HAPPENS YOU MUST DEFRAG!!!!
 						//rm->_allocator->Defrag()
 						return true;
@@ -264,7 +282,7 @@ private:
 				if (found.second)
 				{
 					printf("\tEvicting resource, GUID: %llu.\n\n", r->resource.ID.data);
-					rm->_RemoveResource(found.second);
+					rm->_RemoveResource(found.second, rm->_resources);
 					return true;
 				}
 
@@ -290,7 +308,7 @@ private:
 				if (found.second)
 				{
 					printf("\tEvicting resource, GUID: %llu.\n\n", r->resource.ID.data);
-					rm->_RemoveResource(found.second);
+					rm->_RemoveResource(found.second, rm->_resources);
 					return true;
 				}
 

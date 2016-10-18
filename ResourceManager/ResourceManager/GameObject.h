@@ -16,8 +16,8 @@ class GameObject
 	std::vector<std::pair<bool, SM_GUID>> _MeshLODs;
 	std::vector<std::pair<bool, SM_GUID>> _TextureLODs;
 	//uint32_t _currentLOD;
-	uint32_t _currentTextureLOD;
-	uint32_t _currentMeshLOD;
+	uint32_t _currentTextureLOD = 0;
+	uint32_t _currentMeshLOD = 0;
 public:
 	SM_GUID mesh;
 	SM_GUID texture;

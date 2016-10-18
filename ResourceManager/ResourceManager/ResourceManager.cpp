@@ -35,7 +35,7 @@ const SM_GUID ResourceManager::LoadResource(SM_GUID guid, const Resource::Flag& 
 
 	//Check to see if the GUID is already loaded, in that case see if we can update the priority and then return the Load Resource
 	// (Simply put: if already loaded or in queue to be loaded, don't push it into the queue to be loaded.
-	auto find = _FindResource(guid);
+	auto find = _FindResource(guid, _resources);
 	if (find)
 	{
 		_UpdatePriority(guid, flag);
@@ -45,7 +45,7 @@ const SM_GUID ResourceManager::LoadResource(SM_GUID guid, const Resource::Flag& 
 	}
 	
 	//Create the resource
-	auto& r = _CreateResource(guid, flag)->resource;
+	auto& r = _CreateResource(guid, flag, _resources)->resource;
 	r.IncRefCount();
 
 	//If we don't want to push it onto a thread, and instead want to have it loaded right the fuck now, we do so. 
@@ -111,7 +111,7 @@ const SM_GUID ResourceManager::LoadResource(SM_GUID guid, const Resource::Flag& 
 void ResourceManager::UnloadResource(SM_GUID guid)
 {
 	_mutexLockGeneral.lock();
-	auto found = _FindResource(guid);
+	auto found = _FindResource(guid, _resources);
 
 	if (found)
 	{
@@ -125,7 +125,7 @@ void ResourceManager::UnloadResource(SM_GUID guid)
 void ResourceManager::EvictResource(SM_GUID guid)
 {
 	printf("Setting resource to be evicted. GUID: %llu\n", guid.data);
-	auto found = _FindResource(guid);
+	auto found = _FindResource(guid, _resources);
 
 	if (found)
 	{
@@ -137,7 +137,7 @@ void ResourceManager::EvictResource(SM_GUID guid)
 
 void ResourceManager::_UpdatePriority(SM_GUID guid,const Resource::Flag& flag)
 {
-	auto find = _FindResource(guid);
+	auto find = _FindResource(guid, _resources);
 	if (find)
 	{
 		//Only update the resource if it gets a HIGHER priorty.
@@ -181,7 +181,7 @@ void ResourceManager::_UpdatePriority(SM_GUID guid,const Resource::Flag& flag)
 bool ResourceManager::IsLoaded(SM_GUID guid)
 {
 	_mutexLockGeneral.lock();
-	auto find = _FindResource(guid);
+	auto find = _FindResource(guid, _resources);
 	if (find)
 	{
 		bool ret = find->resource.GetState() == Resource::ResourceState::Loaded;
@@ -446,7 +446,7 @@ void ResourceManager::_LoadingThread(uint16_t threadID)
 				}
 				else
 				{
-					_RemoveResource(_FindResource(job->ID));
+					_RemoveResource(_FindResource(job->ID, _resources), _resources);
 					printf("\tCould not find a resource to evict.\n\n");
 				}
 					
@@ -544,7 +544,7 @@ void ResourceManager::ShutDown()
 	_assetLoader = nullptr;
 
 
-	_RemoveAllResources();
+	_RemoveAllResources(_resources);
 	MemoryManager::ReleasePoolAllocator(_resourcePool);
 	
 	delete _allocator;
