@@ -123,8 +123,7 @@ int main(int argc, char** argv)
 	//ResourceManager::Instance().LoadResource("gold.jpg", Resource::Flag::LOAD_AND_WAIT);
 	// For some reason if you removed the line above this comment, the LOD textures all turn black.
 
-
-
+	
 
 
 	GameObject gg;
@@ -168,10 +167,11 @@ int main(int argc, char** argv)
 			core->GetCameraManager()->MoveForward(-4.0f * core->GetTimer()->GetDeltaTime());
 
 		if (input->IsKeyDown(SDLK_d))
-			core->GetCameraManager()->RotateActiveCamera(0.0f, 0.01f * core->GetTimer()->GetDeltaTime(), 0.0f);
+			core->GetCameraManager()->MoveRight(4.0f * core->GetTimer()->GetDeltaTime());
 
 		if (input->IsKeyDown(SDLK_a))
-			core->GetCameraManager()->RotateActiveCamera(0.0f, -0.01f * core->GetTimer()->GetDeltaTime(), 0.0f);
+			core->GetCameraManager()->MoveRight(-
+				4.0f * core->GetTimer()->GetDeltaTime());
 
 		float xrotation = input->GetMouseXMovement() * core->GetTimer()->GetDeltaTime() * 0.01f;
 		float yrotation = input->GetMouseYMovement() * core->GetTimer()->GetDeltaTime() * 0.01f;
