@@ -79,7 +79,7 @@ int main(int argc, char** argv)
 
 	r.TestAlloc();
 
-	DarferLoader drfLoader("test.drf");
+	//DarferLoader drfLoader("test.drf");
 
 
 
