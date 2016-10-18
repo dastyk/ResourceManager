@@ -343,7 +343,6 @@ namespace Arfer
             }
 
             BinaryWriter writer = new BinaryWriter(fileStream);
-
             currentOffset = 0;
             toLoad.Clear();
             // Write potential other info about package.

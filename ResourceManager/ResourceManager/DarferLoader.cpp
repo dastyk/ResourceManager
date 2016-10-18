@@ -6,11 +6,11 @@
 void DarferLoader::ReadBinary(std::unordered_map<uint64_t, EntryData>& entries)
 {
 
-	uint32_t size = 0;
+	int32_t size = 0;
 	char* buffer = new char[1000];
 
 	// Read name
-	drfFile.read((char*)&size, 4);
+	drfFile.read((char*)&size, 1);
 	drfFile.read(buffer, size);
 	std::string name(buffer, size);
 	delete[] buffer;
