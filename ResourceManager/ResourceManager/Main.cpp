@@ -16,8 +16,8 @@
 #include "DarferLoader.h"
 #include "Scene.h"
 
-void ArfParser(Resource& r);
-void Objarser(Resource& r);
+void ArfParser(Resource::Ptr& resource);
+void Objarser(Resource::Ptr& resource);
 
 
 
@@ -61,14 +61,16 @@ int main(int argc, char** argv)
 	MemoryManager::CreateInstance();
 	MemoryManager::GetInstance()->Init(512U * 1024U * 1024U);
 	ResourceManager& r = ResourceManager::Instance(); // Kickstart at our will
-	r.Init(12U * 1024U * 1024U);
-	r.SetEvictPolicy(ResourceManager::EvictPolicies::FirstFit);
+	r.Init(22U * 1024U * 1024U);
+	//r.SetEvictPolicy(ResourceManager::EvictPolicies::FirstFit);
 	r.SetAssetLoader(new ZipLoader("data.dat"));
 
 	r.AddParser("jpg",
-		[](Resource& r)
+		[](Resource::Ptr& resource)
 	{
-		Core::GetInstance()->GetGraphics()->CreateShaderResource(r);
+		auto g = Core::GetInstance()->GetGraphics();
+		g->CreateShaderResource(resource.guid, resource.data, resource.size);
+		resource.RegisterObserver(g);
 	});
 
 	r.AddParser("arf", ArfParser);
@@ -89,7 +91,7 @@ int main(int argc, char** argv)
 	//ResourceManager::Instance().LoadResource("gold.jpg", Resource::Flag::LOAD_AND_WAIT);
 	// For some reason if you removed the line above this comment, the LOD textures all turn black.
 
-	
+	//ResourceManager::Instance().LoadResource("Sphere0.arf", Resource::Flag::LOAD_AND_WAIT);
 
 
 	GameObject gg;
@@ -196,11 +198,10 @@ int main(int argc, char** argv)
 }
 
 
-void ArfParser(Resource& r)
+void ArfParser(Resource::Ptr& resource)
 {
 	// Setup pointers
-	RawData rdata = r.GetData();
-	ArfData::Data* data = (ArfData::Data*)rdata.data;
+	ArfData::Data* data = (ArfData::Data*)resource.data;
 	ArfData::DataPointers _datap;
 	void* pdata = (void*)((size_t)data + sizeof(ArfData::Data));
 	_datap.positions = (ArfData::Position*)((size_t)pdata + data->PosStart);
@@ -241,19 +242,21 @@ void ArfParser(Resource& r)
 		indices[i] = i;
 	}
 
-	Core::GetInstance()->GetGraphics()->CreateMeshBuffers(r, vertices, numVertices, indices, indexCount);
-
+	auto g = Core::GetInstance()->GetGraphics();
+	g->CreateMeshBuffers(resource.guid, vertices, numVertices, indices, indexCount);
+	resource.RegisterObserver(g);
 	delete[] vertices;
 	delete[] indices;
 }
 
-void Objarser(Resource& r)
+void Objarser(Resource::Ptr& resource)
 {
 	MeshData::MeshData pdata;
-	RawData rdata = r.GetData();
-	ParseObj(rdata.data, pdata);
+	ParseObj(resource.data, pdata);
 
-	Core::GetInstance()->GetGraphics()->CreateMeshBuffers(r, pdata.vertices, pdata.NumVertices, pdata.Indices, pdata.IndexCount);
+	auto g = Core::GetInstance()->GetGraphics();
+	g->CreateMeshBuffers(resource.guid, pdata.vertices, pdata.NumVertices, pdata.Indices, pdata.IndexCount);
+	resource.RegisterObserver(g);
 
 	delete[] pdata.vertices;
 	delete[] pdata.Indices;

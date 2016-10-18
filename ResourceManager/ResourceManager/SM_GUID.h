@@ -20,7 +20,10 @@ struct SM_GUID
 	operator uint64_t() const {
 		return data;
 	}
-
+	void operator=(const SM_GUID& rhs)
+	{
+		this->data = rhs.data;
+	}
 	bool operator==(const SM_GUID& rhs) const
 	{
 		return rhs.data == this->data;

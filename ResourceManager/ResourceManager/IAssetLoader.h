@@ -12,8 +12,8 @@
 struct RawData
 {
 	uint32_t size;
-	char* data;
-	uint32_t fType;
+	void* data;
+	uint8_t fType;
 };
 
 class IAssetLoader
@@ -23,18 +23,18 @@ protected:
 
 	std::string compressedFile;
 	std::map<uint64_t, std::string> hashTable;
-	std::map<uint32_t,uint32_t> _fileTypes;
+	std::map<uint32_t,uint8_t> _fileTypes;
 
 public:
 	IAssetLoader(const std::string &file) { compressedFile = file; };
 	virtual ~IAssetLoader() {};
 
 	virtual RawData LoadResource(SM_GUID guid, std::function<char*(uint32_t dataSize)> allocCallback)=0;
-	void AddType(uint32_t& type)
+	uint8_t AddType(uint32_t& type)
 	{
-		uint32_t t = _fileTypes.size();
-		_fileTypes[type] = _fileTypes.size();//std::hash<std::string>{} (fileend)] = type;
-		type = t;
+		uint8_t t = _fileTypes.size();
+		_fileTypes[type] = t;//std::hash<std::string>{} (fileend)] = type;
+		return t;
 	}
 };
 

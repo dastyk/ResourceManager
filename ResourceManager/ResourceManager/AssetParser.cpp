@@ -11,19 +11,17 @@ AssetParser::~AssetParser()
 {
 }
 
-void AssetParser::AddParser(uint32_t type,const std::function<void(Resource & r)>& parseFunction)
+void AssetParser::AddParser(uint8_t type,const std::function<void(Resource::Ptr& resourcePtr)>& parseFunction)
 {
 	_parsers[type] = std::move(parseFunction);
 }
 
-void AssetParser::ParseResource(Resource & r) const
+void AssetParser::ParseResource(Resource::Ptr& resourcePtr) const
 {
-	RawData rdata = r.GetData();
-
-	auto& find = _parsers.find(rdata.fType);
+	auto& find = _parsers.find(resourcePtr.type);
 	if (find != _parsers.end())
 	{
-		find->second(r);
+		find->second(resourcePtr);
 		return;
 	}
 

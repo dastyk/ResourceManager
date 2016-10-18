@@ -35,18 +35,24 @@ const SM_GUID ResourceManager::LoadResource(SM_GUID guid, const Resource::Flag& 
 
 	//Check to see if the GUID is already loaded, in that case see if we can update the priority and then return the Load Resource
 	// (Simply put: if already loaded or in queue to be loaded, don't push it into the queue to be loaded.
-	auto find = _FindResource(guid, _resources);
-	if (find)
+	auto find = Resource::Find(guid);
+	if (find != Resource::NotFound)
 	{
-		_UpdatePriority(guid, flag);
-		find->resource.IncRefCount();
+		//_UpdatePriority(guid, flag);
+		Resource::Data().refCount[Resource::Count()]++;
 		_mutexLockGeneral.unlock();
 		return guid;
 	}
 	
 	//Create the resource
-	auto& r = _CreateResource(guid, flag, _resources)->resource;
-	r.IncRefCount();
+	const Resource::DataPointers& data = Resource::Data();
+	uint32_t& count = Resource::Count();
+	data.pinned[count] = true;
+	data.flags[count] = flag;
+	data.guid[count] = guid;
+	data.refCount[count] = 1;
+	data.numBlocks[count] = 0;
+	data.startBlock[count] = 0;
 
 	//If we don't want to push it onto a thread, and instead want to have it loaded right the fuck now, we do so. 
 	//Someone else feel free to comment what's going on here. I have no idea, really.
@@ -54,7 +60,7 @@ const SM_GUID ResourceManager::LoadResource(SM_GUID guid, const Resource::Flag& 
 	{
 		//TODO: Move this so we don't "find" a GUID that early have another flag, and now is LOAD_AND_WAIT, but not loaded and just in queue.
 		_mutexLockLoader.lock();
-		printf("Resource loading. GUID: %llu\n", r.GetGUID().data);
+		printf("Resource loading. GUID: %llu\n", guid.data);
 
 		// TODO: Query asset loader for data size -> reserve memory here -> give pointer where asset data can be stored to the asset loader
 
@@ -80,14 +86,19 @@ const SM_GUID ResourceManager::LoadResource(SM_GUID guid, const Resource::Flag& 
 			return data;
 		} );
 
-		r.SetData(rawData, startBlock, numBlocks);
+		data.rawData[count] = rawData.data;
+		data.type[count] = rawData.fType;
+		data.size[count] = rawData.size;
+
 		_mutexLockLoader.unlock();
 
 		_mutexLockParser.lock();
-		_parser.ParseResource(r);
+		_parser.ParseResource(Resource::MakePtr(count));
 		_mutexLockParser.unlock();
-		printf("Resource finished loading. GUID: %llu\n", r.GetGUID().data);
-		r.SetState(Resource::ResourceState::Loaded);
+
+		data.pinned[count] = false;
+		printf("Resource finished loading. GUID: %llu\n", guid.data);
+		
 	}
 	else
 	{
@@ -95,15 +106,15 @@ const SM_GUID ResourceManager::LoadResource(SM_GUID guid, const Resource::Flag& 
 		_mutexLockLoadingQueue.lock();
 		
 		//Set the state of the resource to waiting (to be loaded), print out that it is on the stack and push it to the stack
-		r.SetState(Resource::ResourceState::Waiting);
-		printf("Adding resource to toLoad stack. GUID: %llu\n", r.GetGUID().data);
-		_loadingQueue.push(&r);
+		printf("Adding resource to toLoad stack. GUID: %llu\n", guid.data);
+		_loadingQueue.push(count);
 
 		//Unlock the loading queue so we don't cause a deadlock
 		_mutexLockLoadingQueue.unlock();
 	}
 
 	//Unlock the general lock and return the function with the GUID.
+	count++;
 	_mutexLockGeneral.unlock();
 	return guid;
 }
@@ -111,80 +122,69 @@ const SM_GUID ResourceManager::LoadResource(SM_GUID guid, const Resource::Flag& 
 void ResourceManager::UnloadResource(SM_GUID guid)
 {
 	_mutexLockGeneral.lock();
-	auto found = _FindResource(guid, _resources);
+	auto found = Resource::Find(guid);
 
-	if (found)
+	if (found != Resource::NotFound)
 	{
-		printf("Unreferencing resource. GUID: %llu. RefCount: %d\n", guid.data, found->resource._refCount);
-		found->resource.Unload();
+		auto& refCount = Resource::Data().refCount[found];
+		refCount = (refCount > 0) ? refCount-- : 0;
+		printf("Unreferencing resource. GUID: %llu. RefCount: %d\n", guid.data, refCount);
+		
 	}
 	_mutexLockGeneral.unlock();
 }
 
-//Should maybe never be called
-void ResourceManager::EvictResource(SM_GUID guid)
-{
-	printf("Setting resource to be evicted. GUID: %llu\n", guid.data);
-	auto found = _FindResource(guid, _resources);
-
-	if (found)
-	{
-		found->resource._refCount = 0;
-	}
-
-
-}
-
-void ResourceManager::_UpdatePriority(SM_GUID guid,const Resource::Flag& flag)
-{
-	auto find = _FindResource(guid, _resources);
-	if (find)
-	{
-		//Only update the resource if it gets a HIGHER priorty.
-		//Pop the entire queue and reorder it. A lot of work, is it actually worth?
-		if (find->resource._flags < flag)
-		{
-			find->resource._flags = flag;
-
-
-			std::priority_queue<Resource*, std::vector<Resource*>, CompareResources> newQ;
-
-			_mutexLockLoadingQueue.lock();
-			_mutexLockParserQueue.lock();
-			size_t size = _loadingQueue.size();
-			for (size_t i = 0; i < size; i++)
-			{
-				auto r = _loadingQueue.top();
-				_loadingQueue.pop();
-				newQ.push(r);
-			}
-
-			_loadingQueue = std::move(newQ);
-
-
-
-			size = _parserQueue.size();
-			for (size_t i = 0; i < size; i++)
-			{
-				auto r = _parserQueue.top();
-				_parserQueue.pop();
-				newQ.push(r);
-			}
-
-			_parserQueue = std::move(newQ);
-			_mutexLockParserQueue.unlock();
-			_mutexLockLoadingQueue.unlock();
-		}
-	}
-}
+//
+//void ResourceManager::_UpdatePriority(SM_GUID guid,const Resource::Flag& flag)
+//{
+//	auto find = _FindResource(guid, _resources);
+//	if (find)
+//	{
+//		//Only update the resource if it gets a HIGHER priorty.
+//		//Pop the entire queue and reorder it. A lot of work, is it actually worth?
+//		if (find->resource._flags < flag)
+//		{
+//			find->resource._flags = flag;
+//
+//
+//			std::priority_queue<Resource*, std::vector<Resource*>, CompareResources> newQ;
+//
+//			_mutexLockLoadingQueue.lock();
+//			_mutexLockParserQueue.lock();
+//			size_t size = _loadingQueue.size();
+//			for (size_t i = 0; i < size; i++)
+//			{
+//				auto r = _loadingQueue.top();
+//				_loadingQueue.pop();
+//				newQ.push(r);
+//			}
+//
+//			_loadingQueue = std::move(newQ);
+//
+//
+//
+//			size = _parserQueue.size();
+//			for (size_t i = 0; i < size; i++)
+//			{
+//				auto r = _parserQueue.top();
+//				_parserQueue.pop();
+//				newQ.push(r);
+//			}
+//
+//			_parserQueue = std::move(newQ);
+//			_mutexLockParserQueue.unlock();
+//			_mutexLockLoadingQueue.unlock();
+//		}
+//	}
+//}
 
 bool ResourceManager::IsLoaded(SM_GUID guid)
 {
 	_mutexLockGeneral.lock();
-	auto find = _FindResource(guid, _resources);
-	if (find)
+	auto find = Resource::Find(guid);
+	if (find != Resource::NotFound)
 	{
-		bool ret = find->resource.GetState() == Resource::ResourceState::Loaded;
+		bool ret = !Resource::Data().pinned[find];
 		_mutexLockGeneral.unlock();
 		return ret;
 	}
@@ -249,11 +249,11 @@ void ResourceManager::SetAssetLoader(IAssetLoader * loader)
 	_assetLoader = loader;
 }
 
-void ResourceManager::AddParser(const std::string& fileend, const std::function<void(Resource& r)>& parseFunction)
+void ResourceManager::AddParser(const std::string& fileend, const std::function<void(Resource::Ptr& resource)>& parseFunction)
 {
 	uint32_t type = std::hash<std::string>{} (fileend);
-	_assetLoader->AddType(type);
-	_parser.AddParser(type, parseFunction);
+	uint8_t index = _assetLoader->AddType(type);
+	_parser.AddParser(index, parseFunction);
 	
 }
 
@@ -383,16 +383,15 @@ void ResourceManager::_LoadingThread(uint16_t threadID)
 		if(_loadingQueue.size())
 		{
 			//Get the job
-			Resource* job = _loadingQueue.top();
+			uint32_t job = _loadingQueue.top();
 			_loadingQueue.pop();
 			_mutexLockLoadingQueue.unlock();
 
-			//Proudly write out what GUID we have started working on.
-			ostringstream dataStream;
-			dataStream << job->GetGUID().data;
+			auto& data = Resource::Data();
 
-			job->SetState(Resource::ResourceState::Loading);
-			printf("Started loading resource. GUID: %llu\n", job->GetGUID().data);
+			//Proudly write out what GUID we have started working on.
+			SM_GUID guid = data.guid[job];
+			printf("Started loading resource. GUID: %llu\n", guid.data);
 
 
 			//Lock the loader so we can work in peace and quiet.
@@ -404,7 +403,7 @@ void ResourceManager::_LoadingThread(uint16_t threadID)
 
 			try
 			{
-				RawData rawData = _assetLoader->LoadResource(job->GetGUID(), [this, &startBlock, &numBlocks](uint32_t dataSize) -> char*
+				RawData rawData = _assetLoader->LoadResource(guid, [this, &startBlock, &numBlocks](uint32_t dataSize) -> char*
 				{
 					char* data = nullptr;
 
@@ -422,9 +421,13 @@ void ResourceManager::_LoadingThread(uint16_t threadID)
 
 				_mutexLockLoader.unlock();
 
-				printf("Finished loading resource. GUID: %llu\n", job->GetGUID().data);
-				job->SetState(Resource::ResourceState::Waiting);
-				job->SetData(rawData, startBlock, numBlocks);
+				printf("Finished loading resource. GUID: %llu\n", guid.data);
+
+				data.rawData[job] = rawData.data;
+				data.type[job] = rawData.fType;
+				data.size[job] = rawData.size;
+				data.startBlock[job] = startBlock;
+				data.numBlocks[job] = numBlocks;
 
 				//Lock so we can insert the data to the resources
 				_mutexLockParserQueue.lock();
@@ -440,13 +443,11 @@ void ResourceManager::_LoadingThread(uint16_t threadID)
 				if (_WhatToEvict(numBlocks, this))
 				{
 					_mutexLockLoadingQueue.lock();
-					job->SetState(Resource::ResourceState::Waiting);
 					_loadingQueue.push(job);
 					_mutexLockLoadingQueue.unlock();
 				}
 				else
 				{
-					_RemoveResource(_FindResource(job->ID, _resources), _resources);
 					printf("\tCould not find a resource to evict.\n\n");
 				}
 					
@@ -497,19 +498,22 @@ void ResourceManager::_ParserThread(uint16_t threadID)
 		if (_parserQueue.size())
 		{
 
-			Resource* workingResource = _parserQueue.top();
+			uint32_t job = _parserQueue.top();
 			_parserQueue.pop();
 			_mutexLockParserQueue.unlock();
 
+			auto& data = Resource::Data();
+			SM_GUID guid = data.guid[job];
+
 			//Mark it as parsed, notify the user and start parsing it.
-			workingResource->SetState(Resource::ResourceState::Parsing);
-			printf("Starting parsing resource. GUID: %llu\n", workingResource->GetGUID().data);
+			printf("Starting parsing resource. GUID: %llu\n", guid.data);
 			
-			_parser.ParseResource(*workingResource);
+			_parser.ParseResource(Resource::MakePtr(job));
 			
+			data.pinned[job] = false;
+
 			//The resource is now loaded and marked as such, the used is notified.
-			workingResource->SetState(Resource::ResourceState::Loaded);
-			printf("Finished parsing resource. GUID: %llu\n", workingResource->GetGUID().data);
+			printf("Finished parsing resource. GUID: %llu\n", guid.data);
 
 		}
 		else
@@ -526,10 +530,9 @@ void ResourceManager::_ParserThread(uint16_t threadID)
 
 void ResourceManager::Init(uint64_t maxMemory)
 {
-	uint32_t nrb = maxMemory / (sizeof(ResourceList) + ChunkyAllocator::BlockSize());
+	uint32_t nrb = maxMemory / (Resource::Size + ChunkyAllocator::BlockSize());
 
-	_resourcePool = MemoryManager::CreatePoolAllocator(sizeof(ResourceList), nrb, 0);
-
+	Resource::Init(nrb);
 	_allocator = new ChunkyAllocator(nrb);
 
 	_WhatToEvict = EvictPolicies::NoEvict;
@@ -542,10 +545,7 @@ void ResourceManager::ShutDown()
 
 	delete _assetLoader;
 	_assetLoader = nullptr;
+	Resource::Shutdown();
 
-
-	_RemoveAllResources(_resources);
-	MemoryManager::ReleasePoolAllocator(_resourcePool);
-	
 	delete _allocator;
 }
