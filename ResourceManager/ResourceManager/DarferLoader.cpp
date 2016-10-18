@@ -64,5 +64,33 @@ DarferLoader::~DarferLoader()
 
 RawData DarferLoader::LoadResource(SM_GUID guid, std::function<char*(uint32_t dataSize)> allocCallback)
 {
-	return RawData();
+	auto find = _entries.find(guid.data);
+	if (find == _entries.end())
+	{
+		throw std::runtime_error("Could not find resource with GUID: " + std::to_string(guid));
+	}
+
+
+
+	RawData data;
+	
+	drfFile.seekg(find->second.offset, std::ios_base::end);
+	data.size = find->second.size;
+	data.data = allocCallback(data.size);
+	if (data.data == nullptr)
+	{
+		throw std::runtime_error("Chunky Pool Allocator out of memory.");
+	}	
+	drfFile.read(data.data, data.size);
+
+	auto find2 = _fileTypes.find(find->second.extHash);
+	if (find2 == _fileTypes.end())
+	{
+		throw std::runtime_error("Fileformat with hash " + std::to_string(find->second.extHash) + " not recognized.");
+	}
+
+
+	data.fType = find2->first;
+
+	return data;
 }
