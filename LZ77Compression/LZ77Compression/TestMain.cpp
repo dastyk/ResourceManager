@@ -466,11 +466,11 @@ RawData UncompressHuffman(CompressedData cData)
 
 
 
-void CompressLz77(RawData rData, CompressedData* cdata)
+void CompressLz77(void* rdata, uint64_t size, uint64_t* sizeCompressed, uint64_t* sizeUncompressed, void** cdata)
 {
 	printf("Compressing\n");
-	unsigned char* inputStream = rData.data;
-	int sizeOfInput = rData.size;
+	unsigned char* inputStream = (unsigned char*)rdata;
+	int sizeOfInput = size;
 
 	uint64_t codingPosition = 0;
 	unsigned char* lookAheadBuffer = inputStream;
@@ -548,37 +548,37 @@ void CompressLz77(RawData rData, CompressedData* cdata)
 		//printf("%c\n", c);
 	}
 
-	cdata->data = compressed;
-	cdata->sizeCompressed = pointers.size() * 3;
-	cdata->sizeUncompressed = sizeOfInput;
+	*cdata = compressed;
+	*sizeCompressed = pointers.size() * 3;
+	*sizeUncompressed = sizeOfInput;
 
 }
 
-void UncompressLz77(CompressedData cData, RawData* data)
+void UncompressLz77(void** rdata, uint64_t* size, uint64_t sizeCompressed, uint64_t sizeUncompressed, void* cdata)
 {
 	printf("Uncompressing\n");
 	int currentPos = 0;
-	unsigned char* endData = new unsigned char[cData.sizeUncompressed];
-
-	for (int i = 0; i < cData.sizeCompressed; i += 3)
+	unsigned char* endData = new unsigned char[sizeUncompressed];
+	unsigned char* data = (unsigned char*)cdata;
+	for (int i = 0; i < sizeCompressed; i += 3)
 	{
 
 		int a = 0;
 		a++;
 
-		if ((cData.data[i + 1] & lengthAnd) == 0)
+		if ((data[i + 1] & lengthAnd) == 0)
 		{
-			endData[currentPos] = cData.data[i + 2];
+			endData[currentPos] = data[i + 2];
 			currentPos++;
 		}
 		else
 		{
-			uint8_t length = (((uint8_t)cData.data[i + 1]) & lengthAnd);
+			uint8_t length = (((uint8_t)data[i + 1]) & lengthAnd);
 			//uint16_t offset = ((uint16_t)((cData.data[i] << 8) | cData.data[i]) >> (16 - 11));
-			uint16_t offset = (uint8_t)cData.data[i];
+			uint16_t offset = (uint8_t)data[i];
 			//offset = offset >> 5;
 			offset = (offset << 3); // 3 because up 8 and then down 5 = 3 up (to align to 11 bit)
-			offset |= (cData.data[i + 1] >> (16 - 11));
+			offset |= (data[i + 1] >> (16 - 11));
 
 			memcpy(endData + currentPos, endData + currentPos - offset, length);
 			currentPos += length;
@@ -587,8 +587,8 @@ void UncompressLz77(CompressedData cData, RawData* data)
 	printf("Uncompression Complete\n");
 
 
-	data->data = endData;
-	data->size = cData.sizeUncompressed;
+	*rdata = endData;
+	*size = sizeUncompressed;
 
 
 
@@ -638,7 +638,8 @@ void UncompressLz77(CompressedData cData, RawData* data)
 //
 //	//-----------------------------------------------------------------------------------------------------------------------------
 //
-//	CompressedData compressedData = CompressLz77(rData);
+//	CompressedData compressedData;
+//	CompressLz77(rData.data, rData.size, &compressedData.sizeCompressed, &compressedData.sizeUncompressed, (void**)&compressedData.data);
 //	float sizeDiff1 = compressedData.sizeCompressed / (compressedData.sizeUncompressed * 1.0f);
 //	printf("The compressed file should be %f percent of the original size\n", sizeDiff1 * 100);
 //
@@ -671,7 +672,8 @@ void UncompressLz77(CompressedData cData, RawData* data)
 //	//------------------------------------------------------------------------------------------------------------------------------
 //
 //
-//	RawData uncompressedData = UncompressLz77(testFileToUncompress);
+//	RawData uncompressedData;
+//	UncompressLz77((void**)&uncompressedData.data, &uncompressedData.size, testFileToUncompress.sizeCompressed, testFileToUncompress.sizeUncompressed, testFileToUncompress.data);
 //
 //	bool foundError = false;
 //	for (int i = 0; i < rData.size; i++)

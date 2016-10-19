@@ -28,6 +28,6 @@
 	unsigned char* data;
 };
 
-extern "C" __declspec(dllexport) void CompressLz77(RawData rData, CompressedData* cdata);
-extern "C" __declspec(dllexport) void UncompressLz77(CompressedData cData, RawData* data);
+extern "C" __declspec(dllexport) void CompressLz77(void* rdata, uint64_t size, uint64_t* sizeCompressed, uint64_t* sizeUncompressed, void** cdata);
+extern "C" __declspec(dllexport) void UncompressLz77(void** rdata, uint64_t* size, uint64_t sizeCompressed, uint64_t sizeUncompressed, void* cdata);
 #endif
