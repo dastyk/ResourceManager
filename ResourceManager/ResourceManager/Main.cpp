@@ -128,10 +128,10 @@ int main(int argc, char** argv)
 	bunnyObject.AddLODTexture("b1.jpg");
 	bunnyObject.AddLODTexture("b2.jpg");
 
-	DirectX::XMStoreFloat4x4(&bunnyObject.transform, DirectX::XMMatrixScaling(1.5, 1.5, 1.5) * DirectX::XMMatrixTranslation(0.0f, 0.0f, 10.0f));
-	bunnyObject.pos = DirectX::XMFLOAT3(0.0f, 0.0f, 20.0f);
-	bunnyObject.scale = 1.5f;
-	bunnyObject.radius = 1.8f;
+	DirectX::XMStoreFloat4x4(&bunnyObject.transform, DirectX::XMMatrixScaling(10, 10, 10) * DirectX::XMMatrixRotationY(DirectX::XM_PI)* DirectX::XMMatrixTranslation(-10.0f, 0.0f, 10.0f));
+	bunnyObject.pos = DirectX::XMFLOAT3(-10.0f, 0.0f, 10.0f);
+	bunnyObject.scale = 10.0f;
+	bunnyObject.radius = 0.3f;
 
 	testScene.AddGameObject(bunnyObject);
 
@@ -145,8 +145,8 @@ int main(int argc, char** argv)
 	dragonObject.AddLODTexture("b1.jpg");
 	dragonObject.AddLODTexture("b2.jpg");
 
-	DirectX::XMStoreFloat4x4(&dragonObject.transform, DirectX::XMMatrixScaling(0.3, 0.3, 0.3) * DirectX::XMMatrixTranslation(0.0f, 0.0f, -50.0f));
-	dragonObject.pos = DirectX::XMFLOAT3(0.0f, 0.0f, -50.0f);
+	DirectX::XMStoreFloat4x4(&dragonObject.transform, DirectX::XMMatrixScaling(0.3, 0.3, 0.3) * DirectX::XMMatrixTranslation(10.0f, 0.0f, 10.0f));
+	dragonObject.pos = DirectX::XMFLOAT3(10.0f, 00.0f, 10.0f);
 	dragonObject.scale = 0.25f;
 	dragonObject.radius = 0.3f;
 
