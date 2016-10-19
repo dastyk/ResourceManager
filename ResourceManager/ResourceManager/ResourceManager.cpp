@@ -252,6 +252,30 @@ void ResourceManager::TestAlloc( void )
 	//slot = _allocator->Allocate(3);
 	//memset(_allocator->Data(slot), 0, _allocator->BlockSize() * 3);
 	//_allocator->PrintOccupancy();
+
+	//int32_t slot = _allocator->Allocate(20);
+	//memset(_allocator->Data(slot), 0, _allocator->BlockSize() * 20);
+	//_allocator->PrintOccupancy();
+
+	//_allocator->Free(1, 2);
+	//_allocator->Free(5, 1);
+	//_allocator->Free(13, 4);
+
+	//list<pair<uint32_t, uint32_t>> defrags;
+
+	//printf("Before defragmenting 3 blocks at index 3:\n");
+	//_allocator->PrintOccupancy();
+
+	//defrags.push_back({ 4, 1 });
+	//_allocator->Defrag(defrags);
+
+	//printf("After defragmenting:\n");
+	//_allocator->PrintOccupancy();
+
+	//_allocator->Allocate(3);
+	//_allocator->PrintOccupancy();
+
+	//int hej = 0;
 }
 
 void ResourceManager::Startup()
@@ -324,24 +348,33 @@ void ResourceManager::_Run()
 
 	while (_running)
 	{
-		//_mutexLockGeneral.lock();
-		////Loop through all resources, removing the first, and only one, resource available to be removed.
-		//uint64_t erased = 0;
-		//auto r = _resources;
-		//while (r)
-		//{
-		//	if (r->resource._refCount == 0 && r->resource.GetState() == Resource::ResourceState::Loaded && !(r->resource._flags & Resource::Flag::PERSISTENT))
-		//	{
-		//		printf("Unloading resource. GUID: %llu.\n", r->resource.ID.data);
-		//		_RemoveResource(r);
-		//		break;
-		//	}
-		//	r = r->next;
-		//}
-		//_mutexLockGeneral.unlock();
+		_defragList.clear();
+		_pinned.clear();
+
+		// Find all resources with flag 'Loaded' and add them to a list of
+		// allocations that are allowed to be defragmented
+
+		auto& data = _resource.data;
+		uint32_t count = _resource.count;
+		for (uint32_t i = 0; i < count; i++)
+		{
+			if (data.pinned[i].try_lock())
+			{
+				_defragList.push_back({ data.startBlock[i], data.numBlocks[i] });
+				_pinned.push_back(i);
+			}
+		}
+
+		bool i = _allocator->Defrag(_defragList);
+		if (i)
+			int a = 1;
+		for (auto& m : _pinned)
+		{
+			data.pinned[m].unlock();
+		}
 
 		//Taking a nap.
-		//this_thread::sleep_for(std::chrono::milliseconds(17));
+		this_thread::sleep_for(std::chrono::milliseconds(17));
 	}
 
 	//When we're shutting down, we wait for our child-threads and join them in.

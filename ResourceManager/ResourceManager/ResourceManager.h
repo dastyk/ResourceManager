@@ -213,6 +213,9 @@ private:
 	std::mutex _mutexLockLoader;
 	std::mutex _mutexLockLoadingQueue;
 	std::mutex _mutexLockParserQueue;
+
+	std::vector<uint32_t> _pinned;
+	std::list<std::pair<uint32_t&, uint32_t>> _defragList;
 };
 
 #endif

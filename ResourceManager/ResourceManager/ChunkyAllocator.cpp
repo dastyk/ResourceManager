@@ -121,27 +121,26 @@ void ChunkyAllocator::Free(int32_t first, uint32_t numBlocks)
 	_allocLock.unlock();
 }
 
-// Performs one defragmentation iteration and returns true if something was done.
-bool ChunkyAllocator::Defrag(vector<pair<uint32_t, uint32_t>>& allocs)
+// Performs one defragmentation iteration. Returns which index of the provided
+// list was moved or -1 if none.
+bool ChunkyAllocator::Defrag(list<pair<uint32_t&, uint32_t>>& allocs)
 {
-	// Remember:
-	// Overwriting (or otherwise moving) free chunks must update them accordingly
-	// Moved allocations must be propagated back to the user
-	// Idea for now is to just put this method call in a while-loop to defrag until nothing remains
+	_allocLock.lock();
 
 	FreeChunk* free = _root->Next;
 
 	// No free chunks, nothing to defrag
 	if (free == _end)
 	{
+		_allocLock.unlock();
 		return false;
 	}
 
-	// NaÅEe defragmentation that just stuffs upcoming occupied blocks into the free one.
+	// NaÔve defragmentation that just stuffs upcoming occupied blocks into the free one.
 	for (auto& alloc : allocs)
 	{
 		// Found an allocation that comes after the free block (defrag left)
-		if (reinterpret_cast<char*>(free) + free->Blocks * _blockSize == _pool + alloc.first)
+		if (reinterpret_cast<char*>(free) + free->Blocks * _blockSize == _pool + alloc.first * _blockSize)
 		{
 			// Make a copy of the old free block before overwriting data
 			FreeChunk oldFree;
@@ -160,6 +159,10 @@ bool ChunkyAllocator::Defrag(vector<pair<uint32_t, uint32_t>>& allocs)
 			newFree->Previous->Next = newFree;
 			newFree->Next->Previous = newFree;
 
+			// Allocation was moved to the start of the free chunk before, so its
+			// alloc slot is shifted by the number of blocks of the free chunk.
+			alloc.first -= newFree->Blocks;
+
 			// If the next free block comes immediately after we merge
 			if (newFree->Next == reinterpret_cast<FreeChunk*>(reinterpret_cast<char*>(newFree) + newFree->Blocks * _blockSize))
 			{
@@ -167,11 +170,13 @@ bool ChunkyAllocator::Defrag(vector<pair<uint32_t, uint32_t>>& allocs)
 				newFree->Next = newFree->Next->Next;
 				newFree->Next->Previous = newFree;
 			}
-
+			_allocLock.unlock();
 			return true;
 		}
+
 	}
 
+	_allocLock.unlock();
 	return false;
 }
 
