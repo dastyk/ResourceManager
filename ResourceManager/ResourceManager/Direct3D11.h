@@ -190,8 +190,8 @@ public:
 
 	//Inherited from graphics interface
 	virtual void Draw();
-	virtual void CreateMeshBuffers(Resource& r, MeshData::Vertex* vertices, uint32_t numVertices, uint32_t* indices, uint32_t indexCount);
-	virtual void CreateShaderResource(Resource& resource);
+	virtual void CreateMeshBuffers(const SM_GUID& guid, MeshData::Vertex* vertices, uint32_t numVertices, uint32_t* indices, uint32_t indexCount);
+	virtual void CreateShaderResource(const SM_GUID& guid, const void* data, uint32_t size);
 	virtual void NotifyDelete(SM_GUID guid);
 	virtual void AddToRenderQueue(const GameObject& gameObject);
 

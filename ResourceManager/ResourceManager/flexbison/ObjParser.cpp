@@ -12,12 +12,12 @@ void yy::parser::error(std::string const&err)
 	std::cout << err << std::endl;
 }
 
-void ParseObj(char* rawData, MeshData::MeshData& mdata)
+void ParseObj(const void* rawData, MeshData::MeshData& mdata)
 {
 	o = new Object;
 	fopen_s(&yyin, "temp", "r");
 
-	setbuf(yyin, rawData);
+	setbuf(yyin, (char*)rawData);
 
 	yy::parser parser;
 	if (parser.parse())

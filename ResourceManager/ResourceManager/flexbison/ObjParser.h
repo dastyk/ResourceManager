@@ -1,4 +1,4 @@
 #pragma once
 
 #include "../MeshData.h"
-void ParseObj(char* rawData, MeshData::MeshData& mdata);
+void ParseObj(const void* rawData, MeshData::MeshData& mdata);
