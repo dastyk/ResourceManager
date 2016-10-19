@@ -22,7 +22,7 @@ void Resource::Remove(const uint32_t index)
 		return;
 	}
 	data.pinned[last].lock();
-
+	data.loaded[index] = data.loaded[last];
 	data.guid[index] = data.guid[last];
 	data.flags[index] = data.flags[last];
 	data.refCount[index] = data.refCount[last];
@@ -32,8 +32,9 @@ void Resource::Remove(const uint32_t index)
 	data.size[index] = data.size[last];
 	data.startBlock[index] = data.startBlock[last];
 	data.numBlocks[index] = data.numBlocks[last];
+	data.pinned[last].unlock();
 	data.pinned[last].~mutex();
-	data.pinned[index].unlock();
+	
 	Remove();
 
 }
@@ -50,7 +51,8 @@ void Resource::Allocate(uint32_t numResources)
 	Resource::DataPointers newData;
 
 	newData.pinned = (std::mutex*)newC;
-	newData.guid = (SM_GUID*)(newData.pinned + numResources);
+	newData.loaded = (bool*)(newData.pinned + numResources);
+	newData.guid = (SM_GUID*)(newData.loaded + numResources);
 	newData.flags = (Resource::Flag*)(newData.guid + numResources);
 	newData.refCount = (uint16_t*)(newData.flags + numResources);
 	newData.observer = (Observer**)(newData.refCount + numResources);
@@ -61,6 +63,7 @@ void Resource::Allocate(uint32_t numResources)
 	newData.numBlocks = (uint32_t*)(newData.startBlock + numResources);
 
 	memcpy(newData.pinned, data.pinned, count * sizeof(std::mutex));
+	memcpy(newData.loaded, data.loaded, count * sizeof(bool));
 	memcpy(newData.guid, data.guid, count * sizeof(SM_GUID));
 	memcpy(newData.flags, data.flags, count * sizeof(Resource::Flag));
 	memcpy(newData.refCount, data.refCount, count * sizeof(uint16_t));
@@ -87,6 +90,8 @@ void Resource::UnAllocte()
 {
 	for (uint32_t i = 0; i < count; i++)
 	{
+		data.pinned[i].lock();
+		data.pinned[i].unlock();
 		data.pinned[i].~mutex();
 	}
 	MemoryManager::Release(buffer);

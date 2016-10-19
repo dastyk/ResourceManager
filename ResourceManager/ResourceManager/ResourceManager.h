@@ -92,6 +92,7 @@ private:
 						rm->_resource.Modify();
 						rm->_allocator->Free(data.startBlock[i], data.numBlocks[i]);
 						rm->_resource.Remove(i);		
+						data.pinned[i].unlock();
 						return true;
 					}
 				}

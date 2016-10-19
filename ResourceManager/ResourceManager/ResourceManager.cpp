@@ -40,9 +40,9 @@ const SM_GUID ResourceManager::LoadResource(SM_GUID guid, const Resource::Flag& 
 	if (find != Resource::NotFound)
 	{
 		//_UpdatePriority(guid, flag);
-		_resource.data.pinned[_resource.count].lock();
-		_resource.data.refCount[_resource.count]++;
-		_resource.data.pinned[_resource.count].unlock();
+		_resource.data.pinned[find].lock();
+		_resource.data.refCount[find]++;
+		_resource.data.pinned[find].unlock();
 		_mutexLockGeneral.unlock();
 		return guid;
 	}
@@ -99,8 +99,7 @@ const SM_GUID ResourceManager::LoadResource(SM_GUID guid, const Resource::Flag& 
 
 		_parser.ParseResource(_resource.MakePtr(count));
 
-		_resource.Add();
-		data.pinned[count].unlock();
+		
 		printf("Resource finished loading. GUID: %llu\n", guid.data);
 		
 	}
@@ -115,13 +114,12 @@ const SM_GUID ResourceManager::LoadResource(SM_GUID guid, const Resource::Flag& 
 
 		//Unlock the loading queue so we don't cause a deadlock
 		_mutexLockLoadingQueue.unlock();
-
-		_resource.Add();
 	}
 
 	//Unlock the general lock and return the function with the GUID.
 	
-	//_mutexLockGeneral.unlock();
+	_resource.Add();
+	data.pinned[count].unlock();
 	return guid;
 }
 
@@ -193,8 +191,12 @@ bool ResourceManager::IsLoaded(SM_GUID guid)
 	if (find != Resource::NotFound)
 	{
 		bool ret = _resource.data.pinned[find].try_lock();
-		if(ret)
-			_resource.data.pinned[_resource.count].unlock();
+		if (ret)
+		{
+			ret = _resource.data.loaded[find];
+			_resource.data.pinned[find].unlock();
+		}
+			
 		return ret;
 	}
 	//_mutexLockGeneral.unlock();
@@ -395,9 +397,9 @@ void ResourceManager::_LoadingThread(uint16_t threadID)
 			uint32_t job = _loadingQueue.top();
 			_loadingQueue.pop();
 			_mutexLockLoadingQueue.unlock();
-
+			
 			const auto& data = _resource.data;
-
+			data.pinned[job].lock();
 			//Proudly write out what GUID we have started working on.
 			SM_GUID guid = data.guid[job];
 			printf("Started loading resource. GUID: %llu\n", guid.data);
@@ -465,7 +467,7 @@ void ResourceManager::_LoadingThread(uint16_t threadID)
 				_mutexLockLoader.unlock();
 			}
 			
-
+			data.pinned[job].unlock();
 		}
 		else
 			_mutexLockLoadingQueue.unlock();
@@ -513,13 +515,14 @@ void ResourceManager::_ParserThread(uint16_t threadID)
 			_mutexLockParserQueue.unlock();
 
 			auto& data = _resource.data;
+			data.pinned[job].lock();
 			SM_GUID guid = data.guid[job];
 
 			//Mark it as parsed, notify the user and start parsing it.
 			printf("Starting parsing resource. GUID: %llu\n", guid.data);
 			
 			_parser.ParseResource(_resource.MakePtr(job));
-			
+			data.loaded[job] = true;
 			data.pinned[job].unlock();
 
 			//The resource is now loaded and marked as such, the used is notified.

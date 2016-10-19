@@ -49,6 +49,7 @@ public:
 
 	const static size_t Size =
 		sizeof(std::mutex) +
+		sizeof(bool) +
 		sizeof(SM_GUID) +
 		sizeof(Resource::Flag) +
 		sizeof(uint16_t) +
@@ -62,6 +63,7 @@ public:
 	struct DataPointers
 	{
 		std::mutex* pinned;
+		bool* loaded;
 		SM_GUID* guid;
 		Resource::Flag* flags;
 		uint16_t* refCount;
