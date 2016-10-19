@@ -37,7 +37,7 @@ void Resource::Remove(const uint32_t index)
 	uint32_t last = count - 1;
 	if (last == index)
 	{
-		data.pinned[index].unlock();
+	//	data.pinned[index].unlock();
 		Remove();
 		return;
 	}
@@ -53,7 +53,7 @@ void Resource::Remove(const uint32_t index)
 	data.startBlock[index] = data.startBlock[last];
 	data.numBlocks[index] = data.numBlocks[last];
 	data.pinned[last].unlock();
-	data.pinned[index].unlock();
+	//data.pinned[index].unlock();
 	Remove();
 
 }
@@ -107,6 +107,7 @@ void Resource::Allocate(uint32_t numResources)
 
 void Resource::UnAllocte()
 {
+	
 	for (uint32_t i = 0; i < count; i++)
 	{
 		if(data.pinned[i].try_lock())

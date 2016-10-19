@@ -116,20 +116,19 @@ const SM_GUID ResourceManager::LoadResource(SM_GUID guid, const Resource::Flag& 
 	}
 
 	//Unlock the general lock and return the function with the GUID.
-	
-	_resource.Add();
 	data.pinned[count].unlock();
+	_resource.Add();
 	return guid;
 }
 
 void ResourceManager::UnloadResource(SM_GUID guid)
 {
 
-	auto found = _resource.Find(guid);
+	auto found = _resource.FindLock(guid);
 
 	if (found != Resource::NotFound)
 	{
-		_resource.data.pinned[found].lock();
+		//_resource.data.pinned[found].lock();
 		auto& refCount = _resource.data.refCount[found];
 		refCount = (refCount > 0) ? refCount-1 : 0;
 		_resource.data.pinned[found].unlock();
@@ -273,10 +272,10 @@ void ResourceManager::Startup()
 
 const Resource::Ptr ResourceManager::GetResource(const SM_GUID & guid)
 {
-	uint32_t find = _resource.Find(guid);
+	uint32_t find = _resource.FindLock(guid);
 	if (find != Resource::NotFound)
 	{
-		return _resource.MakePtr(find);
+		return _resource.MakePtrNoLock(find);
 	}
 
 	throw std::runtime_error("Tried to get a non-existing resource. GUID: " + std::to_string(guid.data));
@@ -386,6 +385,9 @@ void ResourceManager::_Run()
 		//Taking a nap.
 		this_thread::sleep_for(std::chrono::milliseconds(17));
 	}
+
+	if (_resource.modifyLock.try_lock())
+		_resource.modifyLock.unlock();
 
 	//When we're shutting down, we wait for our child-threads and join them in.
 	bool allThreadsJoined = false;
@@ -529,7 +531,8 @@ void ResourceManager::_LoadingThread(uint16_t threadID)
 	
 		std::this_thread::sleep_for(std::chrono::milliseconds(17));
 	}
-
+	if (_resource.modifyLock.try_lock())
+		_resource.modifyLock.unlock();
 	//Mark us "done", that is "not in use".
 	_mutexLockGeneral.lock();
 	_threadRunningMap.find(threadID)->second.inUse = false;
@@ -599,6 +602,8 @@ void ResourceManager::_ParserThread(uint16_t threadID)
 		std::this_thread::sleep_for(std::chrono::milliseconds(17));
 	}
 
+	if (_resource.modifyLock.try_lock())
+		_resource.modifyLock.unlock();
 	//Let us join in the thread, mark us as "no longer in use"
 	_mutexLockGeneral.lock();
 	_threadRunningMap[threadID].inUse = false;
@@ -622,6 +627,9 @@ void ResourceManager::ShutDown()
 
 	delete _assetLoader;
 	_assetLoader = nullptr;
+
+	if (_resource.modifyLock.try_lock())
+		_resource.modifyLock.unlock();
 
 	_resource.UnAllocte();
 	delete _allocator;
