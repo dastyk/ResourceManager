@@ -87,13 +87,20 @@ private:
 				for (uint32_t i = 0; i < count; i++)
 				{
 					bool pinned = data.pinned[i].try_lock();
-					if (pinned && data.refCount[i] == 0 && data.numBlocks[i] >= sizeOfLoadRequest)
+					if (pinned)
 					{
-						rm->_resource.Modify();
-						rm->_allocator->Free(data.startBlock[i], data.numBlocks[i]);
-						rm->_resource.Remove(i);		
-						return true;
+						if (data.refCount[i] == 0 && data.numBlocks[i] >= sizeOfLoadRequest)
+						{
+							rm->_resource.Modify();
+							rm->_allocator->Free(data.startBlock[i], data.numBlocks[i]);
+							rm->_resource.Remove(i);
+							return true;
+						}
+						else
+							data.pinned[i].unlock();
+						
 					}
+						
 				}
 				return false;
 			}
