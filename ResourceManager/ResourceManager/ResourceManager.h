@@ -32,8 +32,8 @@ public:
 
 	void TestAlloc( void );
 
-	uint32_t FreeMemory(void) const { return _allocator->FreeMemory() + ((Resource::Limit() - Resource::Count())*Resource::Size); }
-	uint32_t MaxMemory(void) const { return _allocator->MaxMemory() + Resource::Limit()*Resource::Size; }
+	uint32_t FreeMemory(void) const { return _allocator->FreeMemory() + ((_resource.limit - _resource.count)*Resource::Size); }
+	uint32_t MaxMemory(void) const { return _allocator->MaxMemory() + _resource.limit*Resource::Size; }
 
 	void SetAssetLoader(IAssetLoader* loader);
 	void AddParser(const std::string& fileend,const std::function<void(Resource::Ptr& resource)>& parseFunction);
@@ -82,16 +82,16 @@ private:
 			}
 			static bool FirstFit(uint32_t sizeOfLoadRequest, ResourceManager* rm)
 			{
-				uint32_t& count = Resource::Count();
-				auto& data = Resource::Data();
+				uint32_t count = rm->_resource.count;
+				auto& data = rm->_resource.data;
 				for (uint32_t i = 0; i < count; i++)
 				{
 					if (!data.pinned[i] && data.refCount[i] == 0 && data.numBlocks[i] >= sizeOfLoadRequest)
 					{
 						data.pinned[i] = true;
-						rm->_allocator->Free(data.startBlock[i], data.numBlocks[i]);
 						rm->_mutexLockGeneral.lock();
-						Resource::Remove(i);
+						rm->_allocator->Free(data.startBlock[i], data.numBlocks[i]);
+						rm->_resource.Remove(i);
 						rm->_mutexLockGeneral.unlock();
 						return true;
 					}
@@ -190,6 +190,8 @@ private:
 			
 private:
 	ChunkyAllocator* _allocator = nullptr;
+
+	Resource _resource;
 
 	std::priority_queue<uint32_t, std::vector<uint32_t>, std::less<uint32_t>> _loadingQueue;
 	std::priority_queue<uint32_t, std::vector<uint32_t>, std::less<uint32_t>> _parserQueue;

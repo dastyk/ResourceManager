@@ -1,13 +1,11 @@
 #include "Resource.h"
 
 
-Resource* Resource::instance = nullptr;
 uint32_t Resource::Find(const SM_GUID & guid)
 {
-	for (uint32_t i = 0; i < instance->count; i++)
+	for (uint32_t i = 0; i < count; i++)
 	{
-		uint64_t guid2 = instance->data.guid[i];
-		if (guid2 == guid)
+		if (data.guid[i] == guid)
 			return i;
 	}
 	return Resource::NotFound;
@@ -15,9 +13,15 @@ uint32_t Resource::Find(const SM_GUID & guid)
 
 void Resource::Remove(const uint32_t index)
 {
-	Resource::DataPointers& data = instance->data;
+	
+	uint32_t last = count - 1;
+	if (last == index)
+	{
+		count--;
+		return;
+	}
 	data.pinned[index] = true;
-	uint32_t last = instance->count - 1;
+	while (data.pinned[last]);
 	data.pinned[last] = true;
 
 	data.guid[index] = data.guid[last];
@@ -30,7 +34,7 @@ void Resource::Remove(const uint32_t index)
 	data.startBlock[index] = data.startBlock[last];
 	data.numBlocks[index] = data.numBlocks[last];
 	data.pinned[index] = false;
-	instance->count--;
+	count--;
 
 }
 
@@ -70,4 +74,9 @@ void Resource::Allocate(uint32_t numResources)
 	MemoryManager::Release(buffer);
 	buffer = newC;
 	data = newData;
+}
+
+void Resource::UnAllocte()
+{
+	MemoryManager::Release(buffer);
 }

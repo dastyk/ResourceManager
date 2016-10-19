@@ -137,7 +137,7 @@ bool ChunkyAllocator::Defrag(vector<pair<uint32_t, uint32_t>>& allocs)
 		return false;
 	}
 
-	// NaÔve defragmentation that just stuffs upcoming occupied blocks into the free one.
+	// NaÅEe defragmentation that just stuffs upcoming occupied blocks into the free one.
 	for (auto& alloc : allocs)
 	{
 		// Found an allocation that comes after the free block (defrag left)

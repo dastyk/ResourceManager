@@ -16,7 +16,7 @@ public:
 		friend Resource;
 		//friend ResourceManager;
 	private:
-		Ptr(uint32_t index, SM_GUID guid, const void* data, uint8_t type, uint32_t size, Observer** observerPtr, bool& pinned) : index(index), guid(guid), data(data), type(type), size(size), _observerPtr(observerPtr), pinned(pinned)
+		Ptr(uint32_t index,const SM_GUID& guid, const void*& data, const  uint8_t& type, const  uint32_t& size, Observer*& observerPtr) : index(index), guid(guid), data(data), type(type), size(size), _observerPtr(observerPtr)
 		{
 
 		}
@@ -25,18 +25,17 @@ public:
 		{
 
 		}
-		const SM_GUID guid;
-		const void* data;
-		const uint8_t type;
-		const uint32_t size;
+		const SM_GUID& guid;
+		const void*& data;
+		const uint8_t& type;
+		const uint32_t& size;
 		void RegisterObserver(Observer* observer)
 		{
-			*_observerPtr = observer;
+			_observerPtr = observer;
 		}
 	private:
 		const uint32_t index;
-		bool& pinned;
-		Observer** _observerPtr;
+		Observer*& _observerPtr;
 	};
 
 	CreateFlag(Flag, uint32_t, 4,
@@ -76,49 +75,27 @@ public:
 
 private:
 
-	Resource(uint32_t limit) : count(0), limit(0)
+	Resource() : count(0), limit(0)
 	{
-		Allocate(limit);
+		
 	}
 	~Resource()
 	{
-		MemoryManager::Release(buffer);
+		
 	}
-	static Resource* instance;
-	static void Init(uint32_t count)
+	Ptr MakePtr(uint32_t index)
 	{
-		instance = new Resource(count);
-	}
-	static void Shutdown()
-	{
-		delete instance;
-	}
-	static const uint32_t& Limit()
-	{
-		return instance->limit;
-	}
-	static uint32_t& Count()
-	{
-		return instance->count;
-	}
-	static const Resource::DataPointers& Data()
-	{
-		return instance->data;
-	}
-	static Ptr MakePtr(uint32_t index)
-	{
-		auto& data = instance->data;
-		return Ptr(index, data.guid[index], data.rawData[index], data.type[index], data.size[index], &data.observer[index], data.pinned[index]);
+		return Ptr(index,(const SM_GUID&) data.guid[index], (const void*&)data.rawData[index], (const uint8_t&)data.type[index], (const uint32_t&)data.size[index], data.observer[index]); 
 	}
 	uint32_t limit = 0;
 	uint32_t count = 0;
 	void* buffer = nullptr;
 	Resource::DataPointers data;
 
-	static uint32_t Find(const SM_GUID & guid);
-	static void Remove(const uint32_t index);
+	uint32_t Find(const SM_GUID & guid);
+	void Remove(const uint32_t index);
 	void Allocate(uint32_t numResources);
-
+	void UnAllocte();
 
 };
 

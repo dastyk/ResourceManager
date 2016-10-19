@@ -35,18 +35,18 @@ const SM_GUID ResourceManager::LoadResource(SM_GUID guid, const Resource::Flag& 
 
 	//Check to see if the GUID is already loaded, in that case see if we can update the priority and then return the Load Resource
 	// (Simply put: if already loaded or in queue to be loaded, don't push it into the queue to be loaded.
-	auto find = Resource::Find(guid);
+	auto find = _resource.Find(guid);
 	if (find != Resource::NotFound)
 	{
 		//_UpdatePriority(guid, flag);
-		Resource::Data().refCount[Resource::Count()]++;
+		_resource.data.refCount[_resource.count]++;
 		_mutexLockGeneral.unlock();
 		return guid;
 	}
 	
 	//Create the resource
- 	const Resource::DataPointers& data = Resource::Data();
-	uint32_t& count = Resource::Count();
+	const Resource::DataPointers& data = _resource.data;
+	uint32_t count = _resource.count;
 	data.pinned[count] = true;
 	data.flags[count] = flag;
 	data.guid[count] = guid;
@@ -92,7 +92,7 @@ const SM_GUID ResourceManager::LoadResource(SM_GUID guid, const Resource::Flag& 
 
 		_mutexLockLoader.unlock();
 
-		_parser.ParseResource(Resource::MakePtr(count));
+		_parser.ParseResource(_resource.MakePtr(count));
 
 
 		data.pinned[count] = false;
@@ -113,7 +113,7 @@ const SM_GUID ResourceManager::LoadResource(SM_GUID guid, const Resource::Flag& 
 	}
 
 	//Unlock the general lock and return the function with the GUID.
-	count++;
+	_resource.count++;
 	_mutexLockGeneral.unlock();
 	return guid;
 }
@@ -121,12 +121,12 @@ const SM_GUID ResourceManager::LoadResource(SM_GUID guid, const Resource::Flag& 
 void ResourceManager::UnloadResource(SM_GUID guid)
 {
 
-	auto found = Resource::Find(guid);
+	auto found = _resource.Find(guid);
 
 	if (found != Resource::NotFound)
 	{
 		_mutexLockGeneral.lock();
-		auto& refCount = Resource::Data().refCount[found];
+		auto& refCount = _resource.data.refCount[found];
 		refCount = (refCount > 0) ? refCount-1 : 0;
 		_mutexLockGeneral.unlock();
 		printf("Unreferencing resource. GUID: %llu. RefCount: %d\n", guid.data, refCount);
@@ -182,10 +182,10 @@ void ResourceManager::UnloadResource(SM_GUID guid)
 bool ResourceManager::IsLoaded(SM_GUID guid)
 {
 	//_mutexLockGeneral.lock();
-	auto find = Resource::Find(guid);
+	auto find = _resource.Find(guid);
 	if (find != Resource::NotFound)
 	{
-		bool ret = !Resource::Data().pinned[find];
+		bool ret = !_resource.data.pinned[find];
 	//	_mutexLockGeneral.unlock();
 		return ret;
 	}
@@ -388,7 +388,7 @@ void ResourceManager::_LoadingThread(uint16_t threadID)
 			_loadingQueue.pop();
 			_mutexLockLoadingQueue.unlock();
 
-			auto& data = Resource::Data();
+			const auto& data = _resource.data;
 
 			//Proudly write out what GUID we have started working on.
 			SM_GUID guid = data.guid[job];
@@ -449,6 +449,7 @@ void ResourceManager::_LoadingThread(uint16_t threadID)
 				}
 				else
 				{
+					_resource.Remove(job);
 					printf("\tCould not find a resource to evict.\n\n");
 				}
 					
@@ -503,13 +504,13 @@ void ResourceManager::_ParserThread(uint16_t threadID)
 			_parserQueue.pop();
 			_mutexLockParserQueue.unlock();
 
-			auto& data = Resource::Data();
+			auto& data = _resource.data;
 			SM_GUID guid = data.guid[job];
 
 			//Mark it as parsed, notify the user and start parsing it.
 			printf("Starting parsing resource. GUID: %llu\n", guid.data);
 			
-			_parser.ParseResource(Resource::MakePtr(job));
+			_parser.ParseResource(_resource.MakePtr(job));
 			
 			data.pinned[job] = false;
 
@@ -533,7 +534,7 @@ void ResourceManager::Init(uint64_t maxMemory)
 {
 	uint32_t nrb = maxMemory / (Resource::Size + ChunkyAllocator::BlockSize());
 
-	Resource::Init(nrb);
+	_resource.Allocate(nrb);
 	_allocator = new ChunkyAllocator(nrb);
 
 	_WhatToEvict = EvictPolicies::NoEvict;
@@ -546,7 +547,7 @@ void ResourceManager::ShutDown()
 
 	delete _assetLoader;
 	_assetLoader = nullptr;
-	Resource::Shutdown();
 
+	_resource.UnAllocte();
 	delete _allocator;
 }
