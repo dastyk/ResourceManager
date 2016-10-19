@@ -10,7 +10,7 @@ using System.Windows.Forms;
 using System.IO;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.IO.Compression;
-
+using System.Runtime.InteropServices;
 
 
 
@@ -1134,6 +1134,59 @@ namespace Arfer
                     }
                 }
             }
+        }
+        [StructLayout(LayoutKind.Sequential)]
+        [Serializable]
+        private struct RawData
+        {
+            public UInt64 size;
+            public byte[] data;
+        }
+        [StructLayout(LayoutKind.Sequential)]
+        [Serializable]
+        private struct CompressedData
+        {
+            public UInt64 sizeComp;
+            public UInt64 sizeUnComp;
+            public byte[] data;
+        }
+        [DllImport("CLZ77.dll")]
+        private static extern void CompressLz77(RawData data, out CompressedData cdata);
+        [DllImport("CLZ77.dll")]
+        private static extern void UncompressLz77(CompressedData cData, out RawData data);
+
+        private void toolStripButton1_Click(object sender, EventArgs e)
+        {
+            FileInfo info = new FileInfo("bunny.obj");
+            using (BinaryReader file = new BinaryReader(File.Open("bunny.obj", FileMode.Open)))
+            {
+                RawData data = new RawData();
+                data.size = Convert.ToUInt64(info.Length);
+                data.data = file.ReadBytes(Convert.ToInt32(data.size));
+
+                CompressedData cdata = new CompressedData();
+                CompressLz77(data, out cdata);
+                using (BinaryWriter writer = new BinaryWriter(File.Open("comp.asd", FileMode.OpenOrCreate)))
+                {
+                    writer.Write(cdata.sizeComp);
+                    writer.Write(cdata.sizeUnComp);
+                    writer.Write(cdata.data, 0, Convert.ToInt32(cdata.sizeComp));
+                }
+            }
+
+            using (BinaryReader reader = new BinaryReader(File.Open("comp.asd", FileMode.Open)))
+            {
+                CompressedData cdata = new CompressedData();
+                cdata.sizeComp = reader.ReadUInt64();
+                cdata.sizeUnComp = reader.ReadUInt64();
+                cdata.data = reader.ReadBytes(Convert.ToInt32(cdata.sizeComp));
+
+                RawData data = new RawData();
+                UncompressLz77(cdata, out data);
+                char[] st = System.Text.Encoding.UTF8.GetString(data.data).ToCharArray();
+                int i = 0;
+            }
+
         }
     }
 
