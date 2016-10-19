@@ -90,6 +90,10 @@ private:
 		data.pinned[index].lock();
 		return Ptr(index,(const SM_GUID&) data.guid[index], (const void*&)data.rawData[index], (const uint8_t&)data.type[index], (const uint32_t&)data.size[index], &data.observer[index]); 
 	}
+	Ptr MakePtrNoLock(uint32_t index)
+	{
+		return Ptr(index, (const SM_GUID&)data.guid[index], (const void*&)data.rawData[index], (const uint8_t&)data.type[index], (const uint32_t&)data.size[index], &data.observer[index]);
+	}
 	void DestroyPtr(const Ptr& resource)
 	{
 		data.pinned[resource.index].unlock();
@@ -101,6 +105,8 @@ private:
 	Resource::DataPointers data;
 
 	uint32_t Find(const SM_GUID & guid);
+	uint32_t FindLock(const SM_GUID& guid);
+
 	void Remove(const uint32_t index);
 	void Allocate(uint32_t numResources);
 	void UnAllocte();

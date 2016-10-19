@@ -36,16 +36,10 @@ const SM_GUID ResourceManager::LoadResource(SM_GUID guid, const Resource::Flag& 
 	//Check to see if the GUID is already loaded, in that case see if we can update the priority and then return the Load Resource
 	// (Simply put: if already loaded or in queue to be loaded, don't push it into the queue to be loaded.
 
-	auto find = _resource.Find(guid);
+	auto find = _resource.FindLock(guid);
 	if (find != Resource::NotFound)
 	{
-		//_UpdatePriority(guid, flag);
-		_resource.data.pinned[find].lock();
 		_resource.data.refCount[find]++;
-		if(!_resource.data.loaded[find])
-		{
-
-		}
 		_resource.data.pinned[find].unlock();
 		//_mutexLockGeneral.unlock();
 		return guid;
@@ -55,7 +49,7 @@ const SM_GUID ResourceManager::LoadResource(SM_GUID guid, const Resource::Flag& 
 	_resource.Modify();
 	const Resource::DataPointers& data = _resource.data;
 	uint32_t count = _resource.count;
-	new(&data.pinned[count]) std::mutex();
+	//new(&data.pinned[count]) std::mutex();
 	data.pinned[count].lock();
 	data.loaded[count] = false;
 	data.flags[count] = flag;
@@ -115,7 +109,7 @@ const SM_GUID ResourceManager::LoadResource(SM_GUID guid, const Resource::Flag& 
 		
 		//Set the state of the resource to waiting (to be loaded), print out that it is on the stack and push it to the stack
 		printf("Adding resource to toLoad stack. GUID: %llu\n", guid.data);
-		_loadingQueue.push(count);
+		_loadingQueue.push(guid);
 
 		//Unlock the loading queue so we don't cause a deadlock
 		_mutexLockLoadingQueue.unlock();
@@ -369,14 +363,21 @@ void ResourceManager::_Run()
 		{
 			if (data.pinned[i].try_lock())
 			{
-				_defragList.push_back({ data.startBlock[i], data.numBlocks[i] });
-				_pinned.push_back(i);
+				if (data.numBlocks[i])
+				{
+					_defragList.push_back({ data.startBlock[i], data.numBlocks[i] });
+					_pinned.push_back(i);
+				}
+				else
+					data.pinned[i].unlock();
 			}
 		}
+		uint32_t index = _allocator->Defrag(_defragList);
+		if (index != UINT32_MAX)
+		{
+			data.rawData[_pinned[index]] = _allocator->Data(_defragList[index].first);
+		}
 
-		bool i = _allocator->Defrag(_defragList);
-		if (i)
-			int a = 1;
 		for (auto& m : _pinned)
 		{
 			data.pinned[m].unlock();
@@ -441,83 +442,87 @@ void ResourceManager::_LoadingThread(uint16_t threadID)
 		if(_loadingQueue.size())
 		{
 			//Get the job
-			uint32_t job = _loadingQueue.top();
+			SM_GUID guid = _loadingQueue.top();
+
 			_loadingQueue.pop();
 			_mutexLockLoadingQueue.unlock();
 			
-			const auto& data = _resource.data;
-			data.pinned[job].lock();
-			//Proudly write out what GUID we have started working on.
-			SM_GUID guid = data.guid[job];
-			printf("Started loading resource. GUID: %llu\n", guid.data);
-
-
-			//Lock the loader so we can work in peace and quiet.
-			_mutexLockLoader.lock();
-
-			//Call asset loader to load the data we want
-			uint32_t startBlock = 0;
-			uint32_t numBlocks = 0;
-
-			try
+			uint32_t job = _resource.FindLock(guid);
+			if (job != Resource::NotFound)
 			{
-				RawData rawData = _assetLoader->LoadResource(guid, [this, &startBlock, &numBlocks](uint32_t dataSize) -> char*
+				const auto& data = _resource.data;
+				//Proudly write out what GUID we have started working on.
+				SM_GUID guid = data.guid[job];
+				printf("Started loading resource. GUID: %llu\n", guid.data);
+
+
+				//Lock the loader so we can work in peace and quiet.
+				_mutexLockLoader.lock();
+
+				//Call asset loader to load the data we want
+				uint32_t startBlock = 0;
+				uint32_t numBlocks = 0;
+
+				try
 				{
-					char* data = nullptr;
-
-					numBlocks = static_cast<uint32_t>(ceilf(static_cast<float>(dataSize) / _allocator->BlockSize()));
-					startBlock = _allocator->Allocate(numBlocks);
-
-					if (startBlock != -1)
+					RawData rawData = _assetLoader->LoadResource(guid, [this, &startBlock, &numBlocks](uint32_t dataSize) -> char*
 					{
-						data = _allocator->Data(startBlock);
+						char* data = nullptr;
+
+						numBlocks = static_cast<uint32_t>(ceilf(static_cast<float>(dataSize) / _allocator->BlockSize()));
+						startBlock = _allocator->Allocate(numBlocks);
+
+						if (startBlock != -1)
+						{
+							data = _allocator->Data(startBlock);
+						}
+
+						return data;
+					});
+
+
+					_mutexLockLoader.unlock();
+
+					printf("Finished loading resource. GUID: %llu\n", guid.data);
+
+					data.rawData[job] = rawData.data;
+					data.type[job] = rawData.fType;
+					data.size[job] = rawData.size;
+					data.startBlock[job] = startBlock;
+					data.numBlocks[job] = numBlocks;
+
+					//Lock so we can insert the data to the resources
+					_mutexLockParserQueue.lock();
+					_parserQueue.push(guid);
+					_mutexLockParserQueue.unlock();
+
+					data.pinned[job].unlock();
+				}
+				catch (std::runtime_error& e)
+				{
+					//We don't have enough memory. Wait one "sleep", but push the job back onto the queue for a new try.
+					printf("Resource Manager out of memory...\n");
+
+					data.pinned[job].unlock();
+					if (_WhatToEvict(numBlocks, this))
+					{
+						_mutexLockLoadingQueue.lock();
+						_loadingQueue.push(guid);
+						_mutexLockLoadingQueue.unlock();
+					}
+					else
+					{
+						printf("\tCould not find a resource to evict.\n\n");
+						_resource.Modify();
+						_resource.Remove(job);
+
 					}
 
-					return data;
-				});
 
-
-				_mutexLockLoader.unlock();
-
-				printf("Finished loading resource. GUID: %llu\n", guid.data);
-
-				data.rawData[job] = rawData.data;
-				data.type[job] = rawData.fType;
-				data.size[job] = rawData.size;
-				data.startBlock[job] = startBlock;
-				data.numBlocks[job] = numBlocks;
-
-				//Lock so we can insert the data to the resources
-				_mutexLockParserQueue.lock();
-				_parserQueue.push(job);
-				_mutexLockParserQueue.unlock();
-
-				data.pinned[job].unlock();
-			}
-			catch (std::runtime_error& e)
-			{
-				//We don't have enough memory. Wait one "sleep", but push the job back onto the queue for a new try.
-				printf("Resource Manager out of memory...\n");
-
-
-				if (_WhatToEvict(numBlocks, this))
-				{
-					_mutexLockLoadingQueue.lock();
-					_loadingQueue.push(job);
-					_mutexLockLoadingQueue.unlock();
+					_mutexLockLoader.unlock();
 				}
-				else
-				{
-					_resource.Modify();
-					_resource.Remove(job);
-					printf("\tCould not find a resource to evict.\n\n");
-				}
-					
-								
-				_mutexLockLoader.unlock();
+
 			}
-			
-		
 		}
 		else
 			_mutexLockLoadingQueue.unlock();
@@ -559,24 +564,33 @@ void ResourceManager::_ParserThread(uint16_t threadID)
 		_mutexLockParserQueue.lock();
 		if (_parserQueue.size())
 		{
-
-			uint32_t job = _parserQueue.top();
+			SM_GUID guid = _parserQueue.top();
 			_parserQueue.pop();
 			_mutexLockParserQueue.unlock();
 
-			auto& data = _resource.data;
-			const Resource::Ptr& resource = _resource.MakePtr(job);
-			SM_GUID guid = data.guid[job];
+			uint32_t job = _resource.FindLock(guid);
+			if (job != Resource::NotFound)
+			{
+				const Resource::Ptr& resource = _resource.MakePtrNoLock(job);
 
-			//Mark it as parsed, notify the user and start parsing it.
-			printf("Starting parsing resource. GUID: %llu\n", guid.data);
-			
-			_parser.ParseResource(resource);
-			data.loaded[job] = true;
-			_resource.DestroyPtr(resource);
 
-			//The resource is now loaded and marked as such, the used is notified.
-			printf("Finished parsing resource. GUID: %llu\n", guid.data);
+				auto& data = _resource.data;
+				SM_GUID guid = data.guid[job];
+
+				
+				//Mark it as parsed, notify the user and start parsing it.
+				printf("Starting parsing resource. GUID: %llu\n", guid.data);
+
+				_parser.ParseResource(resource);
+				data.loaded[job] = true;
+
+
+
+				//The resource is now loaded and marked as such, the user is notified.
+				printf("Finished parsing resource. GUID: %llu\n", guid.data);
+
+				_resource.DestroyPtr(resource);
+			}
 
 		}
 		else

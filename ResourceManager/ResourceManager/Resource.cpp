@@ -11,6 +11,26 @@ uint32_t Resource::Find(const SM_GUID & guid)
 	return Resource::NotFound;
 }
 
+uint32_t Resource::FindLock(const SM_GUID & guid)
+{
+	modifyLock.lock();
+	for (uint32_t i = 0; i < count; i++)
+	{
+		if (data.pinned[i].try_lock())
+		{
+			if (data.guid[i] == guid)
+			{
+				modifyLock.unlock();
+				return i;
+			}				
+			else
+				data.pinned[i].unlock();
+		}		
+	}
+	modifyLock.unlock();
+	return Resource::NotFound;
+}
+
 void Resource::Remove(const uint32_t index)
 {
 	
@@ -18,7 +38,6 @@ void Resource::Remove(const uint32_t index)
 	if (last == index)
 	{
 		data.pinned[index].unlock();
-		data.pinned[index].~mutex();
 		Remove();
 		return;
 	}
@@ -34,7 +53,6 @@ void Resource::Remove(const uint32_t index)
 	data.startBlock[index] = data.startBlock[last];
 	data.numBlocks[index] = data.numBlocks[last];
 	data.pinned[last].unlock();
-	data.pinned[last].~mutex();
 	data.pinned[index].unlock();
 	Remove();
 
@@ -75,10 +93,10 @@ void Resource::Allocate(uint32_t numResources)
 	memcpy(newData.startBlock, data.startBlock, count * sizeof(uint32_t));
 	memcpy(newData.numBlocks, data.numBlocks, count * sizeof(uint32_t));
 
-	//for (uint32_t i = 0; i < count; i++)
-	//{
-	//	data.pinned[i].~mutex();
-	//}
+	for (uint32_t i = 0; i < numResources; i++)
+	{
+		new (&newData.pinned[i]) std::mutex();
+	}
 
 	limit = numResources;
 	MemoryManager::Release(buffer);
@@ -91,8 +109,8 @@ void Resource::UnAllocte()
 {
 	for (uint32_t i = 0; i < count; i++)
 	{
-		data.pinned[i].lock();
-		data.pinned[i].unlock();
+		if(data.pinned[i].try_lock())
+			data.pinned[i].unlock();
 		data.pinned[i].~mutex();
 	}
 	MemoryManager::Release(buffer);

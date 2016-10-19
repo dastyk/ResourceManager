@@ -17,6 +17,10 @@ struct SM_GUID
 	{
 		data = std::hash<std::string>{} (c);
 	}
+	SM_GUID(uint64_t data) : data(data)
+	{
+		
+	}
 	operator uint64_t() const {
 		return data;
 	}
@@ -28,6 +32,7 @@ struct SM_GUID
 	{
 		return rhs.data == this->data;
 	}
+
 
 };
 

@@ -123,7 +123,7 @@ void ChunkyAllocator::Free(int32_t first, uint32_t numBlocks)
 
 // Performs one defragmentation iteration. Returns which index of the provided
 // list was moved or -1 if none.
-bool ChunkyAllocator::Defrag(list<pair<uint32_t&, uint32_t>>& allocs)
+uint32_t ChunkyAllocator::Defrag(vector<pair<uint32_t&, uint32_t>>& allocs)
 {
 	_allocLock.lock();
 
@@ -133,12 +133,15 @@ bool ChunkyAllocator::Defrag(list<pair<uint32_t&, uint32_t>>& allocs)
 	if (free == _end)
 	{
 		_allocLock.unlock();
-		return false;
+		return UINT32_MAX;
 	}
 
-	// Naïve defragmentation that just stuffs upcoming occupied blocks into the free one.
-	for (auto& alloc : allocs)
+	// Naïve defragmentation that just stuffs upcoming occupied blocks into the free one.'
+	uint32_t size = allocs.size();
+
+	for (uint32_t i = 0; i < size; i++)
 	{
+		auto& alloc = allocs[i];
 		// Found an allocation that comes after the free block (defrag left)
 		if (reinterpret_cast<char*>(free) + free->Blocks * _blockSize == _pool + alloc.first * _blockSize)
 		{
@@ -171,13 +174,13 @@ bool ChunkyAllocator::Defrag(list<pair<uint32_t&, uint32_t>>& allocs)
 				newFree->Next->Previous = newFree;
 			}
 			_allocLock.unlock();
-			return true;
+			return i;
 		}
 
 	}
 
 	_allocLock.unlock();
-	return false;
+	return UINT32_MAX;
 }
 
 // Little debug function that outputs occupancy of blocks where O indicates open

@@ -85,6 +85,14 @@ private:
 			}
 			static bool FirstFit(uint32_t sizeOfLoadRequest, ResourceManager* rm)
 			{
+				uint32_t num = rm->_allocator->FreeBlocks();
+				if (num >= sizeOfLoadRequest)
+
+				{
+					printf("\tWaiting for defrag\n\n");
+					return true;
+				}
+					
 				uint32_t count = rm->_resource.count;
 				auto& data = rm->_resource.data;
 				for (uint32_t i = 0; i < count; i++)
@@ -92,7 +100,7 @@ private:
 					bool pinned = data.pinned[i].try_lock();
 					if (pinned)
 					{
-						if (data.refCount[i] == 0 && data.numBlocks[i] >= sizeOfLoadRequest)
+						if (data.refCount[i] == 0 && data.numBlocks[i] + num >= sizeOfLoadRequest)
 						{
 							rm->_resource.Modify();
 							rm->_allocator->Free(data.startBlock[i], data.numBlocks[i]);
@@ -202,8 +210,8 @@ private:
 
 	Resource _resource;
 
-	std::priority_queue<uint32_t, std::vector<uint32_t>, std::less<uint32_t>> _loadingQueue;
-	std::priority_queue<uint32_t, std::vector<uint32_t>, std::less<uint32_t>> _parserQueue;
+	std::priority_queue<uint64_t, std::vector<uint64_t>, std::less<uint64_t>> _loadingQueue;
+	std::priority_queue<uint64_t, std::vector<uint64_t>, std::less<uint64_t>> _parserQueue;
 	std::unordered_map<uint16_t, ThreadControl, KeyHasher> _threadRunningMap;
 	std::unordered_map<uint16_t, std::thread, KeyHasher> _threadIDMap;
 	IAssetLoader* _assetLoader = nullptr;
@@ -218,7 +226,7 @@ private:
 	std::mutex _mutexLockParserQueue;
 
 	std::vector<uint32_t> _pinned;
-	std::list<std::pair<uint32_t&, uint32_t>> _defragList;
+	std::vector<std::pair<uint32_t&, uint32_t>> _defragList;
 };
 
 #endif
