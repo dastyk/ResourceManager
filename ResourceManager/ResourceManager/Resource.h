@@ -4,7 +4,7 @@
 #include "Observer.h"
 #include "flags.h"
 #include "MemoryManager.h"
-
+#include <mutex>
 class ResourceManager;
 
 class Resource
@@ -48,7 +48,7 @@ public:
 	static const uint32_t NotFound = UINT32_MAX;
 
 	const static size_t Size =
-		sizeof(bool) +
+		sizeof(std::mutex) +
 		sizeof(SM_GUID) +
 		sizeof(Resource::Flag) +
 		sizeof(uint16_t) +
@@ -61,7 +61,7 @@ public:
 
 	struct DataPointers
 	{
-		bool* pinned;
+		std::mutex* pinned;
 		SM_GUID* guid;
 		Resource::Flag* flags;
 		uint16_t* refCount;
@@ -87,6 +87,7 @@ private:
 	{
 		return Ptr(index,(const SM_GUID&) data.guid[index], (const void*&)data.rawData[index], (const uint8_t&)data.type[index], (const uint32_t&)data.size[index], data.observer[index]); 
 	}
+	std::mutex modifyLock;
 	uint32_t limit = 0;
 	uint32_t count = 0;
 	void* buffer = nullptr;
@@ -97,6 +98,20 @@ private:
 	void Allocate(uint32_t numResources);
 	void UnAllocte();
 
+	inline void Modify()
+	{
+		modifyLock.lock();
+	}
+	inline void Remove()
+	{
+		count--;
+		modifyLock.unlock();
+	}
+	inline void Add()
+	{
+		count++;
+		modifyLock.unlock();
+	}
 };
 
 #endif

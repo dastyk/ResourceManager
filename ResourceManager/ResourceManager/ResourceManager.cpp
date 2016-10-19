@@ -31,23 +31,28 @@ ResourceManager::~ResourceManager()
 const SM_GUID ResourceManager::LoadResource(SM_GUID guid, const Resource::Flag& flag)
 {
 	//Lock the "general" lock so that we won't be able to change a resource before we're done with it. Unlocked right before a return
-	_mutexLockGeneral.lock();
+	//_mutexLockGeneral.lock();
 
 	//Check to see if the GUID is already loaded, in that case see if we can update the priority and then return the Load Resource
 	// (Simply put: if already loaded or in queue to be loaded, don't push it into the queue to be loaded.
+
 	auto find = _resource.Find(guid);
 	if (find != Resource::NotFound)
 	{
 		//_UpdatePriority(guid, flag);
+		_resource.data.pinned[_resource.count].lock();
 		_resource.data.refCount[_resource.count]++;
+		_resource.data.pinned[_resource.count].unlock();
 		_mutexLockGeneral.unlock();
 		return guid;
 	}
 	
 	//Create the resource
+	_resource.Modify();
 	const Resource::DataPointers& data = _resource.data;
 	uint32_t count = _resource.count;
-	data.pinned[count] = true;
+	new(&data.pinned[count]) std::mutex();
+	data.pinned[count].lock();
 	data.flags[count] = flag;
 	data.guid[count] = guid;
 	data.refCount[count] = 1;
@@ -90,12 +95,12 @@ const SM_GUID ResourceManager::LoadResource(SM_GUID guid, const Resource::Flag& 
 		data.type[count] = rawData.fType;
 		data.size[count] = rawData.size;
 
-		_mutexLockLoader.unlock();
+		//_mutexLockLoader.unlock();
 
 		_parser.ParseResource(_resource.MakePtr(count));
 
-
-		data.pinned[count] = false;
+		_resource.Add();
+		data.pinned[count].unlock();
 		printf("Resource finished loading. GUID: %llu\n", guid.data);
 		
 	}
@@ -110,11 +115,13 @@ const SM_GUID ResourceManager::LoadResource(SM_GUID guid, const Resource::Flag& 
 
 		//Unlock the loading queue so we don't cause a deadlock
 		_mutexLockLoadingQueue.unlock();
+
+		_resource.Add();
 	}
 
 	//Unlock the general lock and return the function with the GUID.
-	_resource.count++;
-	_mutexLockGeneral.unlock();
+	
+	//_mutexLockGeneral.unlock();
 	return guid;
 }
 
@@ -125,10 +132,10 @@ void ResourceManager::UnloadResource(SM_GUID guid)
 
 	if (found != Resource::NotFound)
 	{
-		_mutexLockGeneral.lock();
+		_resource.data.pinned[found].lock();
 		auto& refCount = _resource.data.refCount[found];
 		refCount = (refCount > 0) ? refCount-1 : 0;
-		_mutexLockGeneral.unlock();
+		_resource.data.pinned[found].unlock();
 		printf("Unreferencing resource. GUID: %llu. RefCount: %d\n", guid.data, refCount);
 		
 	}
@@ -185,8 +192,9 @@ bool ResourceManager::IsLoaded(SM_GUID guid)
 	auto find = _resource.Find(guid);
 	if (find != Resource::NotFound)
 	{
-		bool ret = !_resource.data.pinned[find];
-	//	_mutexLockGeneral.unlock();
+		bool ret = _resource.data.pinned[find].try_lock();
+		if(ret)
+			_resource.data.pinned[_resource.count].unlock();
 		return ret;
 	}
 	//_mutexLockGeneral.unlock();
@@ -512,7 +520,7 @@ void ResourceManager::_ParserThread(uint16_t threadID)
 			
 			_parser.ParseResource(_resource.MakePtr(job));
 			
-			data.pinned[job] = false;
+			data.pinned[job].unlock();
 
 			//The resource is now loaded and marked as such, the used is notified.
 			printf("Finished parsing resource. GUID: %llu\n", guid.data);

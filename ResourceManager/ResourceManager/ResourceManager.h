@@ -86,13 +86,12 @@ private:
 				auto& data = rm->_resource.data;
 				for (uint32_t i = 0; i < count; i++)
 				{
-					if (!data.pinned[i] && data.refCount[i] == 0 && data.numBlocks[i] >= sizeOfLoadRequest)
+					bool pinned = data.pinned[i].try_lock();
+					if (pinned && data.refCount[i] == 0 && data.numBlocks[i] >= sizeOfLoadRequest)
 					{
-						data.pinned[i] = true;
-						rm->_mutexLockGeneral.lock();
+						rm->_resource.Modify();
 						rm->_allocator->Free(data.startBlock[i], data.numBlocks[i]);
-						rm->_resource.Remove(i);
-						rm->_mutexLockGeneral.unlock();
+						rm->_resource.Remove(i);		
 						return true;
 					}
 				}

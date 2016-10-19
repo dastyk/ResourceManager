@@ -17,12 +17,11 @@ void Resource::Remove(const uint32_t index)
 	uint32_t last = count - 1;
 	if (last == index)
 	{
-		count--;
+		data.pinned[last].~mutex();
+		Remove();
 		return;
 	}
-	data.pinned[index] = true;
-	while (data.pinned[last]);
-	data.pinned[last] = true;
+	data.pinned[last].lock();
 
 	data.guid[index] = data.guid[last];
 	data.flags[index] = data.flags[last];
@@ -33,13 +32,15 @@ void Resource::Remove(const uint32_t index)
 	data.size[index] = data.size[last];
 	data.startBlock[index] = data.startBlock[last];
 	data.numBlocks[index] = data.numBlocks[last];
-	data.pinned[index] = false;
-	count--;
+	data.pinned[last].~mutex();
+	data.pinned[index].unlock();
+	Remove();
 
 }
 
 void Resource::Allocate(uint32_t numResources)
 {
+	modifyLock.lock();
 	if (numResources <= limit)
 	{
 		throw std::runtime_error("Can shrink the resource chunk.");
@@ -48,7 +49,7 @@ void Resource::Allocate(uint32_t numResources)
 	void* newC = (char*)MemoryManager::Alloc(Resource::Size*numResources);
 	Resource::DataPointers newData;
 
-	newData.pinned = (bool*)newC;
+	newData.pinned = (std::mutex*)newC;
 	newData.guid = (SM_GUID*)(newData.pinned + numResources);
 	newData.flags = (Resource::Flag*)(newData.guid + numResources);
 	newData.refCount = (uint16_t*)(newData.flags + numResources);
@@ -59,7 +60,7 @@ void Resource::Allocate(uint32_t numResources)
 	newData.startBlock = (uint32_t*)(newData.size + numResources);
 	newData.numBlocks = (uint32_t*)(newData.startBlock + numResources);
 
-	memcpy(newData.pinned, data.pinned, count * sizeof(bool));
+	memcpy(newData.pinned, data.pinned, count * sizeof(std::mutex));
 	memcpy(newData.guid, data.guid, count * sizeof(SM_GUID));
 	memcpy(newData.flags, data.flags, count * sizeof(Resource::Flag));
 	memcpy(newData.refCount, data.refCount, count * sizeof(uint16_t));
@@ -70,13 +71,23 @@ void Resource::Allocate(uint32_t numResources)
 	memcpy(newData.startBlock, data.startBlock, count * sizeof(uint32_t));
 	memcpy(newData.numBlocks, data.numBlocks, count * sizeof(uint32_t));
 
+	//for (uint32_t i = 0; i < count; i++)
+	//{
+	//	data.pinned[i].~mutex();
+	//}
+
 	limit = numResources;
 	MemoryManager::Release(buffer);
 	buffer = newC;
 	data = newData;
+	modifyLock.unlock();
 }
 
 void Resource::UnAllocte()
 {
+	for (uint32_t i = 0; i < count; i++)
+	{
+		data.pinned[i].~mutex();
+	}
 	MemoryManager::Release(buffer);
 }
