@@ -53,6 +53,7 @@ const SM_GUID ResourceManager::LoadResource(SM_GUID guid, const Resource::Flag& 
 	uint32_t count = _resource.count;
 	new(&data.pinned[count]) std::mutex();
 	data.pinned[count].lock();
+	data.loaded[count] = false;
 	data.flags[count] = flag;
 	data.guid[count] = guid;
 	data.refCount[count] = 1;
@@ -99,7 +100,7 @@ const SM_GUID ResourceManager::LoadResource(SM_GUID guid, const Resource::Flag& 
 
 		_parser.ParseResource(_resource.MakePtr(count));
 
-		
+		data.loaded[count] = true;
 		printf("Resource finished loading. GUID: %llu\n", guid.data);
 		
 	}
