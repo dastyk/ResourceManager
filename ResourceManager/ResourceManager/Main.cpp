@@ -16,8 +16,8 @@
 #include "DarferLoader.h"
 #include "Scene.h"
 
-void ArfParser(Resource& r);
-void Objarser(Resource& r);
+void ArfParser(const Resource::Ptr& resource);
+void Objarser(const Resource::Ptr& resource);
 
 
 
@@ -61,14 +61,16 @@ int main(int argc, char** argv)
 	MemoryManager::CreateInstance();
 	MemoryManager::GetInstance()->Init(512U * 1024U * 1024U);
 	ResourceManager& r = ResourceManager::Instance(); // Kickstart at our will
-	r.Init(12U * 1024U * 1024U);
+	r.Init(125U * 1024U * 1024U);
 	r.SetEvictPolicy(ResourceManager::EvictPolicies::FirstFit);
 	r.SetAssetLoader(new ZipLoader("data.dat"));
 
 	r.AddParser("jpg",
-		[](Resource& r)
+		[](const Resource::Ptr& resource)
 	{
-		Core::GetInstance()->GetGraphics()->CreateShaderResource(r);
+		auto g = Core::GetInstance()->GetGraphics();
+		g->CreateShaderResource(resource.guid, resource.data, resource.size);
+		resource.RegisterObserver(g);
 	});
 
 	r.AddParser("arf", ArfParser);
@@ -89,31 +91,66 @@ int main(int argc, char** argv)
 	//ResourceManager::Instance().LoadResource("gold.jpg", Resource::Flag::LOAD_AND_WAIT);
 	// For some reason if you removed the line above this comment, the LOD textures all turn black.
 
-	
+	//ResourceManager::Instance().LoadResource("Sphere0.arf", Resource::Flag::LOAD_AND_WAIT);
 
 
-	GameObject gg;
-	gg.AddLODMesh("Sphere0.arf");
-	gg.AddLODMesh("Sphere1.arf");
-	gg.AddLODMesh("Sphere2.arf");
-	gg.AddLODMesh("Sphere3.arf");
-	gg.AddLODMesh("Sphere4.arf");
-	gg.AddLODMesh("Sphere5.arf");
 
-	gg.AddLODTexture("b0.jpg");
-	gg.AddLODTexture("b1.jpg");
-	gg.AddLODTexture("b2.jpg");
-	gg.AddLODTexture("b3.jpg");
-	gg.AddLODTexture("b4.jpg");
-	gg.AddLODTexture("b5.jpg");
+	GameObject sphereObject;
+	sphereObject.AddLODMesh("Sphere0.arf");
+	sphereObject.AddLODMesh("Sphere1.arf");
+	sphereObject.AddLODMesh("Sphere2.arf");
+	sphereObject.AddLODMesh("Sphere3.arf");
+	sphereObject.AddLODMesh("Sphere4.arf");
+	sphereObject.AddLODMesh("Sphere5.arf");
 
-	DirectX::XMStoreFloat4x4(&gg.transform, DirectX::XMMatrixScaling(0.6,0.6,0.6) * DirectX::XMMatrixTranslation(0.0f, 0.0f, 10.0f));
-	gg.pos = DirectX::XMFLOAT3(0.0f, 0.0f, 10.0f);
-	gg.scale = 0.6f;
-	gg.radius = 0.8f;
+	sphereObject.AddLODTexture("b0.jpg");
+	sphereObject.AddLODTexture("b1.jpg");
+	sphereObject.AddLODTexture("b2.jpg");
+	sphereObject.AddLODTexture("b3.jpg");
+	sphereObject.AddLODTexture("b4.jpg");
+	sphereObject.AddLODTexture("b5.jpg");
+
+	DirectX::XMStoreFloat4x4(&sphereObject.transform, DirectX::XMMatrixScaling(0.6,0.6,0.6) * DirectX::XMMatrixTranslation(0.0f, 0.0f, 10.0f));
+	sphereObject.pos = DirectX::XMFLOAT3(0.0f, 0.0f, 10.0f);
+	sphereObject.scale = 0.6f;
+	sphereObject.radius = 0.8f;
 
 	Scene testScene;
-	testScene.AddGameObject(gg);
+	testScene.AddGameObject(sphereObject);
+
+	GameObject bunnyObject;
+	bunnyObject.AddLODMesh("Bunny0.arf");
+	bunnyObject.AddLODMesh("Bunny1.arf");
+	bunnyObject.AddLODMesh("Bunny2.arf");
+	bunnyObject.AddLODMesh("Bunny3.arf");
+
+	bunnyObject.AddLODTexture("b0.jpg");
+	bunnyObject.AddLODTexture("b1.jpg");
+	bunnyObject.AddLODTexture("b2.jpg");
+
+	DirectX::XMStoreFloat4x4(&bunnyObject.transform, DirectX::XMMatrixScaling(10, 10, 10) * DirectX::XMMatrixRotationY(DirectX::XM_PI)* DirectX::XMMatrixTranslation(-10.0f, 0.0f, 10.0f));
+	bunnyObject.pos = DirectX::XMFLOAT3(-10.0f, 0.0f, 10.0f);
+	bunnyObject.scale = 10.0f;
+	bunnyObject.radius = 0.3f;
+
+	testScene.AddGameObject(bunnyObject);
+
+
+	GameObject dragonObject;
+	dragonObject.AddLODMesh("Dragon0.arf");
+	dragonObject.AddLODMesh("Dragon1.arf");
+	dragonObject.AddLODMesh("Dragon2.arf");
+
+	dragonObject.AddLODTexture("b0.jpg");
+	dragonObject.AddLODTexture("b1.jpg");
+	dragonObject.AddLODTexture("b2.jpg");
+
+	DirectX::XMStoreFloat4x4(&dragonObject.transform, DirectX::XMMatrixScaling(0.3, 0.3, 0.3) * DirectX::XMMatrixTranslation(10.0f, 0.0f, 10.0f));
+	dragonObject.pos = DirectX::XMFLOAT3(10.0f, 00.0f, 10.0f);
+	dragonObject.scale = 0.25f;
+	dragonObject.radius = 0.3f;
+
+	testScene.AddGameObject(dragonObject);
 
 	printf("<----||Starting Game loop||---->\n\n");
 	InputManager* input = core->GetInputManager();
@@ -147,13 +184,13 @@ int main(int argc, char** argv)
 		
 		if (input->WasKeyPressed(SDLK_1))
 		{
-			gg.pos = DirectX::XMFLOAT3(rand()%20 -10, rand() % 20 - 10, rand() % 20 - 10);
-			gg.scale = rand()%8 / 10 + 0.2f;
-			gg.radius = rand() % 8 / 10 + 0.2f;
+			sphereObject.pos = DirectX::XMFLOAT3(rand()%20 -10, rand() % 20 - 10, rand() % 20 - 10);
+			sphereObject.scale = rand()%8 / 10 + 0.2f;
+			sphereObject.radius = rand() % 8 / 10 + 0.2f;
 
-			DirectX::XMStoreFloat4x4(&gg.transform, DirectX::XMMatrixScaling(gg.scale, gg.scale, gg.scale) * DirectX::XMMatrixTranslationFromVector(DirectX::XMLoadFloat3(&gg.pos)));
+			DirectX::XMStoreFloat4x4(&sphereObject.transform, DirectX::XMMatrixScaling(sphereObject.scale, sphereObject.scale, sphereObject.scale) * DirectX::XMMatrixTranslationFromVector(DirectX::XMLoadFloat3(&sphereObject.pos)));
 			
-			testScene.AddGameObject(gg);
+			testScene.AddGameObject(sphereObject);
 		}
 
 		testScene.Update(core->GetCameraManager()->GetActiveCamera().position);
@@ -196,11 +233,10 @@ int main(int argc, char** argv)
 }
 
 
-void ArfParser(Resource& r)
+void ArfParser(const Resource::Ptr& resource)
 {
 	// Setup pointers
-	RawData rdata = r.GetData();
-	ArfData::Data* data = (ArfData::Data*)rdata.data;
+	ArfData::Data* data = (ArfData::Data*)resource.data;
 	ArfData::DataPointers _datap;
 	void* pdata = (void*)((size_t)data + sizeof(ArfData::Data));
 	_datap.positions = (ArfData::Position*)((size_t)pdata + data->PosStart);
@@ -241,19 +277,21 @@ void ArfParser(Resource& r)
 		indices[i] = i;
 	}
 
-	Core::GetInstance()->GetGraphics()->CreateMeshBuffers(r, vertices, numVertices, indices, indexCount);
-
+	auto g = Core::GetInstance()->GetGraphics();
+	g->CreateMeshBuffers(resource.guid, vertices, numVertices, indices, indexCount);
+	resource.RegisterObserver(g);
 	delete[] vertices;
 	delete[] indices;
 }
 
-void Objarser(Resource& r)
+void Objarser(const Resource::Ptr& resource)
 {
 	MeshData::MeshData pdata;
-	RawData rdata = r.GetData();
-	ParseObj(rdata.data, pdata);
+	ParseObj(resource.data, pdata);
 
-	Core::GetInstance()->GetGraphics()->CreateMeshBuffers(r, pdata.vertices, pdata.NumVertices, pdata.Indices, pdata.IndexCount);
+	auto g = Core::GetInstance()->GetGraphics();
+	g->CreateMeshBuffers(resource.guid, pdata.vertices, pdata.NumVertices, pdata.Indices, pdata.IndexCount);
+	resource.RegisterObserver(g);
 
 	delete[] pdata.vertices;
 	delete[] pdata.Indices;

@@ -81,7 +81,7 @@ RawData DarferLoader::LoadResource(SM_GUID guid, std::function<char*(uint32_t da
 	{
 		throw std::runtime_error("Chunky Pool Allocator out of memory.");
 	}	
-	drfFile.read(data.data, data.size);
+	drfFile.read((char*)data.data, data.size);
 
 	auto find2 = _fileTypes.find(find->second.extHash);
 	if (find2 == _fileTypes.end())

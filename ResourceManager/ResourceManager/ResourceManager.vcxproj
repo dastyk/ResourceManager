@@ -151,6 +151,7 @@
     <ClCompile Include="flexbison\parser.tab.cpp" />
     <ClCompile Include="IGraphics.cpp" />
     <ClCompile Include="InputManager.cpp" />
+    <ClCompile Include="Resource.cpp" />
     <ClCompile Include="Scene.cpp" />
     <ClCompile Include="stdafx.cpp" />
     <ClCompile Include="TestMain.cpp" />

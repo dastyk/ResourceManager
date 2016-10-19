@@ -10,7 +10,7 @@ using System.Windows.Forms;
 using System.IO;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.IO.Compression;
-
+using System.Runtime.InteropServices;
 
 
 
@@ -1134,6 +1134,75 @@ namespace Arfer
                     }
                 }
             }
+        }
+
+        private struct RawData
+        {
+            public UInt64 size;
+            public byte[] data;
+        }
+
+        private struct CompressedData
+        {
+            public UInt64 sizeComp;
+            public UInt64 sizeUnComp;
+            public IntPtr data;
+        }
+        [DllImport("LZ77Compression.dll")]
+        private static extern void CompressLz77([In, MarshalAs(UnmanagedType.LPArray)] byte[] rdata,
+            UInt64 size, ref UInt64 sizeCompressed, ref UInt64 sizeUncompressed, ref IntPtr cdata);
+        [DllImport("LZ77Compression.dll")]
+        private static extern void UncompressLz77(
+            ref IntPtr rdata, ref UInt64 size, UInt64 sizeCompressed, UInt64 sizeUncompressed, 
+            [In, MarshalAs(UnmanagedType.LPArray)] byte[] cdata);
+
+        private void toolStripButton1_Click(object sender, EventArgs e)
+        {
+            FileInfo info = new FileInfo("bunny.obj");
+        
+            using (BinaryReader file = new BinaryReader(File.Open("bunny.obj", FileMode.Open)))
+            {
+                RawData data = new RawData();
+                data.size = Convert.ToUInt64(info.Length);
+                data.data = file.ReadBytes(Convert.ToInt32(data.size));
+
+                CompressedData cdata = new CompressedData();
+                CompressLz77(data.data, data.size, ref cdata.sizeComp, ref cdata.sizeUnComp, ref cdata.data);
+                using (BinaryWriter writer = new BinaryWriter(File.Open("comp.asd", FileMode.OpenOrCreate)))
+                {
+                    writer.Write(cdata.sizeComp);
+                    writer.Write(cdata.sizeUnComp);
+                    byte[] myArray = new byte[Convert.ToInt32(cdata.sizeComp)];
+                    Marshal.Copy(cdata.data, myArray, 0, Convert.ToInt32(cdata.sizeComp));
+                    writer.Write(myArray, 0, Convert.ToInt32(cdata.sizeComp));                                
+                }
+
+                using (BinaryReader reader = new BinaryReader(File.Open("comp.asd", FileMode.Open)))
+                {
+                    CompressedData cdata2 = new CompressedData();
+                    RawData data2 = new RawData();
+                    cdata2.sizeComp = reader.ReadUInt64();
+                    cdata2.sizeUnComp = reader.ReadUInt64();
+                    data2.data = reader.ReadBytes(Convert.ToInt32(cdata2.sizeComp));
+
+
+                    UncompressLz77(ref cdata2.data, ref data2.size, cdata2.sizeComp, cdata2.sizeUnComp, data2.data);
+                    byte[] myArray2 = new byte[Convert.ToInt32(data2.size)];
+                    Marshal.Copy(cdata2.data, myArray2, 0, Convert.ToInt32(data2.size));
+                    char[] st = System.Text.Encoding.UTF8.GetString(myArray2).ToCharArray();
+                    int o = myArray2.Length;
+                    for (int i = 0; i < data.data.Length; i++)
+                    {
+                        if (data.data[i] != myArray2[i])
+                        {
+                            int asd = 0;
+                        }
+                    }
+
+                }
+            }
+           
+
         }
     }
 

@@ -2,19 +2,21 @@
 #define _ASSET_PARSER_H_
 
 #pragma once
-#include "Resource.h"
+
 #include <functional>
 #include <map>
 #include "Types.h"
+#include "Resource.h"
+
 class AssetParser
 {
-	std::map<uint32_t, std::function<void(Resource & r)>> _parsers;
+	std::map<uint8_t, std::function<void(const Resource::Ptr& resourcePtr)>> _parsers;
 public:
 	AssetParser();
 	~AssetParser();
 
-	void AddParser(uint32_t type,const std::function<void(Resource & r)>& parseFunction);
-	void ParseResource(Resource& r)const;
+	void AddParser(uint8_t type,const std::function<void(const Resource::Ptr& resourcePtr)>& parseFunction);
+	void ParseResource(const Resource::Ptr& resourcePtr)const;
 };
 
 #endif

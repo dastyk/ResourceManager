@@ -338,42 +338,35 @@ void Direct3D11::Draw()
 }
 
 
-void Direct3D11::CreateMeshBuffers(Resource& r, MeshData::Vertex* vertices, uint32_t numVertices, uint32_t* indices, uint32_t indexCount)
+void Direct3D11::CreateMeshBuffers(const SM_GUID& guid, MeshData::Vertex* vertices, uint32_t numVertices, uint32_t* indices, uint32_t indexCount)
 {
-	uint64_t guid = r.GetGUID().data;
 	_bufferLock.lock();
-	auto& got = _vertexBuffers.find(guid);
+	auto& got = _vertexBuffers.find(guid.data);
 	if (got == _vertexBuffers.end())
 	{
 		
 		_vertexBuffers[guid] = BufferInfo(_CreateVertexBuffer(vertices, numVertices), numVertices);
 		_indexBuffers[guid] = BufferInfo(_CreateIndexBuffer(indices, indexCount), indexCount);
-		r.registerObserver(this);
-	
 	}
 	else
 	{
-		DebugLogger::GetInstance()->AddMsg("Tried to create mesh buffers for the same resource while it already existed, GUID: " + guid);
+		DebugLogger::GetInstance()->AddMsg("Tried to create mesh buffers for the same resource while it already existed, GUID: " + guid.data);
 	}
 	_bufferLock.unlock();
 }
 
-void Direct3D11::CreateShaderResource(Resource& resource)
+void Direct3D11::CreateShaderResource(const SM_GUID& guid, const void* data, uint32_t size)
 {
 	_textureLock.lock();
 	CoInitializeEx(NULL, COINIT_MULTITHREADED);
-	auto& got = _textures.find(resource.GetGUID().data);
+	auto& got = _textures.find(guid.data);
 	if (got == _textures.end())
 	{
-		
-		RawData td = resource.GetData();
-		_textures[resource.GetGUID().data] = _CreateWICTexture(td.data, td.size);
-		resource.registerObserver(this);
-		
+		_textures[guid.data] = _CreateWICTexture(data, size);
 	}
 	else
 	{
-		DebugLogger::GetInstance()->AddMsg("Tried to create shader resource view while it already existed, GUID: " + resource.GetGUID().data);
+		DebugLogger::GetInstance()->AddMsg("Tried to create shader resource view while it already existed, GUID: " + guid.data);
 	}
 	_textureLock.unlock();
 }

@@ -246,13 +246,16 @@ void MemoryManager::ReleaseStackAllocator(StackAllocator * object)
 
 void MemoryManager::Release(void * p)
 {
-	_instance->_mutexLock.lock();
-	void* a = (void*)((size_t)p - sizeof(uint32_t));
-	uint32_t size = *(uint32_t*)a;
-	_instance->_Free(a, size);
-	_instance->_remainingMemory += _instance->_allocatedBlocks[a];
-	_instance->_allocatedBlocks.erase(a);
-	_instance->_mutexLock.unlock();
+	if(p)
+	{
+		_instance->_mutexLock.lock();
+		void* a = (void*)((size_t)p - sizeof(uint32_t));
+		uint32_t size = *(uint32_t*)a;
+		_instance->_Free(a, size);
+		_instance->_remainingMemory += _instance->_allocatedBlocks[a];
+		_instance->_allocatedBlocks.erase(a);
+		_instance->_mutexLock.unlock();
+	}
 }
 
 void MemoryManager::PrintBlockInfo()
