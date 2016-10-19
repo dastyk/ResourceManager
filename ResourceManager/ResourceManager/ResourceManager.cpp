@@ -42,6 +42,10 @@ const SM_GUID ResourceManager::LoadResource(SM_GUID guid, const Resource::Flag& 
 		//_UpdatePriority(guid, flag);
 		_resource.data.pinned[find].lock();
 		_resource.data.refCount[find]++;
+		if(!_resource.data.loaded[find])
+		{
+
+		}
 		_resource.data.pinned[find].unlock();
 		//_mutexLockGeneral.unlock();
 		return guid;
@@ -445,6 +449,8 @@ void ResourceManager::_LoadingThread(uint16_t threadID)
 				_mutexLockParserQueue.lock();
 				_parserQueue.push(job);
 				_mutexLockParserQueue.unlock();
+
+				data.pinned[job].unlock();
 			}
 			catch (std::runtime_error& e)
 			{
@@ -460,6 +466,7 @@ void ResourceManager::_LoadingThread(uint16_t threadID)
 				}
 				else
 				{
+					_resource.Modify();
 					_resource.Remove(job);
 					printf("\tCould not find a resource to evict.\n\n");
 				}
@@ -468,7 +475,7 @@ void ResourceManager::_LoadingThread(uint16_t threadID)
 				_mutexLockLoader.unlock();
 			}
 			
-			data.pinned[job].unlock();
+		
 		}
 		else
 			_mutexLockLoadingQueue.unlock();

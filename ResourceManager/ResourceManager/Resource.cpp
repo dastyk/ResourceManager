@@ -17,7 +17,8 @@ void Resource::Remove(const uint32_t index)
 	uint32_t last = count - 1;
 	if (last == index)
 	{
-		data.pinned[last].~mutex();
+		data.pinned[index].unlock();
+		data.pinned[index].~mutex();
 		Remove();
 		return;
 	}
@@ -34,7 +35,7 @@ void Resource::Remove(const uint32_t index)
 	data.numBlocks[index] = data.numBlocks[last];
 	data.pinned[last].unlock();
 	data.pinned[last].~mutex();
-	
+	data.pinned[index].unlock();
 	Remove();
 
 }
