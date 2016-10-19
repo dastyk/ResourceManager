@@ -43,7 +43,7 @@ const SM_GUID ResourceManager::LoadResource(SM_GUID guid, const Resource::Flag& 
 		_resource.data.pinned[find].lock();
 		_resource.data.refCount[find]++;
 		_resource.data.pinned[find].unlock();
-		_mutexLockGeneral.unlock();
+		//_mutexLockGeneral.unlock();
 		return guid;
 	}
 	
