@@ -10,13 +10,13 @@
 
 class AssetParser
 {
-	std::map<uint8_t, std::function<void(Resource::Ptr& resourcePtr)>> _parsers;
+	std::map<uint8_t, std::function<void(const Resource::Ptr& resourcePtr)>> _parsers;
 public:
 	AssetParser();
 	~AssetParser();
 
-	void AddParser(uint8_t type,const std::function<void(Resource::Ptr& resourcePtr)>& parseFunction);
-	void ParseResource(Resource::Ptr& resourcePtr)const;
+	void AddParser(uint8_t type,const std::function<void(const Resource::Ptr& resourcePtr)>& parseFunction);
+	void ParseResource(const Resource::Ptr& resourcePtr)const;
 };
 
 #endif

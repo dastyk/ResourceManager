@@ -11,12 +11,12 @@ AssetParser::~AssetParser()
 {
 }
 
-void AssetParser::AddParser(uint8_t type,const std::function<void(Resource::Ptr& resourcePtr)>& parseFunction)
+void AssetParser::AddParser(uint8_t type,const std::function<void(const Resource::Ptr& resourcePtr)>& parseFunction)
 {
 	_parsers[type] = std::move(parseFunction);
 }
 
-void AssetParser::ParseResource(Resource::Ptr& resourcePtr) const
+void AssetParser::ParseResource(const Resource::Ptr& resourcePtr) const
 {
 	auto& find = _parsers.find(resourcePtr.type);
 	if (find != _parsers.end())

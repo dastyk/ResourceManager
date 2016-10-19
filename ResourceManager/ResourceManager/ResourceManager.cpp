@@ -194,15 +194,8 @@ bool ResourceManager::IsLoaded(SM_GUID guid)
 	//_mutexLockGeneral.lock();
 	auto find = _resource.Find(guid);
 	if (find != Resource::NotFound)
-	{
-		bool ret = _resource.data.pinned[find].try_lock();
-		if (ret)
-		{
-			ret = _resource.data.loaded[find];
-			_resource.data.pinned[find].unlock();
-		}
-			
-		return ret;
+	{	
+		return _resource.data.loaded[find];
 	}
 	//_mutexLockGeneral.unlock();
 	return false;
@@ -284,12 +277,28 @@ void ResourceManager::Startup()
 }
 
 
+const Resource::Ptr ResourceManager::GetResource(const SM_GUID & guid)
+{
+	uint32_t find = _resource.Find(guid);
+	if (find != Resource::NotFound)
+	{
+		return _resource.MakePtr(find);
+	}
+
+	throw std::runtime_error("Tried to get a non-existing resource. GUID: " + std::to_string(guid.data));
+}
+
+void ResourceManager::ReturnResource(const Resource::Ptr & resource)
+{
+	_resource.DestroyPtr(resource);
+}
+
 void ResourceManager::SetAssetLoader(IAssetLoader * loader)
 {
 	_assetLoader = loader;
 }
 
-void ResourceManager::AddParser(const std::string& fileend, const std::function<void(Resource::Ptr& resource)>& parseFunction)
+void ResourceManager::AddParser(const std::string& fileend, const std::function<void(const Resource::Ptr& resource)>& parseFunction)
 {
 	uint32_t type = std::hash<std::string>{} (fileend);
 	uint8_t index = _assetLoader->AddType(type);
@@ -556,15 +565,15 @@ void ResourceManager::_ParserThread(uint16_t threadID)
 			_mutexLockParserQueue.unlock();
 
 			auto& data = _resource.data;
-			data.pinned[job].lock();
+			const Resource::Ptr& resource = _resource.MakePtr(job);
 			SM_GUID guid = data.guid[job];
 
 			//Mark it as parsed, notify the user and start parsing it.
 			printf("Starting parsing resource. GUID: %llu\n", guid.data);
 			
-			_parser.ParseResource(_resource.MakePtr(job));
+			_parser.ParseResource(resource);
 			data.loaded[job] = true;
-			data.pinned[job].unlock();
+			_resource.DestroyPtr(resource);
 
 			//The resource is now loaded and marked as such, the used is notified.
 			printf("Finished parsing resource. GUID: %llu\n", guid.data);

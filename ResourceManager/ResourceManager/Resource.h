@@ -16,7 +16,7 @@ public:
 		friend Resource;
 		//friend ResourceManager;
 	private:
-		Ptr(uint32_t index,const SM_GUID& guid, const void*& data, const  uint8_t& type, const  uint32_t& size, Observer*& observerPtr) : index(index), guid(guid), data(data), type(type), size(size), _observerPtr(observerPtr)
+		Ptr(uint32_t index,const SM_GUID& guid, const void*& data, const  uint8_t& type, const  uint32_t& size, Observer** observerPtr) : index(index), guid(guid), data(data), type(type), size(size), _observerPtr(observerPtr)
 		{
 
 		}
@@ -29,13 +29,13 @@ public:
 		const void*& data;
 		const uint8_t& type;
 		const uint32_t& size;
-		void RegisterObserver(Observer* observer)
+		void RegisterObserver(Observer* observer) const
 		{
-			_observerPtr = observer;
+			*_observerPtr = observer;
 		}
 	private:
 		const uint32_t index;
-		Observer*& _observerPtr;
+		Observer** _observerPtr;
 	};
 
 	CreateFlag(Flag, uint32_t, 4,
@@ -87,7 +87,12 @@ private:
 	}
 	Ptr MakePtr(uint32_t index)
 	{
-		return Ptr(index,(const SM_GUID&) data.guid[index], (const void*&)data.rawData[index], (const uint8_t&)data.type[index], (const uint32_t&)data.size[index], data.observer[index]); 
+		data.pinned[index].lock();
+		return Ptr(index,(const SM_GUID&) data.guid[index], (const void*&)data.rawData[index], (const uint8_t&)data.type[index], (const uint32_t&)data.size[index], &data.observer[index]); 
+	}
+	void DestroyPtr(const Ptr& resource)
+	{
+		data.pinned[resource.index].unlock();
 	}
 	std::mutex modifyLock;
 	uint32_t limit = 0;

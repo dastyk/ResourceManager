@@ -34,9 +34,12 @@ public:
 
 	uint32_t FreeMemory(void) const { return _allocator->FreeMemory() + ((_resource.limit - _resource.count)*Resource::Size); }
 	uint32_t MaxMemory(void) const { return _allocator->MaxMemory() + _resource.limit*Resource::Size; }
+	const Resource::Ptr GetResource(const SM_GUID& guid);
+	void ReturnResource(const Resource::Ptr& resource);
+
 
 	void SetAssetLoader(IAssetLoader* loader);
-	void AddParser(const std::string& fileend,const std::function<void(Resource::Ptr& resource)>& parseFunction);
+	void AddParser(const std::string& fileend,const std::function<void(const Resource::Ptr& resource)>& parseFunction);
 	void SetEvictPolicy(const std::function<bool(uint32_t sizeOfLoadRequest, ResourceManager* rm)>& evictPolicy);
 	void Init(uint64_t maxMemory);
 	void ShutDown();

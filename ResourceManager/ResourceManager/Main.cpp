@@ -16,8 +16,8 @@
 #include "DarferLoader.h"
 #include "Scene.h"
 
-void ArfParser(Resource::Ptr& resource);
-void Objarser(Resource::Ptr& resource);
+void ArfParser(const Resource::Ptr& resource);
+void Objarser(const Resource::Ptr& resource);
 
 
 
@@ -66,7 +66,7 @@ int main(int argc, char** argv)
 	r.SetAssetLoader(new ZipLoader("data.dat"));
 
 	r.AddParser("jpg",
-		[](Resource::Ptr& resource)
+		[](const Resource::Ptr& resource)
 	{
 		auto g = Core::GetInstance()->GetGraphics();
 		g->CreateShaderResource(resource.guid, resource.data, resource.size);
@@ -198,7 +198,7 @@ int main(int argc, char** argv)
 }
 
 
-void ArfParser(Resource::Ptr& resource)
+void ArfParser(const Resource::Ptr& resource)
 {
 	// Setup pointers
 	ArfData::Data* data = (ArfData::Data*)resource.data;
@@ -249,7 +249,7 @@ void ArfParser(Resource::Ptr& resource)
 	delete[] indices;
 }
 
-void Objarser(Resource::Ptr& resource)
+void Objarser(const Resource::Ptr& resource)
 {
 	MeshData::MeshData pdata;
 	ParseObj(resource.data, pdata);
