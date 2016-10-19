@@ -148,7 +148,10 @@ private:
 		uint32_t numBlocks = rm->resource._numBlocks;
 		rm->~ResourceList();
 
-		_allocator->Free(startBlock, numBlocks);
+		if (numBlocks)
+		{
+			_allocator->Free(startBlock, numBlocks);
+		}
 		_resourcePool->Free(rm);
 	}
 	void _RemoveResourceNoDelete(ResourceList* rm, ResourceList*& start)
@@ -337,6 +340,8 @@ private:
 	std::mutex _mutexLockParser;
 	std::mutex _mutexLockLoadingQueue;
 	std::mutex _mutexLockParserQueue;
+
+	std::list<std::pair<uint32_t, uint32_t>> _defragList;
 };
 
 #endif

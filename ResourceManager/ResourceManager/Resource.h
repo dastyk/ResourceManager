@@ -107,6 +107,8 @@ public:
 		_SetDataLock.unlock();
 		return returnd;
 	};
+	uint32_t GetAllocSlot(void) const { return _startBlock; }
+	uint32_t GetNumBlocks(void) const { return _numBlocks; }
 	void SetState(ResourceState state)
 	{
 		_StateLock.lock();

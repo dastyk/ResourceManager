@@ -3,7 +3,7 @@
 
 #include <stdint.h>
 #include <mutex>
-#include <vector>
+#include <list>
 
 class ChunkyAllocator
 {
@@ -13,7 +13,7 @@ public:
 
 	int32_t Allocate(uint32_t blocks);
 	void Free(int32_t firstBlock, uint32_t numBlocks);
-	bool Defrag(std::vector<std::pair<uint32_t, uint32_t>>& allocs);
+	int32_t Defrag(std::list<std::pair<uint32_t, uint32_t>>& allocs);
 
 	static uint32_t BlockSize(void) { return _blockSize; }
 	char* Data(uint32_t block) { return  _pool + block * _blockSize; }

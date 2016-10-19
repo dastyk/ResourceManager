@@ -236,6 +236,30 @@ void ResourceManager::TestAlloc( void )
 	//slot = _allocator->Allocate(3);
 	//memset(_allocator->Data(slot), 0, _allocator->BlockSize() * 3);
 	//_allocator->PrintOccupancy();
+
+	//int32_t slot = _allocator->Allocate(20);
+	//memset(_allocator->Data(slot), 0, _allocator->BlockSize() * 20);
+	//_allocator->PrintOccupancy();
+
+	//_allocator->Free(1, 2);
+	//_allocator->Free(5, 1);
+	//_allocator->Free(13, 4);
+
+	//list<pair<uint32_t, uint32_t>> defrags;
+
+	//printf("Before defragmenting 3 blocks at index 3:\n");
+	//_allocator->PrintOccupancy();
+
+	//defrags.push_back({ 4, 1 });
+	//_allocator->Defrag(defrags);
+
+	//printf("After defragmenting:\n");
+	//_allocator->PrintOccupancy();
+
+	//_allocator->Allocate(3);
+	//_allocator->PrintOccupancy();
+
+	//int hej = 0;
 }
 
 void ResourceManager::Startup()
@@ -457,7 +481,44 @@ void ResourceManager::_LoadingThread(uint16_t threadID)
 
 		}
 		else
+		{
 			_mutexLockLoadingQueue.unlock();
+
+			_mutexLockGeneral.lock();
+
+			_defragList.clear();
+
+			// Find all resources with flag 'Loaded' and add them to a list of
+			// allocations that are allowed to be defragmented
+			ResourceList* walker = _resources;
+			while (walker)
+			{
+				if (walker->resource.GetState() == Resource::ResourceState::Loaded)
+				{
+					_defragList.push_back({ walker->resource.GetAllocSlot(), walker->resource.GetNumBlocks() });
+				}
+
+				walker = walker->next;
+			}
+
+			int32_t changedIndex = _allocator->Defrag(_defragList);
+			if (changedIndex >= 0)
+			{
+				// Find the walker that corresponds to moved allocation
+				walker = _resources;
+				for (int32_t i = 0; i < changedIndex; ++i)
+				{
+					walker = walker->next;
+				}
+
+				// Update resource with new data
+				auto it = _defragList.begin();
+				advance(it, changedIndex);
+				walker->resource.SetData(walker->resource.GetData(), it->first, it->second);
+			}
+
+			_mutexLockGeneral.unlock();
+		}
 	
 		std::this_thread::sleep_for(std::chrono::milliseconds(17));
 	}
