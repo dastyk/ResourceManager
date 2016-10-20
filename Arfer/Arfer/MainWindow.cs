@@ -51,7 +51,11 @@ namespace Arfer
             if (node.Tag != null)
             {
                 TreeData data = (TreeData)node.Tag;
-                nodeComp.Text = "Compressed: " + ((data.compressed) ? "Yes" : "No");
+                nodeComp.Text = "Compressed: ";
+                if (data.compressed == 1)
+                    nodeComp.Text += "LC77.";
+                else
+                    nodeComp.Text += "Not compressed.";
                 nodeExt.Text = "Extension: " + data.ext;
                 nodeSize.Text = "File Size: " + data.size;
                 fileData.Text = data.data;
@@ -474,7 +478,7 @@ namespace Arfer
                 TreeData data = new TreeData();
                 data.ext = Path.GetExtension(node.Text);
                 node.Text = Path.GetFileNameWithoutExtension(node.Text);
-                data.compressed = reader.ReadBoolean();
+                data.compressed = reader.ReadByte();
                 data.filePath = "";
                 
                 data.offset = reader.ReadInt64();
@@ -620,7 +624,7 @@ namespace Arfer
                 }
             }
                 //currentOffset += data.size;
-                data.compressed = false;
+                data.compressed = 0;
                 data.filePath = path;
                 data.ext = Path.GetExtension(path);
                 node.Tag = data;
@@ -804,7 +808,7 @@ namespace Arfer
                                 BinaryReader br = new BinaryReader(file);
                                 data.data = System.Text.Encoding.UTF8.GetString(br.ReadBytes((int)data.size % 500));
                                 //currentOffset += data.size;
-                                data.compressed = false;
+                                data.compressed = 0;
                                 data.filePath = path;
                                 data.ext = Path.GetExtension(path);
                                 node.Tag = data;
@@ -1204,13 +1208,47 @@ namespace Arfer
            
 
         }
+
+        private void compressToolStripMenuItem1_Click(object sender, EventArgs e)
+        {
+            TreeNode node = itemTree.SelectedNode;
+            TreeData data = (TreeData)node.Tag;
+
+            if(String.IsNullOrEmpty(data.zip))
+            {
+                if (data.offset == 0)
+                {
+                    FileInfo info = new FileInfo(data.filePath);
+
+                    using (BinaryReader file = new BinaryReader(info.OpenRead()))
+                    {
+                        UInt64 size = Convert.ToUInt64(data.size);
+                        byte[] bytes = file.ReadBytes(Convert.ToInt32(data.size));
+
+                        UInt64 cSize= 0;
+                        UInt64 ucSize = 0 ;
+                        IntPtr cdata= new IntPtr(0);
+                        CompressLz77(bytes, size, ref cSize, ref ucSize, ref cdata);
+
+                    }
+                }
+                else
+                {
+
+                }
+            }
+            else
+            {
+
+            }
+        }
     }
 
     class TreeData
     {
         public long offset;
         public long size;
-        public bool compressed;
+        public byte compressed;
         public string ext;
         public string filePath;
         public string data;
