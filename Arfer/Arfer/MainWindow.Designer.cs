@@ -50,6 +50,14 @@
             this.toolStripMenuItem5 = new System.Windows.Forms.ToolStripSeparator();
             this.toggleCheckboxesToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.deleteSelectedToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.toolsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.compressToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.allToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.selectedToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.uncompressToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.allToolStripMenuItem1 = new System.Windows.Forms.ToolStripMenuItem();
+            this.selectedToolStripMenuItem1 = new System.Windows.Forms.ToolStripMenuItem();
+            this.selectiveCompressionToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.itemTree = new System.Windows.Forms.TreeView();
             this.itemTreeRCCM = new System.Windows.Forms.ContextMenuStrip(this.components);
             this.addFolderToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -65,7 +73,11 @@
             this.itemTreeFileNodeRCCM = new System.Windows.Forms.ContextMenuStrip(this.components);
             this.renameToolStripMenuItem1 = new System.Windows.Forms.ToolStripMenuItem();
             this.removeToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.toolStripMenuItem7 = new System.Windows.Forms.ToolStripSeparator();
+            this.compressToolStripMenuItem1 = new System.Windows.Forms.ToolStripMenuItem();
+            this.uncompressToolStripMenuItem1 = new System.Windows.Forms.ToolStripMenuItem();
             this.nodeInfoBox = new System.Windows.Forms.GroupBox();
+            this.ucSizeInfo = new System.Windows.Forms.Label();
             this.fileData = new System.Windows.Forms.Label();
             this.nodeExt = new System.Windows.Forms.Label();
             this.nodeComp = new System.Windows.Forms.Label();
@@ -77,7 +89,12 @@
             this.toolStripSeparator1 = new System.Windows.Forms.ToolStripSeparator();
             this.checkBoxT = new System.Windows.Forms.ToolStripButton();
             this.delChecked = new System.Windows.Forms.ToolStripButton();
-            this.toolStripButton1 = new System.Windows.Forms.ToolStripButton();
+            this.progressBar1 = new System.Windows.Forms.ProgressBar();
+            this.compressWorker = new System.ComponentModel.BackgroundWorker();
+            this.progLab = new System.Windows.Forms.Label();
+            this.uncompressWorker = new System.ComponentModel.BackgroundWorker();
+            this.selcW = new System.ComponentModel.BackgroundWorker();
+            this.selucW = new System.ComponentModel.BackgroundWorker();
             this.menuStrip1.SuspendLayout();
             this.itemTreeNodeRCCM.SuspendLayout();
             this.itemTreeFileNodeRCCM.SuspendLayout();
@@ -190,7 +207,8 @@
             this.menuStrip1.BackColor = System.Drawing.SystemColors.ControlLightLight;
             this.menuStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.fileToolStripMenuItem,
-            this.treeToolStripMenuItem});
+            this.treeToolStripMenuItem,
+            this.toolsToolStripMenuItem});
             this.menuStrip1.Location = new System.Drawing.Point(0, 0);
             this.menuStrip1.Name = "menuStrip1";
             this.menuStrip1.Padding = new System.Windows.Forms.Padding(0);
@@ -243,6 +261,71 @@
             this.deleteSelectedToolStripMenuItem.Size = new System.Drawing.Size(176, 22);
             this.deleteSelectedToolStripMenuItem.Text = "Delete Selected";
             this.deleteSelectedToolStripMenuItem.Click += new System.EventHandler(this.deleteSelectedToolStripMenuItem_Click);
+            // 
+            // toolsToolStripMenuItem
+            // 
+            this.toolsToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.compressToolStripMenuItem,
+            this.uncompressToolStripMenuItem,
+            this.selectiveCompressionToolStripMenuItem});
+            this.toolsToolStripMenuItem.Name = "toolsToolStripMenuItem";
+            this.toolsToolStripMenuItem.Size = new System.Drawing.Size(47, 24);
+            this.toolsToolStripMenuItem.Text = "Tools";
+            // 
+            // compressToolStripMenuItem
+            // 
+            this.compressToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.allToolStripMenuItem,
+            this.selectedToolStripMenuItem});
+            this.compressToolStripMenuItem.Name = "compressToolStripMenuItem";
+            this.compressToolStripMenuItem.Size = new System.Drawing.Size(193, 22);
+            this.compressToolStripMenuItem.Text = "Compress...";
+            // 
+            // allToolStripMenuItem
+            // 
+            this.allToolStripMenuItem.Name = "allToolStripMenuItem";
+            this.allToolStripMenuItem.Size = new System.Drawing.Size(118, 22);
+            this.allToolStripMenuItem.Text = "All";
+            this.allToolStripMenuItem.Click += new System.EventHandler(this.allToolStripMenuItem_Click);
+            // 
+            // selectedToolStripMenuItem
+            // 
+            this.selectedToolStripMenuItem.Enabled = false;
+            this.selectedToolStripMenuItem.Name = "selectedToolStripMenuItem";
+            this.selectedToolStripMenuItem.Size = new System.Drawing.Size(118, 22);
+            this.selectedToolStripMenuItem.Text = "Selected";
+            this.selectedToolStripMenuItem.Click += new System.EventHandler(this.selectedToolStripMenuItem_Click);
+            // 
+            // uncompressToolStripMenuItem
+            // 
+            this.uncompressToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.allToolStripMenuItem1,
+            this.selectedToolStripMenuItem1});
+            this.uncompressToolStripMenuItem.Name = "uncompressToolStripMenuItem";
+            this.uncompressToolStripMenuItem.Size = new System.Drawing.Size(193, 22);
+            this.uncompressToolStripMenuItem.Text = "Uncompress...";
+            // 
+            // allToolStripMenuItem1
+            // 
+            this.allToolStripMenuItem1.Name = "allToolStripMenuItem1";
+            this.allToolStripMenuItem1.Size = new System.Drawing.Size(118, 22);
+            this.allToolStripMenuItem1.Text = "All";
+            this.allToolStripMenuItem1.Click += new System.EventHandler(this.allToolStripMenuItem1_Click);
+            // 
+            // selectedToolStripMenuItem1
+            // 
+            this.selectedToolStripMenuItem1.Enabled = false;
+            this.selectedToolStripMenuItem1.Name = "selectedToolStripMenuItem1";
+            this.selectedToolStripMenuItem1.Size = new System.Drawing.Size(118, 22);
+            this.selectedToolStripMenuItem1.Text = "Selected";
+            this.selectedToolStripMenuItem1.Click += new System.EventHandler(this.selectedToolStripMenuItem1_Click);
+            // 
+            // selectiveCompressionToolStripMenuItem
+            // 
+            this.selectiveCompressionToolStripMenuItem.Name = "selectiveCompressionToolStripMenuItem";
+            this.selectiveCompressionToolStripMenuItem.Size = new System.Drawing.Size(193, 22);
+            this.selectiveCompressionToolStripMenuItem.Text = "Selective Compression";
+            this.selectiveCompressionToolStripMenuItem.Click += new System.EventHandler(this.selectiveCompressionToolStripMenuItem_Click);
             // 
             // itemTree
             // 
@@ -340,26 +423,49 @@
             // 
             this.itemTreeFileNodeRCCM.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.renameToolStripMenuItem1,
-            this.removeToolStripMenuItem});
+            this.removeToolStripMenuItem,
+            this.toolStripMenuItem7,
+            this.compressToolStripMenuItem1,
+            this.uncompressToolStripMenuItem1});
             this.itemTreeFileNodeRCCM.Name = "itemTreeFileNodeRCCM";
-            this.itemTreeFileNodeRCCM.Size = new System.Drawing.Size(118, 48);
+            this.itemTreeFileNodeRCCM.Size = new System.Drawing.Size(141, 98);
             // 
             // renameToolStripMenuItem1
             // 
             this.renameToolStripMenuItem1.Name = "renameToolStripMenuItem1";
-            this.renameToolStripMenuItem1.Size = new System.Drawing.Size(117, 22);
+            this.renameToolStripMenuItem1.Size = new System.Drawing.Size(140, 22);
             this.renameToolStripMenuItem1.Text = "Rename";
             this.renameToolStripMenuItem1.Click += new System.EventHandler(this.renameToolStripMenuItem1_Click);
             // 
             // removeToolStripMenuItem
             // 
             this.removeToolStripMenuItem.Name = "removeToolStripMenuItem";
-            this.removeToolStripMenuItem.Size = new System.Drawing.Size(117, 22);
+            this.removeToolStripMenuItem.Size = new System.Drawing.Size(140, 22);
             this.removeToolStripMenuItem.Text = "Remove";
             this.removeToolStripMenuItem.Click += new System.EventHandler(this.removeToolStripMenuItem_Click);
             // 
+            // toolStripMenuItem7
+            // 
+            this.toolStripMenuItem7.Name = "toolStripMenuItem7";
+            this.toolStripMenuItem7.Size = new System.Drawing.Size(137, 6);
+            // 
+            // compressToolStripMenuItem1
+            // 
+            this.compressToolStripMenuItem1.Name = "compressToolStripMenuItem1";
+            this.compressToolStripMenuItem1.Size = new System.Drawing.Size(140, 22);
+            this.compressToolStripMenuItem1.Text = "Compress";
+            this.compressToolStripMenuItem1.Click += new System.EventHandler(this.compressToolStripMenuItem1_Click);
+            // 
+            // uncompressToolStripMenuItem1
+            // 
+            this.uncompressToolStripMenuItem1.Name = "uncompressToolStripMenuItem1";
+            this.uncompressToolStripMenuItem1.Size = new System.Drawing.Size(140, 22);
+            this.uncompressToolStripMenuItem1.Text = "Uncompress";
+            this.uncompressToolStripMenuItem1.Click += new System.EventHandler(this.uncompressToolStripMenuItem1_Click);
+            // 
             // nodeInfoBox
             // 
+            this.nodeInfoBox.Controls.Add(this.ucSizeInfo);
             this.nodeInfoBox.Controls.Add(this.fileData);
             this.nodeInfoBox.Controls.Add(this.nodeExt);
             this.nodeInfoBox.Controls.Add(this.nodeComp);
@@ -369,6 +475,16 @@
             this.nodeInfoBox.Size = new System.Drawing.Size(290, 500);
             this.nodeInfoBox.TabIndex = 3;
             this.nodeInfoBox.TabStop = false;
+            // 
+            // ucSizeInfo
+            // 
+            this.ucSizeInfo.AutoSize = true;
+            this.ucSizeInfo.Location = new System.Drawing.Point(136, 66);
+            this.ucSizeInfo.Name = "ucSizeInfo";
+            this.ucSizeInfo.Size = new System.Drawing.Size(102, 13);
+            this.ucSizeInfo.TabIndex = 4;
+            this.ucSizeInfo.Text = "Uncompressed size:";
+            this.ucSizeInfo.Visible = false;
             // 
             // fileData
             // 
@@ -410,8 +526,7 @@
             this.loadButton,
             this.toolStripSeparator1,
             this.checkBoxT,
-            this.delChecked,
-            this.toolStripButton1});
+            this.delChecked});
             this.toolStrip1.Location = new System.Drawing.Point(0, 24);
             this.toolStrip1.Name = "toolStrip1";
             this.toolStrip1.Size = new System.Drawing.Size(613, 25);
@@ -478,15 +593,50 @@
             this.delChecked.ToolTipText = "Delete selected";
             this.delChecked.Click += new System.EventHandler(this.delChecked_Click);
             // 
-            // toolStripButton1
+            // progressBar1
             // 
-            this.toolStripButton1.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Image;
-            this.toolStripButton1.Image = ((System.Drawing.Image)(resources.GetObject("toolStripButton1.Image")));
-            this.toolStripButton1.ImageTransparentColor = System.Drawing.Color.Magenta;
-            this.toolStripButton1.Name = "toolStripButton1";
-            this.toolStripButton1.Size = new System.Drawing.Size(23, 22);
-            this.toolStripButton1.Text = "toolStripButton1";
-            this.toolStripButton1.Click += new System.EventHandler(this.toolStripButton1_Click);
+            this.progressBar1.Location = new System.Drawing.Point(138, 26);
+            this.progressBar1.Name = "progressBar1";
+            this.progressBar1.Size = new System.Drawing.Size(100, 23);
+            this.progressBar1.TabIndex = 5;
+            // 
+            // compressWorker
+            // 
+            this.compressWorker.WorkerReportsProgress = true;
+            this.compressWorker.DoWork += new System.ComponentModel.DoWorkEventHandler(this.compressWorker_DoWork);
+            this.compressWorker.ProgressChanged += new System.ComponentModel.ProgressChangedEventHandler(this.compressWorker_ProgressChanged);
+            this.compressWorker.RunWorkerCompleted += new System.ComponentModel.RunWorkerCompletedEventHandler(this.compressWorker_RunWorkerCompleted);
+            // 
+            // progLab
+            // 
+            this.progLab.AutoSize = true;
+            this.progLab.Location = new System.Drawing.Point(245, 28);
+            this.progLab.Name = "progLab";
+            this.progLab.Size = new System.Drawing.Size(35, 13);
+            this.progLab.TabIndex = 6;
+            this.progLab.Text = "label1";
+            this.progLab.Visible = false;
+            // 
+            // uncompressWorker
+            // 
+            this.uncompressWorker.WorkerReportsProgress = true;
+            this.uncompressWorker.DoWork += new System.ComponentModel.DoWorkEventHandler(this.uncompressWorker_DoWork);
+            this.uncompressWorker.ProgressChanged += new System.ComponentModel.ProgressChangedEventHandler(this.uncompressWorker_ProgressChanged);
+            this.uncompressWorker.RunWorkerCompleted += new System.ComponentModel.RunWorkerCompletedEventHandler(this.uncompressWorker_RunWorkerCompleted);
+            // 
+            // selcW
+            // 
+            this.selcW.WorkerReportsProgress = true;
+            this.selcW.DoWork += new System.ComponentModel.DoWorkEventHandler(this.selcW_DoWork);
+            this.selcW.ProgressChanged += new System.ComponentModel.ProgressChangedEventHandler(this.selcW_ProgressChanged);
+            this.selcW.RunWorkerCompleted += new System.ComponentModel.RunWorkerCompletedEventHandler(this.selcW_RunWorkerCompleted);
+            // 
+            // selucW
+            // 
+            this.selucW.WorkerReportsProgress = true;
+            this.selucW.DoWork += new System.ComponentModel.DoWorkEventHandler(this.selucW_DoWork);
+            this.selucW.ProgressChanged += new System.ComponentModel.ProgressChangedEventHandler(this.selucW_ProgressChanged);
+            this.selucW.RunWorkerCompleted += new System.ComponentModel.RunWorkerCompletedEventHandler(this.selucW_RunWorkerCompleted);
             // 
             // Arfer
             // 
@@ -494,6 +644,8 @@
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.SystemColors.Control;
             this.ClientSize = new System.Drawing.Size(613, 560);
+            this.Controls.Add(this.progLab);
+            this.Controls.Add(this.progressBar1);
             this.Controls.Add(this.toolStrip1);
             this.Controls.Add(this.nodeInfoBox);
             this.Controls.Add(this.itemTree);
@@ -567,7 +719,24 @@
         private System.Windows.Forms.ToolStripMenuItem exportToToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem zipToolStripMenuItem1;
         private System.Windows.Forms.ToolStripSeparator toolStripMenuItem6;
-        private System.Windows.Forms.ToolStripButton toolStripButton1;
+        private System.Windows.Forms.ToolStripMenuItem toolsToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem compressToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem allToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem selectedToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem uncompressToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem allToolStripMenuItem1;
+        private System.Windows.Forms.ToolStripMenuItem selectedToolStripMenuItem1;
+        private System.Windows.Forms.ToolStripMenuItem selectiveCompressionToolStripMenuItem;
+        private System.Windows.Forms.ToolStripSeparator toolStripMenuItem7;
+        private System.Windows.Forms.ToolStripMenuItem compressToolStripMenuItem1;
+        private System.Windows.Forms.ToolStripMenuItem uncompressToolStripMenuItem1;
+        private System.Windows.Forms.Label ucSizeInfo;
+        private System.Windows.Forms.ProgressBar progressBar1;
+        private System.ComponentModel.BackgroundWorker compressWorker;
+        private System.Windows.Forms.Label progLab;
+        private System.ComponentModel.BackgroundWorker uncompressWorker;
+        private System.ComponentModel.BackgroundWorker selcW;
+        private System.ComponentModel.BackgroundWorker selucW;
     }
 }
 
