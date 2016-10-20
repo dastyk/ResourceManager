@@ -374,28 +374,28 @@ namespace Arfer
                 {
                     if (String.IsNullOrEmpty( d.zipPath ))
                     {
-                        FileStream file;
+                        BinaryReader file;
                         if (d.path == "")
                         {
                             // This file is located in a previous packfile. (At location d.offset back from end of file.)
-                            file = File.Open(packOpenedPath, FileMode.Open);
-                            file.Seek(-Convert.ToInt64( d.offset), SeekOrigin.End);
+                            file = new BinaryReader(File.Open(packOpenedPath, FileMode.Open));
+                            file.BaseStream.Seek(-Convert.ToInt64( d.offset), SeekOrigin.End);
                         }
                         else
                         {
                             // This file is located in the path.
-                            file = File.Open(d.path, FileMode.Open);
+                            file = new BinaryReader(File.Open(d.path, FileMode.Open));
                         }
                         int bytesRead;
                         long sizeToRead = Convert.ToInt64(d.size);
-                        while (sizeToRead > 0 && (bytesRead = file.Read(buffer, 0, (int)Math.Min(buffer.Length, Convert.ToInt64(d.size)))) > 0)
+                        while (sizeToRead > 0 && (bytesRead = file.Read(buffer, 0, (int)Math.Min(buffer.Length, sizeToRead))) > 0)
                         {
                             fileStream.Write(buffer, 0, bytesRead);
                             sizeToRead -= bytesRead;
                         }
 
                         file.Close();
-                        if(d.comp != 0)
+                        if(d.comp != 0 && !String.IsNullOrEmpty(d.path))
                         {
                             File.Delete(d.path);
                         }
@@ -411,7 +411,7 @@ namespace Arfer
                                 {
                                     int bytesRead;
                                     long sizeToRead = Convert.ToInt64(d.size);
-                                    while (sizeToRead > 0 && (bytesRead = file.Read(buffer, 0, (int)Math.Min(buffer.Length, Convert.ToInt64(d.size)))) > 0)
+                                    while (sizeToRead > 0 && (bytesRead = file.Read(buffer, 0,(int)Math.Min(buffer.Length, sizeToRead))) > 0)
                                     {
                                         fileStream.Write(buffer, 0, bytesRead);
                                         sizeToRead -= bytesRead;
@@ -447,7 +447,6 @@ namespace Arfer
                 if (data.size != 0)
                 {
                     writer.Write(currentOffset + data.size);
-
                     toLoad.Add(new LoadData(data.filePath, data.size, data.offset, currentOffset + data.size, data.compressed, data.zip));
                     data.filePath = "";
                     data.zip = "";
@@ -1269,6 +1268,7 @@ namespace Arfer
                 return false;
             UInt64 size = data.size;
             byte[] bytes;
+            string path = data.filePath;
             if (String.IsNullOrEmpty(data.zip))
             {
                 if (data.offset == 0)
@@ -1289,7 +1289,7 @@ namespace Arfer
                     {
                         file.BaseStream.Seek(-Convert.ToInt64(data.offset), SeekOrigin.End);
                         bytes = file.ReadBytes(Convert.ToInt32(data.size));
-                        data.filePath = node.Text;
+                        path = node.Text + data.ext;
                     }
                 }
             }
@@ -1315,22 +1315,24 @@ namespace Arfer
                 return false;
 
             if (data.compressed == byte.MaxValue)
-                data.filePath = Path.GetFileNameWithoutExtension(data.filePath);
+                path = Path.GetFileNameWithoutExtension(path);
 
-            data.filePath = Path.GetFileName(data.filePath) + ".lz77";
+            data.filePath = Path.GetFileName(path) + ".lz77";
             data.compressed = 1;
+            data.offset = 0;
             data.csize = data.size;
-            data.zip = "";
+            data.zip = null;
             data.size = cSize + sizeof(UInt64);
             using (BinaryWriter ofile = new BinaryWriter(File.Create(data.filePath)))
             {
                 byte[] myArray = new byte[Convert.ToInt32(cSize)];
                 Marshal.Copy(cdata, myArray, 0, Convert.ToInt32(cSize));
-                Marshal.FreeHGlobal(cdata);
+                
                 ofile.Write(data.csize);
                 ofile.Write(myArray);
+                Marshal.FreeHGlobal(cdata);
             }
-            changed();
+   
             return true;
         }
         private bool uncompressNode(TreeNode node)
@@ -1374,7 +1376,7 @@ namespace Arfer
             {
                 ofile.Write(rdata);
             }
-            changed();
+           
             return true;
         }
         private void compressToolStripMenuItem1_Click(object sender, EventArgs e)
@@ -1382,7 +1384,7 @@ namespace Arfer
             if (compressNode(itemTree.SelectedNode))
             {
                 setSelectedNode(itemTree.SelectedNode);
-                
+                changed();
             }
         }
 
@@ -1391,17 +1393,18 @@ namespace Arfer
             if (uncompressNode(itemTree.SelectedNode))
             {
                 setSelectedNode(itemTree.SelectedNode);
-               
+                changed();
             }
                 
         }
         private void compressAll(TreeNode node, BackgroundWorker worker)
         {
-            worker.ReportProgress(progressBar1.Value + 1, node.Text);
+            
             if (node.Nodes.Count == 0)
             {               
                 if (node.Tag != null)
-                {    
+                {
+                    worker.ReportProgress(progressBar1.Value + 1, node.Text);
                     compressNode(node);
                 }
             }
@@ -1415,11 +1418,12 @@ namespace Arfer
         }
         private void uncompressAll(TreeNode node, BackgroundWorker worker)
         {
-            worker.ReportProgress(progressBar1.Value + 1, node.Text);
+            
             if (node.Nodes.Count == 0)
             {
                 if (node.Tag != null)
                 {
+                    worker.ReportProgress(progressBar1.Value + 1, node.Text);
                     uncompressNode(node);
                 }
             }
@@ -1493,6 +1497,7 @@ namespace Arfer
         {
             progLab.Text = "Compressing " +  (string)e.UserState;
             progressBar1.Value = e.ProgressPercentage;
+            changed();
         }
 
         private void compressWorker_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
@@ -1514,6 +1519,7 @@ namespace Arfer
         {
             progLab.Text = "Unompressing " + (string)e.UserState;
             progressBar1.Value = e.ProgressPercentage;
+            changed();
         }
 
         private void uncompressWorker_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
@@ -1536,6 +1542,7 @@ namespace Arfer
         {
             progLab.Text = "Compressing " + (string)e.UserState;
             progressBar1.Value = e.ProgressPercentage;
+            changed();
         }
 
         private void selcW_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
@@ -1558,6 +1565,7 @@ namespace Arfer
         {
             progLab.Text = "Uncompressing " + (string)e.UserState;
             progressBar1.Value = e.ProgressPercentage;
+            changed();
         }
 
         private void selucW_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)

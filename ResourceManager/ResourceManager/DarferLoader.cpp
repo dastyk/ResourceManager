@@ -73,8 +73,8 @@ RawData DarferLoader::LoadResource(SM_GUID guid, std::function<char*(uint32_t da
 
 
 	RawData data;
-	
-	drfFile.seekg(find->second.offset, std::ios_base::end);
+	int64_t s = -(int64_t)find->second.offset;
+	drfFile.seekg(s, std::ios_base::end);
 	data.size = find->second.size;
 	data.data = allocCallback(data.size);
 	if (data.data == nullptr)
