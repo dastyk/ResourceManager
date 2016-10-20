@@ -554,11 +554,11 @@ void CompressLz77(void* rdata, uint64_t size, uint64_t* sizeCompressed, uint64_t
 
 }
 
-void UncompressLz77(void** rdata, uint64_t* size, uint64_t sizeCompressed, uint64_t sizeUncompressed, void* cdata)
+void UncompressLz77(void* rdata, uint64_t sizeCompressed, uint64_t sizeUncompressed, void* cdata)
 {
 	printf("Uncompressing\n");
 	int currentPos = 0;
-	unsigned char* endData = new unsigned char[sizeUncompressed];
+	unsigned char* endData = (unsigned char*)rdata;
 	unsigned char* data = (unsigned char*)cdata;
 	for (int i = 0; i < sizeCompressed; i += 3)
 	{
@@ -585,13 +585,6 @@ void UncompressLz77(void** rdata, uint64_t* size, uint64_t sizeCompressed, uint6
 		}
 	}
 	printf("Uncompression Complete\n");
-
-
-	*rdata = endData;
-	*size = sizeUncompressed;
-
-
-
 }
 //
 //int main()
