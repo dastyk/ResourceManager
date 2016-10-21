@@ -5,6 +5,15 @@ FileLoader::FileLoader()
 	//nothing
 }
 
+/*
+filelistfile is a textfile in the format:
+filename.jpg
+filename2.jpg
+mesh.arf
+mesh2.arf
+
+and so on
+*/
 FileLoader::FileLoader(const std::string& filelistfile)
 {
 	std::ifstream in(filelistfile);
