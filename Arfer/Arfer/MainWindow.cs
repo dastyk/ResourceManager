@@ -54,11 +54,16 @@ namespace Arfer
                 nodeComp.Text = "Compressed: ";
                 if (data.compressed != 0 && data.compressed != byte.MaxValue)
                 {
+                    compRate.Text = "Compression rate: " +  (data.rate*100.0).ToString("F1") + "%";
+                    compRate.Visible = true;
                     ucSizeInfo.Text = "Uncompressed size: " + data.csize;
                     ucSizeInfo.Visible = true;
                 }
                 else
+                {
                     ucSizeInfo.Visible = false;
+                    compRate.Visible = false;
+                }
                 if (data.compressed == 1)
                     nodeComp.Text += "LZ77-HUFF.";
                 else if(data.compressed == 2)
@@ -79,6 +84,7 @@ namespace Arfer
                 nodeExt.Text = "Extension: ";
                 nodeSize.Text = "File Size: ";
                 ucSizeInfo.Visible = false;
+                compRate.Visible = false;
                 fileData.Text = "";
             }
         }
@@ -517,6 +523,7 @@ namespace Arfer
                 if (data.compressed > 0)
                 {
                     data.csize = reader.ReadUInt64();
+                    data.rate = Convert.ToDouble(data.size) / Convert.ToDouble(data.csize);
                     reader.BaseStream.Seek(-sizeof(UInt64), SeekOrigin.Current);
                 }
                 data.data = System.Text.Encoding.UTF8.GetString(reader.ReadBytes((int)Math.Min(500, data.size)));
@@ -1130,7 +1137,7 @@ namespace Arfer
                                     byte[] buffer = new byte[2048];
                                     int bytesRead;
                                     long sizeToRead = Convert.ToInt64(data.size);
-                                    while (sizeToRead > 0 && (bytesRead = file.Read(buffer, 0, (int)Math.Min(buffer.Length, Convert.ToInt32(data.size)))) > 0)
+                                    while (sizeToRead > 0 && (bytesRead = file.Read(buffer, 0, (int)Math.Min(buffer.Length, Convert.ToInt32(sizeToRead)))) > 0)
                                     {
                                         writer.Write(buffer, 0, bytesRead);
                                         sizeToRead -= bytesRead;
@@ -1292,8 +1299,9 @@ namespace Arfer
                 if (lz77huffp < 0.9)
                 {
                     lz77huffp *= lz77p;
-                    if (lz77huffp < lz77p)
+                    if (lz77huffp < lz77p*0.9)
                     {
+
                         p = lz77huffp;
                         cData = lz77huffdata;
                         cSize = lz77huffcs;
@@ -1308,6 +1316,13 @@ namespace Arfer
                         compressed = 2;
                     }
                 }
+                else
+                {
+                    p = lz77p;
+                    cData = lz77data;
+                    cSize = lz77cs;
+                    compressed = 2;
+                }
             }
 
             UInt64 huffcs = 0;
@@ -1321,9 +1336,12 @@ namespace Arfer
                 if (hufflz77p < 0.9)
                 {
                     hufflz77p *= huffp;
-                    if (hufflz77p < huffp)
+                    if (hufflz77p < huffp*0.9)
                     {
-                        if (hufflz77p < p)
+                        double temp = p;
+                        if (compressed == 2)
+                            temp *= 0.9;
+                        if (hufflz77p < temp)
                         {
                             p = hufflz77p;
                             cData = hufflz77data;
@@ -1342,6 +1360,17 @@ namespace Arfer
                             compressed = 4;
                         }
                     }
+
+                }
+                else
+                {
+                    if (huffp < p)
+                    {
+                        p = huffp;
+                        cData = huffdata;
+                        cSize = huffcs;
+                        compressed = 4;
+                    }
                 }
             }
 
@@ -1356,6 +1385,7 @@ namespace Arfer
             data.offset = 0;
             data.csize = data.size;
             data.zip = null;
+            data.rate = p;
             if (compressed == 1 || compressed == 3)
                 data.size = cSize + sizeof(UInt64) * 2;
             else
@@ -1711,5 +1741,6 @@ namespace Arfer
         public string filePath;
         public string data;
         public string zip;
+        public double rate;
     }
 }

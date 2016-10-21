@@ -95,6 +95,7 @@
             this.uncompressWorker = new System.ComponentModel.BackgroundWorker();
             this.selcW = new System.ComponentModel.BackgroundWorker();
             this.selucW = new System.ComponentModel.BackgroundWorker();
+            this.compRate = new System.Windows.Forms.Label();
             this.menuStrip1.SuspendLayout();
             this.itemTreeNodeRCCM.SuspendLayout();
             this.itemTreeFileNodeRCCM.SuspendLayout();
@@ -465,6 +466,7 @@
             // 
             // nodeInfoBox
             // 
+            this.nodeInfoBox.Controls.Add(this.compRate);
             this.nodeInfoBox.Controls.Add(this.ucSizeInfo);
             this.nodeInfoBox.Controls.Add(this.fileData);
             this.nodeInfoBox.Controls.Add(this.nodeExt);
@@ -638,6 +640,16 @@
             this.selucW.ProgressChanged += new System.ComponentModel.ProgressChangedEventHandler(this.selucW_ProgressChanged);
             this.selucW.RunWorkerCompleted += new System.ComponentModel.RunWorkerCompletedEventHandler(this.selucW_RunWorkerCompleted);
             // 
+            // compRate
+            // 
+            this.compRate.AutoSize = true;
+            this.compRate.Location = new System.Drawing.Point(139, 41);
+            this.compRate.Name = "compRate";
+            this.compRate.Size = new System.Drawing.Size(35, 13);
+            this.compRate.TabIndex = 5;
+            this.compRate.Text = "label1";
+            this.compRate.Visible = false;
+            // 
             // Arfer
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -737,6 +749,7 @@
         private System.ComponentModel.BackgroundWorker uncompressWorker;
         private System.ComponentModel.BackgroundWorker selcW;
         private System.ComponentModel.BackgroundWorker selucW;
+        private System.Windows.Forms.Label compRate;
     }
 }
 
