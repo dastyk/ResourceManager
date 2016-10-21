@@ -79,6 +79,7 @@ RawData DarferLoader::LoadResource(SM_GUID guid, std::function<char*(uint32_t da
 	
 	if (find->second.compressionType)
 	{
+		rawsize -= sizeof(uint64_t);
 		uint64_t uncompressedSize;
 		drfFile.read((char*)&uncompressedSize, sizeof(uint64_t));
 
@@ -86,6 +87,7 @@ RawData DarferLoader::LoadResource(SM_GUID guid, std::function<char*(uint32_t da
 		uint64_t secondUncompressionSize = 0;
 		if(find->second.compressionType == 1 || find->second.compressionType == 3)
 		{
+			rawsize -= sizeof(uint64_t);
 			drfFile.read((char*)&secondUncompressionSize, sizeof(uint64_t));
 		}
 		drfFile.read(buffer, rawsize);
@@ -100,8 +102,8 @@ RawData DarferLoader::LoadResource(SM_GUID guid, std::function<char*(uint32_t da
 		if (find->second.compressionType == 1)//LZ77 then huff
 		{
 			char* huffer = (char*)MemoryManager::Alloc(secondUncompressionSize);
-			UncompressLz77((void*)huffer, rawsize, (void*)buffer);
-			UncompressHuffman((void*)data.data, secondUncompressionSize, (void*)huffer);
+			UncompressHuffman(huffer, secondUncompressionSize, buffer);
+			UncompressLz77(data.data, secondUncompressionSize, huffer);
 			MemoryManager::Release(huffer);
 		}
 		else if (find->second.compressionType == 2)//Only LZ77
@@ -111,13 +113,13 @@ RawData DarferLoader::LoadResource(SM_GUID guid, std::function<char*(uint32_t da
 		else if (find->second.compressionType == 3)
 		{
 			char* zuffer = (char*)MemoryManager::Alloc(secondUncompressionSize);
-			UncompressHuffman(zuffer, rawsize, buffer);
-			UncompressLz77(data.data, secondUncompressionSize, zuffer);
+			UncompressLz77(zuffer, rawsize, buffer);
+			UncompressHuffman(data.data, uncompressedSize, zuffer);
 			MemoryManager::Release(zuffer);
 		}
 		else if (find->second.compressionType == 4)
 		{
-			UncompressHuffman(data.data, rawsize, buffer);
+			UncompressHuffman(data.data, uncompressedSize, buffer);
 		}
 		MemoryManager::Release(buffer);
 	}
@@ -138,7 +140,7 @@ RawData DarferLoader::LoadResource(SM_GUID guid, std::function<char*(uint32_t da
 	}
 
 
-	data.fType = find2->first;
+	data.fType = find2->second;
 
 	return data;
 }

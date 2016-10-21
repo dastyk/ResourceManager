@@ -350,7 +350,7 @@ void Direct3D11::CreateMeshBuffers(const SM_GUID& guid, MeshData::Vertex* vertic
 	}
 	else
 	{
-		DebugLogger::GetInstance()->AddMsg("Tried to create mesh buffers for the same resource while it already existed, GUID: " + guid.data);
+		DebugLogger::GetInstance()->AddMsg("Tried to create mesh buffers for the same resource while it already existed, GUID: ");
 	}
 	_bufferLock.unlock();
 }
@@ -366,7 +366,7 @@ void Direct3D11::CreateShaderResource(const SM_GUID& guid, const void* data, uin
 	}
 	else
 	{
-		DebugLogger::GetInstance()->AddMsg("Tried to create shader resource view while it already existed, GUID: " + guid.data);
+		DebugLogger::GetInstance()->AddMsg("Tried to create shader resource view while it already existed, GUID: ");
 	}
 	_textureLock.unlock();
 }

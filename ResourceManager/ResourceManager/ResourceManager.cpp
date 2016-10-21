@@ -447,6 +447,13 @@ void ResourceManager::_LoadingThread(uint16_t threadID)
 			SM_GUID guid = _loadingQueue.top();
 
 			_loadingQueue.pop();
+
+			if (guid.data == 16376063061694915042)
+			{
+				int k = 5;
+				k++;
+			}
+
 			_mutexLockLoadingQueue.unlock();
 			
 			uint32_t job = _resource.FindLock(guid);
