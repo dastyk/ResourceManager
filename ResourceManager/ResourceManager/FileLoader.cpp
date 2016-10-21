@@ -72,6 +72,8 @@ RawData FileLoader::LoadResource(SM_GUID guid, std::function<char*(uint32_t data
 	RawData rd;
 	rd.size = size;
 	rd.data = allocCallback(size);
+	if (rd.data == nullptr)
+		throw std::exception("Chunky allocator out of memory");
 	in.read((char*)rd.data, filesize);
 
 	return rd;
