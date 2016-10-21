@@ -1292,8 +1292,9 @@ namespace Arfer
                 if (lz77huffp < 0.9)
                 {
                     lz77huffp *= lz77p;
-                    if (lz77huffp < lz77p)
+                    if (lz77huffp < lz77p*0.9)
                     {
+
                         p = lz77huffp;
                         cData = lz77huffdata;
                         cSize = lz77huffcs;
@@ -1308,6 +1309,13 @@ namespace Arfer
                         compressed = 2;
                     }
                 }
+                else
+                {
+                    p = lz77p;
+                    cData = lz77data;
+                    cSize = lz77cs;
+                    compressed = 2;
+                }
             }
 
             UInt64 huffcs = 0;
@@ -1321,8 +1329,10 @@ namespace Arfer
                 if (hufflz77p < 0.9)
                 {
                     hufflz77p *= huffp;
-                    if (hufflz77p < huffp)
+                    if (hufflz77p < huffp*0.9)
                     {
+                        if (compressed == 2)
+                            p *= 0.9;
                         if (hufflz77p < p)
                         {
                             p = hufflz77p;
@@ -1341,6 +1351,17 @@ namespace Arfer
                             cSize = huffcs;
                             compressed = 4;
                         }
+                    }
+
+                }
+                else
+                {
+                    if (huffp < p)
+                    {
+                        p = huffp;
+                        cData = huffdata;
+                        cSize = huffcs;
+                        compressed = 4;
                     }
                 }
             }
