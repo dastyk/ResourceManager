@@ -63,8 +63,8 @@ int main(int argc, char** argv)
 	ResourceManager& r = ResourceManager::Instance(); // Kickstart at our will
 	r.Init(125U * 1024U * 1024U);
 	r.SetEvictPolicy(ResourceManager::EvictPolicies::FirstFit);
-	r.SetAssetLoader(new ZipLoader("data.dat"));
-
+	//r.SetAssetLoader(new ZipLoader("data.dat"));
+	r.SetAssetLoader(new DarferLoader("data.drf"));
 	r.AddParser("jpg",
 		[](const Resource::Ptr& resource)
 	{

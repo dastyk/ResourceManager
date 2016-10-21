@@ -136,7 +136,7 @@ uint32_t ChunkyAllocator::Defrag(vector<pair<uint32_t&, uint32_t>>& allocs)
 		return UINT32_MAX;
 	}
 
-	// NaÔve defragmentation that just stuffs upcoming occupied blocks into the free one.'
+	// NaÅEe defragmentation that just stuffs upcoming occupied blocks into the free one.'
 	uint32_t size = allocs.size();
 
 	for (uint32_t i = 0; i < size; i++)

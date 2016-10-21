@@ -13,7 +13,6 @@ using System.IO.Compression;
 using System.Runtime.InteropServices;
 
 
-
 namespace Arfer
 {
 
@@ -22,7 +21,7 @@ namespace Arfer
         private string packOpenedPath = "";
         private string savePath = "";
         private string loadPath = "";
-        private long currentOffset = 0;
+        private UInt64 currentOffset = 0;
         private List<TreeNode> checkedNodes = new List<TreeNode>();
         public Arfer()
         {
@@ -38,6 +37,7 @@ namespace Arfer
             saveAsToolStripMenuItem.Enabled = true;
             saveButton.Enabled = true;
             exportToToolStripMenuItem.Enabled = true;
+
         }
         private void saved()
         {
@@ -52,12 +52,19 @@ namespace Arfer
             {
                 TreeData data = (TreeData)node.Tag;
                 nodeComp.Text = "Compressed: ";
+                if (data.compressed != 0 && data.compressed != byte.MaxValue)
+                {
+                    ucSizeInfo.Text = "Uncompressed size: " + data.csize;
+                    ucSizeInfo.Visible = true;
+                }
+                else
+                    ucSizeInfo.Visible = false;
                 if (data.compressed == 1)
                     nodeComp.Text += "LC77.";
                 else
                     nodeComp.Text += "Not compressed.";
                 nodeExt.Text = "Extension: " + data.ext;
-                nodeSize.Text = "File Size: " + data.size;
+                nodeSize.Text = "File Size: " + data.size + " B";
                 fileData.Text = data.data;
             }
             else
@@ -65,6 +72,7 @@ namespace Arfer
                 nodeComp.Text = "Compressed: ";
                 nodeExt.Text = "Extension: ";
                 nodeSize.Text = "File Size: ";
+                ucSizeInfo.Visible = false;
                 fileData.Text = "";
             }
         }
@@ -259,7 +267,11 @@ namespace Arfer
                 {
                     itemTree.Nodes.Clear();
                     checkedNodes.Clear();
-
+                    delChecked.Enabled = false;
+                    deleteSelectedToolStripMenuItem.Enabled = false;
+                    exportToToolStripMenuItem.Enabled = false;
+                    selectedToolStripMenuItem.Enabled = false;
+                    selectedToolStripMenuItem1.Enabled = false;
                     using (BinaryReader reader = new BinaryReader(File.Open(prom.FileName, FileMode.Open)))
                     {
                         readFromBinary(reader, itemTree);
@@ -323,20 +335,22 @@ namespace Arfer
         }
         struct LoadData
         {
-            public LoadData(string path, long size, long offset, long newOffset, string zipP = null)
+            public LoadData(string path, UInt64 size, UInt64 offset, UInt64 newOffset, byte comp, string zipP = null)
             {
                 this.path = path;
                 this.size = size;
                 this.offset = offset;
                 this.newOffset = newOffset;
                 this.zipPath = zipP;
+                this.comp = comp;
             }
 
             public string path;
-            public long size;
-            public long offset;
-            public long newOffset;
+            public UInt64 size;
+            public UInt64 offset;
+            public UInt64 newOffset;
             public string zipPath;
+            public byte comp;
         }
         private List<LoadData> toLoad = new List<LoadData>();
 
@@ -358,29 +372,33 @@ namespace Arfer
                 toLoad.Reverse();
                 foreach (LoadData d in toLoad)
                 {
-                    if (d.zipPath == null)
+                    if (String.IsNullOrEmpty( d.zipPath ))
                     {
-                        FileStream file;
+                        BinaryReader file;
                         if (d.path == "")
                         {
                             // This file is located in a previous packfile. (At location d.offset back from end of file.)
-                            file = File.Open(packOpenedPath, FileMode.Open);
-                            file.Seek(-d.offset, SeekOrigin.End);
+                            file = new BinaryReader(File.Open(packOpenedPath, FileMode.Open));
+                            file.BaseStream.Seek(-Convert.ToInt64( d.offset), SeekOrigin.End);
                         }
                         else
                         {
                             // This file is located in the path.
-                            file = File.Open(d.path, FileMode.Open);
+                            file = new BinaryReader(File.Open(d.path, FileMode.Open));
                         }
                         int bytesRead;
-                        long sizeToRead = d.size;
-                        while (sizeToRead > 0 && (bytesRead = file.Read(buffer, 0, (int)Math.Min(buffer.Length, d.size))) > 0)
+                        long sizeToRead = Convert.ToInt64(d.size);
+                        while (sizeToRead > 0 && (bytesRead = file.Read(buffer, 0, (int)Math.Min(buffer.Length, sizeToRead))) > 0)
                         {
                             fileStream.Write(buffer, 0, bytesRead);
                             sizeToRead -= bytesRead;
                         }
 
                         file.Close();
+                        if(d.comp != 0 && !String.IsNullOrEmpty(d.path))
+                        {
+                            File.Delete(d.path);
+                        }
                     }
                     else
                     {
@@ -392,10 +410,10 @@ namespace Arfer
                                 using (BinaryReader file = new BinaryReader(entry.Open()))
                                 {
                                     int bytesRead;
-                                    long sizeToRead = d.size;
-                                    while (sizeToRead > 0 && (bytesRead = file.Read(buffer, 0, (int)Math.Min(buffer.Length, d.size))) > 0)
+                                    long sizeToRead = Convert.ToInt64(d.size);
+                                    while (sizeToRead > 0 && (bytesRead = file.Read(buffer, 0,(int)Math.Min(buffer.Length, sizeToRead))) > 0)
                                     {
-                                        fileStream.Write(buffer,0 , bytesRead);
+                                        fileStream.Write(buffer, 0, bytesRead);
                                         sizeToRead -= bytesRead;
                                     }
                                 }
@@ -412,7 +430,7 @@ namespace Arfer
         }
         private void writeToBinary(BinaryWriter writer, TreeNode tree)
         {
-            
+
             if (tree.Tag == null)
             {
                 writer.Write(tree.Text);
@@ -429,9 +447,9 @@ namespace Arfer
                 if (data.size != 0)
                 {
                     writer.Write(currentOffset + data.size);
-                   
-                    toLoad.Add(new LoadData(data.filePath, data.size, data.offset, currentOffset + data.size, data.zip));
+                    toLoad.Add(new LoadData(data.filePath, data.size, data.offset, currentOffset + data.size, data.compressed, data.zip));
                     data.filePath = "";
+                    data.zip = "";
                     data.offset = currentOffset + data.size;
                     currentOffset += data.size;
 
@@ -439,7 +457,7 @@ namespace Arfer
                 writer.Write(data.size);
             }
 
-            
+
             writer.Write(tree.Nodes.Count);
             foreach (TreeNode n in tree.Nodes)
             {
@@ -479,14 +497,19 @@ namespace Arfer
                 data.ext = Path.GetExtension(node.Text);
                 node.Text = Path.GetFileNameWithoutExtension(node.Text);
                 data.compressed = reader.ReadByte();
-                data.filePath = "";
+                                data.filePath = "";
                 
-                data.offset = reader.ReadInt64();
-                data.size = reader.ReadInt64();
+                data.offset = reader.ReadUInt64();
+                data.size = reader.ReadUInt64();
 
                 node.ContextMenuStrip = itemTreeFileNodeRCCM;
                 long headPos = reader.BaseStream.Position;
-                reader.BaseStream.Seek(-data.offset, SeekOrigin.End);
+                reader.BaseStream.Seek(-Convert.ToInt64(data.offset), SeekOrigin.End);
+                if (data.compressed != 0 && data.compressed != byte.MaxValue)
+                {
+                    data.csize = reader.ReadUInt64();
+                    reader.BaseStream.Seek(-sizeof(UInt64), SeekOrigin.Current);
+                }
                 data.data = System.Text.Encoding.UTF8.GetString(reader.ReadBytes((int)Math.Min(500, data.size)));
                 reader.BaseStream.Seek(headPos, SeekOrigin.Begin);
 
@@ -607,7 +630,7 @@ namespace Arfer
                 data.zip = null;
                 using (FileStream file = File.Open(path, FileMode.Open))
                 {
-                    data.size = file.Length;
+                    data.size = Convert.ToUInt64(file.Length);
                     BinaryReader br = new BinaryReader(file);
                     data.data = System.Text.Encoding.UTF8.GetString(br.ReadBytes((int)(data.size % 500)));
                 }
@@ -615,7 +638,7 @@ namespace Arfer
             else
             {
                 data.zip = zipPath;
-                data.size = entry.Length;
+                data.size = Convert.ToUInt64( entry.Length);
                 using (StreamReader file = new StreamReader(entry.Open()))
                 {
                     char[] buffer = new char[500];
@@ -733,7 +756,7 @@ namespace Arfer
                 Point pt = ((TreeView)sender).PointToClient(new Point(e.X, e.Y));
                 TreeNode DestinationNode = ((TreeView)sender).GetNodeAt(pt);
 
-                if (DestinationNode != null)
+                if (DestinationNode != null && DestinationNode.Tag == null)
                 {
                     NewNode = (TreeNode)e.Data.GetData("System.Windows.Forms.TreeNode");
 
@@ -804,7 +827,7 @@ namespace Arfer
                                 node.ContextMenuStrip = itemTreeFileNodeRCCM;
                                 TreeData data = new TreeData();
                                 data.offset = 0;
-                                data.size = file.Length;
+                                data.size = Convert.ToUInt64( file.Length);
                                 BinaryReader br = new BinaryReader(file);
                                 data.data = System.Text.Encoding.UTF8.GetString(br.ReadBytes((int)data.size % 500));
                                 //currentOffset += data.size;
@@ -872,27 +895,56 @@ namespace Arfer
             itemTree.CheckBoxes = (itemTree.CheckBoxes) ? false : true;
             checkedNodes.Clear();
         }
+        private void addToChecked(TreeNode node)
+        {
+            node.Checked = true;
+            checkedNodes.Add(node);
+            foreach(TreeNode n in node.Nodes)
+            {
+                addToChecked(n);
+            }
+        }
+        private void removeFromChecked(TreeNode node)
+        {
+            node.Checked = false;
+            checkedNodes.Remove(node);
+            foreach (TreeNode n in node.Nodes)
+            {
+                removeFromChecked(n);
+            }
+        }
+        private bool run = true;
         private void itemTree_AfterCheck(object sender, TreeViewEventArgs e)
         {
-            if (e.Node.Checked)
+            if (run)
             {
-                checkedNodes.Add(e.Node);
-            }
-            else
-            {
-                checkedNodes.Remove(e.Node);
-            }
-            if(checkedNodes.Count == 0)
-            {
-                delChecked.Enabled = false;
-                deleteSelectedToolStripMenuItem.Enabled = false;
-                exportToToolStripMenuItem.Enabled = false;
-            }
-            else
-            {
-                delChecked.Enabled = true;
-                deleteSelectedToolStripMenuItem.Enabled = true;
-                exportToToolStripMenuItem.Enabled = true;
+                run = false;
+                if (e.Node.Checked)
+                {
+                    addToChecked(e.Node);
+                }
+                else
+                {
+                    removeFromChecked(e.Node);
+                }
+
+                if (checkedNodes.Count == 0)
+                {
+                    delChecked.Enabled = false;
+                    deleteSelectedToolStripMenuItem.Enabled = false;
+                    exportToToolStripMenuItem.Enabled = false;
+                    selectedToolStripMenuItem.Enabled = false;
+                    selectedToolStripMenuItem1.Enabled = false;
+                }
+                else
+                {
+                    delChecked.Enabled = true;
+                    deleteSelectedToolStripMenuItem.Enabled = true;
+                    exportToToolStripMenuItem.Enabled = true;
+                    selectedToolStripMenuItem.Enabled = true;
+                    selectedToolStripMenuItem1.Enabled = true;
+                }
+                run = true;
             }
         }
         private void delSel()
@@ -1065,11 +1117,11 @@ namespace Arfer
 
                                 using (FileStream file = File.Open(packOpenedPath, FileMode.Open))
                                 {
-                                    file.Seek(-data.offset, SeekOrigin.End);
+                                    file.Seek(-Convert.ToInt64(data.offset), SeekOrigin.End);
                                     byte[] buffer = new byte[2048];
                                     int bytesRead;
-                                    long sizeToRead = data.size;
-                                    while (sizeToRead > 0 && (bytesRead = file.Read(buffer, 0, (int)Math.Min(buffer.Length, data.size))) > 0)
+                                    long sizeToRead = Convert.ToInt64(data.size);
+                                    while (sizeToRead > 0 && (bytesRead = file.Read(buffer, 0, (int)Math.Min(buffer.Length, Convert.ToInt32(data.size)))) > 0)
                                     {
                                         writer.Write(buffer, 0, bytesRead);
                                         sizeToRead -= bytesRead;
@@ -1095,8 +1147,8 @@ namespace Arfer
                                     {
                                         byte[] buffer = new byte[2048];
                                         int bytesRead;
-                                        long sizeToRead = data.size;
-                                        while (sizeToRead > 0 && (bytesRead = file.Read(buffer, 0, (int)Math.Min(buffer.Length, data.size))) > 0)
+                                        long sizeToRead = Convert.ToInt64( data.size);
+                                        while (sizeToRead > 0 && (bytesRead = file.Read(buffer, 0, (int)Math.Min(buffer.Length, Convert.ToInt32(sizeToRead)))) > 0)
                                         {
                                             writer.Write(buffer, 0, bytesRead);
                                             sizeToRead -= bytesRead;
@@ -1157,10 +1209,10 @@ namespace Arfer
             UInt64 size, ref UInt64 sizeCompressed, ref UInt64 sizeUncompressed, ref IntPtr cdata);
         [DllImport("LZ77Compression.dll")]
         private static extern void UncompressLz77(
-            ref IntPtr rdata, ref UInt64 size, UInt64 sizeCompressed, UInt64 sizeUncompressed, 
+            [MarshalAs(UnmanagedType.LPArray)] byte[] rdata, UInt64 sizeCompressed, UInt64 sizeUncompressed,
             [In, MarshalAs(UnmanagedType.LPArray)] byte[] cdata);
 
-        private void toolStripButton1_Click(object sender, EventArgs e)
+    private void toolStripButton1_Click(object sender, EventArgs e)
         {
             FileInfo info = new FileInfo("bunny.obj");
         
@@ -1181,40 +1233,43 @@ namespace Arfer
                     writer.Write(myArray, 0, Convert.ToInt32(cdata.sizeComp));                                
                 }
 
-                using (BinaryReader reader = new BinaryReader(File.Open("comp.asd", FileMode.Open)))
-                {
-                    CompressedData cdata2 = new CompressedData();
-                    RawData data2 = new RawData();
-                    cdata2.sizeComp = reader.ReadUInt64();
-                    cdata2.sizeUnComp = reader.ReadUInt64();
-                    data2.data = reader.ReadBytes(Convert.ToInt32(cdata2.sizeComp));
+                //using (BinaryReader reader = new BinaryReader(File.Open("comp.asd", FileMode.Open)))
+                //{
+                //    CompressedData cdata2 = new CompressedData();
+                //    RawData data2 = new RawData();
+                //    cdata2.sizeComp = reader.ReadUInt64();
+                //    cdata2.sizeUnComp = reader.ReadUInt64();
+                //    data2.data = reader.ReadBytes(Convert.ToInt32(cdata2.sizeComp));
 
 
-                    UncompressLz77(ref cdata2.data, ref data2.size, cdata2.sizeComp, cdata2.sizeUnComp, data2.data);
-                    byte[] myArray2 = new byte[Convert.ToInt32(data2.size)];
-                    Marshal.Copy(cdata2.data, myArray2, 0, Convert.ToInt32(data2.size));
-                    char[] st = System.Text.Encoding.UTF8.GetString(myArray2).ToCharArray();
-                    int o = myArray2.Length;
-                    for (int i = 0; i < data.data.Length; i++)
-                    {
-                        if (data.data[i] != myArray2[i])
-                        {
-                            int asd = 0;
-                        }
-                    }
+                //    UncompressLz77(ref cdata2.data, cdata2.sizeComp, cdata2.sizeUnComp, data2.data);
+                //    byte[] myArray2 = new byte[Convert.ToInt32(data2.size)];
+                //    Marshal.Copy(cdata2.data, myArray2, 0, Convert.ToInt32(data2.size));
+                //    char[] st = Encoding.UTF8.GetString(myArray2).ToCharArray();
+                //    int o = myArray2.Length;
+                //    for (int i = 0; i < data.data.Length; i++)
+                //    {
+                //        if (data.data[i] != myArray2[i])
+                //        {
+                //            int asd = 0;
+                //        }
+                //    }
 
-                }
+                //}
             }
            
 
         }
 
-        private void compressToolStripMenuItem1_Click(object sender, EventArgs e)
+        private bool compressNode(TreeNode node)
         {
-            TreeNode node = itemTree.SelectedNode;
             TreeData data = (TreeData)node.Tag;
-
-            if(String.IsNullOrEmpty(data.zip))
+            if (data.compressed != 0 && data.compressed != byte.MaxValue)
+                return false;
+            UInt64 size = data.size;
+            byte[] bytes;
+            string path = data.filePath;
+            if (String.IsNullOrEmpty(data.zip))
             {
                 if (data.offset == 0)
                 {
@@ -1222,33 +1277,311 @@ namespace Arfer
 
                     using (BinaryReader file = new BinaryReader(info.OpenRead()))
                     {
-                        UInt64 size = Convert.ToUInt64(data.size);
-                        byte[] bytes = file.ReadBytes(Convert.ToInt32(data.size));
-
-                        UInt64 cSize= 0;
-                        UInt64 ucSize = 0 ;
-                        IntPtr cdata= new IntPtr(0);
-                        CompressLz77(bytes, size, ref cSize, ref ucSize, ref cdata);
-
+                        bytes = file.ReadBytes(Convert.ToInt32(data.size));
                     }
+
+
+
                 }
                 else
                 {
-
+                    using (BinaryReader file = new BinaryReader(File.Open(packOpenedPath, FileMode.Open)))
+                    {
+                        file.BaseStream.Seek(-Convert.ToInt64(data.offset), SeekOrigin.End);
+                        bytes = file.ReadBytes(Convert.ToInt32(data.size));
+                        path = node.Text + data.ext;
+                    }
                 }
             }
             else
             {
+                using (ZipArchive archive = ZipFile.OpenRead(data.zip))
+                {
+                    ZipArchiveEntry entry = archive.GetEntry(data.filePath);
+                    using (BinaryReader file = new BinaryReader(entry.Open()))
+                    {
+                        bytes = file.ReadBytes(Convert.ToInt32(data.size));
 
+                    }
+                }
             }
+            UInt64 cSize = 0;
+            UInt64 ucSize = 0;
+            IntPtr cdata = new IntPtr(0);
+            CompressLz77(bytes, size, ref cSize, ref ucSize, ref cdata);
+
+            double p = Convert.ToDouble(cSize) / Convert.ToDouble(size);
+            if (p > 0.90)
+                return false;
+
+            if (data.compressed == byte.MaxValue)
+                path = Path.GetFileNameWithoutExtension(path);
+
+            data.filePath = Path.GetFileName(path) + ".lz77";
+            data.compressed = 1;
+            data.offset = 0;
+            data.csize = data.size;
+            data.zip = null;
+            data.size = cSize + sizeof(UInt64);
+            using (BinaryWriter ofile = new BinaryWriter(File.Create(data.filePath)))
+            {
+                byte[] myArray = new byte[Convert.ToInt32(cSize)];
+                Marshal.Copy(cdata, myArray, 0, Convert.ToInt32(cSize));
+                
+                ofile.Write(data.csize);
+                ofile.Write(myArray);
+                Marshal.FreeHGlobal(cdata);
+            }
+   
+            return true;
+        }
+        private bool uncompressNode(TreeNode node)
+        {
+            TreeData data = (TreeData)node.Tag;
+            if (data.compressed == 0 || data.compressed == byte.MaxValue)
+                return false;
+            byte[] bytes;
+            UInt64 size;
+            if (data.offset == 0)
+            {
+                FileInfo info = new FileInfo(data.filePath);
+
+                using (BinaryReader file = new BinaryReader(info.OpenRead()))
+                {
+                    size = file.ReadUInt64();
+                    bytes = file.ReadBytes(Convert.ToInt32(data.size - sizeof(UInt64)));
+                }
+            }
+            else
+            {
+                using (BinaryReader file = new BinaryReader(File.Open(packOpenedPath, FileMode.Open)))
+                {
+                    file.BaseStream.Seek(-Convert.ToInt64(data.offset), SeekOrigin.End);
+                    size = file.ReadUInt64();
+                    bytes = file.ReadBytes(Convert.ToInt32(data.size - sizeof(UInt64)));
+                    data.filePath = node.Text;
+                }
+            }
+            byte[] rdata = new byte[size];
+            UInt64 cSize = data.size - sizeof(UInt64);
+            UInt64 ucSize = 0;
+            UncompressLz77(rdata, cSize, ucSize, bytes);
+
+            File.Delete(data.filePath);
+            data.filePath = Path.GetFileNameWithoutExtension(data.filePath) + ".puc";
+            data.compressed = byte.MaxValue;
+            data.csize = 0;
+            data.size = size;
+            using (BinaryWriter ofile = new BinaryWriter(File.Create(data.filePath)))
+            {
+                ofile.Write(rdata);
+            }
+           
+            return true;
+        }
+        private void compressToolStripMenuItem1_Click(object sender, EventArgs e)
+        {
+            if (compressNode(itemTree.SelectedNode))
+            {
+                setSelectedNode(itemTree.SelectedNode);
+                changed();
+            }
+        }
+
+        private void uncompressToolStripMenuItem1_Click(object sender, EventArgs e)
+        {
+            if (uncompressNode(itemTree.SelectedNode))
+            {
+                setSelectedNode(itemTree.SelectedNode);
+                changed();
+            }
+                
+        }
+        private void compressAll(TreeNode node, BackgroundWorker worker)
+        {
+            
+            if (node.Nodes.Count == 0)
+            {               
+                if (node.Tag != null)
+                {
+                    worker.ReportProgress(progressBar1.Value + 1, node.Text);
+                    compressNode(node);
+                }
+            }
+            else
+            {
+                foreach(TreeNode n in node.Nodes)
+                {
+                    compressAll(n, worker);
+                }
+            }
+        }
+        private void uncompressAll(TreeNode node, BackgroundWorker worker)
+        {
+            
+            if (node.Nodes.Count == 0)
+            {
+                if (node.Tag != null)
+                {
+                    worker.ReportProgress(progressBar1.Value + 1, node.Text);
+                    uncompressNode(node);
+                }
+            }
+            else
+            {
+                foreach (TreeNode n in node.Nodes)
+                {
+                    uncompressAll(n, worker);
+                }
+            }
+        }
+        private void allToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            progressBar1.Maximum = itemTree.GetNodeCount(true);
+            progressBar1.Step = 1;
+            progressBar1.Value = 0;
+            progLab.Visible = true;
+            progressBar1.Visible = true;
+            compressWorker.RunWorkerAsync();
+        }
+
+        private void selectedToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            progressBar1.Maximum = itemTree.GetNodeCount(true);
+            progressBar1.Step = 1;
+            progressBar1.Value = 0;
+            progLab.Visible = true;
+            progressBar1.Visible = true;
+            selcW.RunWorkerAsync();
+        }
+
+        private void allToolStripMenuItem1_Click(object sender, EventArgs e)
+        {
+            progressBar1.Maximum = itemTree.GetNodeCount(true);
+            progressBar1.Step = 1;
+            progressBar1.Value = 0;
+            progLab.Visible = true;
+            progressBar1.Visible = true;
+            uncompressWorker.RunWorkerAsync();
+        }
+
+        private void selectedToolStripMenuItem1_Click(object sender, EventArgs e)
+        {
+            progressBar1.Maximum = itemTree.GetNodeCount(true);
+            progressBar1.Step = 1;
+            progressBar1.Value = 0;
+            progLab.Visible = true;
+            progressBar1.Visible = true;
+            selucW.RunWorkerAsync();
+        }
+
+        private void selectiveCompressionToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            progressBar1.Maximum = itemTree.GetNodeCount(true);
+            progressBar1.Step = 1;
+            progressBar1.Value = 0;
+            progLab.Visible = true;
+            progressBar1.Visible = true;
+            compressWorker.RunWorkerAsync();
+        }
+
+        private void compressWorker_DoWork(object sender, DoWorkEventArgs e)
+        {
+            BackgroundWorker backgroundWorker = sender as BackgroundWorker;
+
+           
+            compressAll(itemTree.Nodes[0] ,backgroundWorker);
+        }
+
+        private void compressWorker_ProgressChanged(object sender, ProgressChangedEventArgs e)
+        {
+            progLab.Text = "Compressing " +  (string)e.UserState;
+            progressBar1.Value = e.ProgressPercentage;
+            changed();
+        }
+
+        private void compressWorker_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
+        {
+            setSelectedNode(itemTree.SelectedNode);
+            progLab.Visible = false;
+            progressBar1.Visible = false;
+        }
+
+        private void uncompressWorker_DoWork(object sender, DoWorkEventArgs e)
+        {
+            BackgroundWorker backgroundWorker = sender as BackgroundWorker;
+
+
+            uncompressAll(itemTree.Nodes[0], backgroundWorker);
+        }
+
+        private void uncompressWorker_ProgressChanged(object sender, ProgressChangedEventArgs e)
+        {
+            progLab.Text = "Unompressing " + (string)e.UserState;
+            progressBar1.Value = e.ProgressPercentage;
+            changed();
+        }
+
+        private void uncompressWorker_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
+        {
+            setSelectedNode(itemTree.SelectedNode);
+            progLab.Visible = false;
+            progressBar1.Visible = false;
+        }
+
+        private void selcW_DoWork(object sender, DoWorkEventArgs e)
+        {
+            BackgroundWorker backgroundWorker = sender as BackgroundWorker;
+            foreach (TreeNode n in checkedNodes)
+            {
+                 compressAll(n, backgroundWorker);
+            }
+        }
+
+        private void selcW_ProgressChanged(object sender, ProgressChangedEventArgs e)
+        {
+            progLab.Text = "Compressing " + (string)e.UserState;
+            progressBar1.Value = e.ProgressPercentage;
+            changed();
+        }
+
+        private void selcW_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
+        {
+            setSelectedNode(itemTree.SelectedNode);
+            progLab.Visible = false;
+            progressBar1.Visible = false;
+        }
+
+        private void selucW_DoWork(object sender, DoWorkEventArgs e)
+        {
+            BackgroundWorker backgroundWorker = sender as BackgroundWorker;
+            foreach (TreeNode n in checkedNodes)
+            {
+                uncompressAll(n, backgroundWorker);
+            }
+        }
+
+        private void selucW_ProgressChanged(object sender, ProgressChangedEventArgs e)
+        {
+            progLab.Text = "Uncompressing " + (string)e.UserState;
+            progressBar1.Value = e.ProgressPercentage;
+            changed();
+        }
+
+        private void selucW_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
+        {
+            setSelectedNode(itemTree.SelectedNode);
+            progLab.Visible = false;
+            progressBar1.Visible = false;
         }
     }
 
     class TreeData
     {
-        public long offset;
-        public long size;
+        public UInt64 offset;
+        public UInt64 size;
         public byte compressed;
+        public UInt64 csize;
         public string ext;
         public string filePath;
         public string data;
