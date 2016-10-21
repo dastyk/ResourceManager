@@ -108,11 +108,11 @@ void Resource::Allocate(uint32_t numResources)
 void Resource::UnAllocte()
 {
 	
-	for (uint32_t i = 0; i < count; i++)
+	/*for (uint32_t i = 0; i < count; i++)
 	{
-		if(data.pinned[i].try_lock())
+		data.pinned[i].lock();
 			data.pinned[i].unlock();
 		data.pinned[i].~mutex();
-	}
+	}*/
 	MemoryManager::Release(buffer);
 }
