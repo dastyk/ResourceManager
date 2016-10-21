@@ -145,6 +145,7 @@
   <ItemGroup>
     <ClCompile Include="ChunkyAllocator.cpp" />
     <ClCompile Include="DarferLoader.cpp" />
+    <ClCompile Include="FileLoader.cpp" />
     <ClCompile Include="flexbison\Object.cpp" />
     <ClCompile Include="flexbison\ObjParser.cpp" />
     <ClCompile Include="flexbison\parser.flex.cpp" />
@@ -162,6 +163,7 @@
   <ItemGroup>
     <ClInclude Include="ChunkyAllocator.h" />
     <ClInclude Include="DarferLoader.h" />
+    <ClInclude Include="FileLoader.h" />
     <ClInclude Include="flexbison\FlexLexer.h" />
     <ClInclude Include="flexbison\Object.h" />
     <ClInclude Include="flexbison\ObjParser.h" />
