@@ -141,7 +141,7 @@ pointer FindMatch(unsigned char* window, int windowSize, unsigned char* lookAhea
 
 }
 
-void CompressLz77(void* rdata, uint64_t size, uint64_t* sizeCompressed, uint64_t* sizeUncompressed, void** cdata)
+void CompressLz77(void* rdata, uint64_t size, uint64_t* csize, void** cdata)
 {
 	printf("Compressing\n");
 	unsigned char* inputStream = (unsigned char*)rdata;
@@ -216,18 +216,17 @@ void CompressLz77(void* rdata, uint64_t size, uint64_t* sizeCompressed, uint64_t
 	}
 
 	*cdata = compressed;
-	*sizeCompressed = pointers.size() * 3;
-	*sizeUncompressed = sizeOfInput;
+	*csize = pointers.size() * 3;
 
 }
 
-void UncompressLz77(void** rdata, uint64_t* size, uint64_t sizeCompressed, uint64_t sizeUncompressed, void* cdata)
+void UncompressLz77(void* rdata, uint64_t csize, void* cdata)
 {
 	printf("Uncompressing\n");
 	int currentPos = 0;
-	unsigned char* endData = new unsigned char[sizeUncompressed];
+	unsigned char* endData = (unsigned char*)rdata;
 	unsigned char* data = (unsigned char*)cdata;
-	for (int i = 0; i < sizeCompressed; i += 3)
+	for (int i = 0; i < csize; i += 3)
 	{
 
 		int a = 0;
@@ -250,12 +249,6 @@ void UncompressLz77(void** rdata, uint64_t* size, uint64_t sizeCompressed, uint6
 		}
 	}
 	printf("Uncompression Complete\n");
-
-
-	*rdata = endData;
-	*size = sizeUncompressed;
-
-
 
 }
 
@@ -338,14 +331,14 @@ uint32_t reverse(uint32_t b, uint8_t nrOfBits) // Needed to simplify reading whe
 	return b;
 }
 
-CompressedData32 HuffmanEncode(std::string table, RawData rData)
+void HuffmanEncode(std::string table, void* rdata, uint64_t size, uint64_t* csize, void** cdata)
 {
 
 	std::unordered_map<unsigned char, HuffmanTableEntry> translatedTable;
 	HuffmanTableEntry temp;
 	uint32_t numberTranslated = 0;
 	unsigned int nrOfBitsFound = 0;
-
+	unsigned char* rData = (unsigned char*)rdata;
 	for (int i = 0; i < table.size(); i++)
 	{
 		if (table[i] == ' ')
@@ -374,9 +367,9 @@ CompressedData32 HuffmanEncode(std::string table, RawData rData)
 	int totalBitsWritten = 0;
 	int totalBytesAllocated = 1;
 
-	for (int i = 0; i < rData.size; i++)
+	for (int i = 0; i < size; i++)
 	{
-		HuffmanTableEntry entry = translatedTable[rData.data[i]];
+		HuffmanTableEntry entry = translatedTable[rData[i]];
 		remainingBitsToWrite = entry.nrOfBits;
 
 
@@ -425,36 +418,34 @@ CompressedData32 HuffmanEncode(std::string table, RawData rData)
 
 	//Add on the table to the compressed data and then add the compressed data itself
 
-	CompressedData32 returnData;
-	returnData.sizeCompressed = cData.size() * sizeof(uint32_t) + sizeof(uint8_t) + table.size() * sizeof(uint8_t);
-	returnData.sizeUncompressed = rData.size;
-	returnData.data = new uint32_t[returnData.sizeCompressed];
+
+	*csize = cData.size() * sizeof(uint32_t) + sizeof(uint16_t) + table.size() * sizeof(uint8_t);
+
+	*cdata = new uint32_t[*csize];
 	uint16_t nrOfEntries = (uint16_t)translatedTable.size();
 
-	memcpy(returnData.data, &nrOfEntries, sizeof(uint16_t));
+	memcpy(*cdata, &nrOfEntries, sizeof(uint16_t));
 
 	unsigned int counter = 0;
 	while (counter < table.size())
 	{
-		memcpy((unsigned char*)returnData.data + sizeof(uint16_t) + counter, &table[counter], sizeof(char));
+		memcpy((unsigned char*)*cdata + sizeof(uint16_t) + counter, &table[counter], sizeof(char));
 		counter++;
 	}
 
 	unsigned int counter2 = 0;
 	while (counter2 < cData.size())
 	{
-		memcpy(((unsigned char*)returnData.data) + sizeof(uint16_t) + counter + counter2 * sizeof(uint32_t), &cData[counter2], sizeof(uint32_t));
+		memcpy(((unsigned char*)*cdata) + sizeof(uint16_t) + counter + counter2 * sizeof(uint32_t), &cData[counter2], sizeof(uint32_t));
 		counter2++;
 	}
-
-	return returnData;
 }
 
-CompressedData32 CompressHuffman(RawData rData)
+void CompressHuffman(void* rdata, uint64_t size, uint64_t* csize, void** cdata)
 {
 	//https://distributedalgorithm.wordpress.com/2016/01/02/huffman-coding-the-optimal-prefix-code/
-	printf("Started Huffman Compression%c\n", rData.data[0]);
-	std::vector<HuffmanNode> nodes = CountBytes(rData.data, rData.size);
+	printf("Started Huffman Compression\n");
+	std::vector<HuffmanNode> nodes = CountBytes((unsigned char*)rdata, size);
 	HuffmanNode* temp1;
 	HuffmanNode* temp2;
 	long long int position;
@@ -507,12 +498,11 @@ CompressedData32 CompressHuffman(RawData rData)
 
 	//--------------------------------------------------------------------------------------------------------------
 
-	CompressedData32 cData = HuffmanEncode(table, rData);
+	HuffmanEncode(table, (unsigned char*)rdata, size, csize, cdata);
 	printf("Huffman Compression complete\n");
-	return cData;
 }
 
-RawData UncompressHuffman(CompressedData32 cData)
+void UncompressHuffman(void* rdata, uint64_t size, void* cdata)
 {
 	//Get the information stored in the start of the data
 	printf("Started Huffman Uncompression\n");
@@ -520,19 +510,19 @@ RawData UncompressHuffman(CompressedData32 cData)
 	std::string table;
 	unsigned int counter = 2;
 	char readByte;
-
+	uint32_t* cData = (uint32_t*)cdata;
 	uint16_t nrOfEntries = 0;
-	memcpy(&nrOfEntries, &cData.data[0], sizeof(uint16_t));
+	memcpy(&nrOfEntries, &cData[0], sizeof(uint16_t));
 
 	while (foundEndLines < nrOfEntries)
 	{
-		memcpy(&readByte, (unsigned char*)cData.data + sizeof(unsigned char) * counter, sizeof(unsigned char));
+		memcpy(&readByte, (unsigned char*)cData + sizeof(unsigned char) * counter, sizeof(unsigned char));
 
 		table += readByte;
 
 		if (readByte == '\n')
 		{
-			memcpy(&readByte, (unsigned char*)cData.data + sizeof(unsigned char) * counter + 1, sizeof(unsigned char));
+			memcpy(&readByte, (unsigned char*)cData + sizeof(unsigned char) * counter + 1, sizeof(unsigned char));
 
 			if (readByte != '\n')
 				foundEndLines++;
@@ -586,9 +576,6 @@ RawData UncompressHuffman(CompressedData32 cData)
 	uint8_t posInByte = 0;
 	std::string foundCode("");
 
-	RawData rData;
-	rData.data = new unsigned char[cData.sizeUncompressed];
-	rData.size = cData.sizeUncompressed;
 	unsigned int uncompressedCounter = 0;
 
 	//--------------------------------------------------------------------------------------------------------------
@@ -602,10 +589,10 @@ RawData UncompressHuffman(CompressedData32 cData)
 	uint32_t data = NULL;
 	HuffmanTableEntry toCheck;
 	uint64_t readBits = 0;
-
-	while (translatedBytes < cData.sizeUncompressed)
+	unsigned char* rData = (unsigned char*)rdata;
+	while (translatedBytes < size)
 	{
-		memcpy(&data, (unsigned char*)cData.data + counter + counter2 * sizeof(uint32_t), sizeof(uint32_t));
+		memcpy(&data, (unsigned char*)cData + counter + counter2 * sizeof(uint32_t), sizeof(uint32_t));
 
 		bit = (data >> posInByte) & 1;
 		toCheck.bits |= bit << toCheck.nrOfBits;
@@ -619,7 +606,7 @@ RawData UncompressHuffman(CompressedData32 cData)
 		}
 		else
 		{
-			rData.data[uncompressedCounter] = got->second;
+			rData[uncompressedCounter] = got->second;
 			mask = 0;
 			toCheck.bits = 0;
 			toCheck.nrOfBits = 0;
@@ -640,9 +627,32 @@ RawData UncompressHuffman(CompressedData32 cData)
 
 
 	printf("Huffman Uncompression complete\n");
-	return rData;
 
 }
+
+int main()
+{
+	std::ifstream t1;
+	t1.open("Sphere0.arf", std::ios::binary);      // open input file
+	t1.seekg(0, std::ios::end);    // go to the end
+	uint64_t rSize = t1.tellg();           // report location (this is the length)
+	t1.seekg(0, std::ios::beg);    // go back to the beginning
+	unsigned char* rData = new unsigned char[rSize];    // allocate memory for a buffer of appropriate dimension
+	t1.read((char*)rData, rSize);       // read the whole file into the buffer
+	t1.close();
+
+	uint64_t lz77sizeC = 0;
+	void* lz77Data;
+	CompressLz77(rData, rSize, &lz77sizeC, &lz77Data);
+
+	uint64_t huffsizeC = 0;
+	void* huffData;
+	CompressHuffman(lz77Data, lz77sizeC, &huffsizeC, &huffData);
+
+	UncompressHuffman(lz77Data, lz77sizeC, huffData);
+
+}
+
 
 //
 //int main()

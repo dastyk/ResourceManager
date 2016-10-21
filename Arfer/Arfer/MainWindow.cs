@@ -60,7 +60,13 @@ namespace Arfer
                 else
                     ucSizeInfo.Visible = false;
                 if (data.compressed == 1)
-                    nodeComp.Text += "LC77.";
+                    nodeComp.Text += "LZ77-HUFF.";
+                else if(data.compressed == 2)
+                    nodeComp.Text += "LZ77.";
+                else if(data.compressed == 3)
+                    nodeComp.Text += "HUFF-LZ77.";
+                else if(data.compressed == 4)
+                    nodeComp.Text += "HUFF.";
                 else
                     nodeComp.Text += "Not compressed.";
                 nodeExt.Text = "Extension: " + data.ext;
@@ -442,12 +448,15 @@ namespace Arfer
                 writer.Write(true);
                 TreeData data = (TreeData)tree.Tag;
 
+                byte com = data.compressed;
+                if (data.compressed == byte.MaxValue)
+                    data.compressed = 0;
 
                 writer.Write(data.compressed);
                 if (data.size != 0)
                 {
                     writer.Write(currentOffset + data.size);
-                    toLoad.Add(new LoadData(data.filePath, data.size, data.offset, currentOffset + data.size, data.compressed, data.zip));
+                    toLoad.Add(new LoadData(data.filePath, data.size, data.offset, currentOffset + data.size, com, data.zip));
                     data.filePath = "";
                     data.zip = "";
                     data.offset = currentOffset + data.size;
@@ -505,7 +514,7 @@ namespace Arfer
                 node.ContextMenuStrip = itemTreeFileNodeRCCM;
                 long headPos = reader.BaseStream.Position;
                 reader.BaseStream.Seek(-Convert.ToInt64(data.offset), SeekOrigin.End);
-                if (data.compressed != 0 && data.compressed != byte.MaxValue)
+                if (data.compressed > 0)
                 {
                     data.csize = reader.ReadUInt64();
                     reader.BaseStream.Seek(-sizeof(UInt64), SeekOrigin.Current);
@@ -1206,66 +1215,26 @@ namespace Arfer
         }
         [DllImport("LZ77Compression.dll")]
         private static extern void CompressLz77([In, MarshalAs(UnmanagedType.LPArray)] byte[] rdata,
-            UInt64 size, ref UInt64 sizeCompressed, ref UInt64 sizeUncompressed, ref IntPtr cdata);
+            UInt64 size, ref UInt64 sizeCompressed, ref IntPtr cdata);
         [DllImport("LZ77Compression.dll")]
         private static extern void UncompressLz77(
-            [MarshalAs(UnmanagedType.LPArray)] byte[] rdata, UInt64 sizeCompressed, UInt64 sizeUncompressed,
+            [MarshalAs(UnmanagedType.LPArray)] byte[] rdata, UInt64 sizeCompressed,
+            [In, MarshalAs(UnmanagedType.LPArray)] byte[] cdata);
+        [DllImport("LZ77Compression.dll")]
+        private static extern void CompressHuffman([In, MarshalAs(UnmanagedType.LPArray)] byte[] rdata,
+            UInt64 size, ref UInt64 sizeCompressed, ref IntPtr cdata);
+        [DllImport("LZ77Compression.dll")]
+        private static extern void UncompressHuffman(
+            [MarshalAs(UnmanagedType.LPArray)] byte[] rdata, UInt64 size,
             [In, MarshalAs(UnmanagedType.LPArray)] byte[] cdata);
 
-    private void toolStripButton1_Click(object sender, EventArgs e)
-        {
-            FileInfo info = new FileInfo("bunny.obj");
-        
-            using (BinaryReader file = new BinaryReader(File.Open("bunny.obj", FileMode.Open)))
-            {
-                RawData data = new RawData();
-                data.size = Convert.ToUInt64(info.Length);
-                data.data = file.ReadBytes(Convert.ToInt32(data.size));
 
-                CompressedData cdata = new CompressedData();
-                CompressLz77(data.data, data.size, ref cdata.sizeComp, ref cdata.sizeUnComp, ref cdata.data);
-                using (BinaryWriter writer = new BinaryWriter(File.Open("comp.asd", FileMode.OpenOrCreate)))
-                {
-                    writer.Write(cdata.sizeComp);
-                    writer.Write(cdata.sizeUnComp);
-                    byte[] myArray = new byte[Convert.ToInt32(cdata.sizeComp)];
-                    Marshal.Copy(cdata.data, myArray, 0, Convert.ToInt32(cdata.sizeComp));
-                    writer.Write(myArray, 0, Convert.ToInt32(cdata.sizeComp));                                
-                }
-
-                //using (BinaryReader reader = new BinaryReader(File.Open("comp.asd", FileMode.Open)))
-                //{
-                //    CompressedData cdata2 = new CompressedData();
-                //    RawData data2 = new RawData();
-                //    cdata2.sizeComp = reader.ReadUInt64();
-                //    cdata2.sizeUnComp = reader.ReadUInt64();
-                //    data2.data = reader.ReadBytes(Convert.ToInt32(cdata2.sizeComp));
-
-
-                //    UncompressLz77(ref cdata2.data, cdata2.sizeComp, cdata2.sizeUnComp, data2.data);
-                //    byte[] myArray2 = new byte[Convert.ToInt32(data2.size)];
-                //    Marshal.Copy(cdata2.data, myArray2, 0, Convert.ToInt32(data2.size));
-                //    char[] st = Encoding.UTF8.GetString(myArray2).ToCharArray();
-                //    int o = myArray2.Length;
-                //    for (int i = 0; i < data.data.Length; i++)
-                //    {
-                //        if (data.data[i] != myArray2[i])
-                //        {
-                //            int asd = 0;
-                //        }
-                //    }
-
-                //}
-            }
-           
-
-        }
         private bool compressNode(TreeNode node)
         {
             TreeData data = (TreeData)node.Tag;
             if (data.compressed != 0 && data.compressed != byte.MaxValue)
                 return false;
-            
+
             byte[] bytes;
             string path = data.filePath;
             if (String.IsNullOrEmpty(data.zip))
@@ -1311,44 +1280,189 @@ namespace Arfer
             byte[] lz77data = null;
             UInt64 cSize = 0;
             byte[] cData = null;
+            double p = 1.0;
             double lz77p = compressLZ77(bytes, size, ref lz77data, ref lz77cs);
+            UInt64 size2 = 0;
+            byte compressed = 0;
             if (lz77p < 0.9)
             {
-                UInt64 lz77huffc = 0;
+                UInt64 lz77huffcs = 0;
                 byte[] lz77huffdata = null;
-                //if(huff(balbal)
-                cSize = lz77cs;
-                cData = lz77data;
+                double lz77huffp = compressHuff(lz77data, lz77cs, ref lz77huffdata, ref lz77huffcs) ;
+                if (lz77huffp < 0.9)
+                {
+                    lz77huffp *= lz77p;
+                    if (lz77huffp < lz77p)
+                    {
+                        p = lz77huffp;
+                        cData = lz77huffdata;
+                        cSize = lz77huffcs;
+                        compressed = 1;
+                        size2 = lz77cs;
+                    }
+                    else
+                    {
+                        p = lz77p;
+                        cData = lz77data;
+                        cSize = lz77cs;
+                        compressed = 2;
+                    }
+                }
             }
-            else
-                return false;
-            UInt64 huffc = 0;
-            byte[] huffdata = null;
 
-                        if (data.compressed == byte.MaxValue)
+            UInt64 huffcs = 0;
+            byte[] huffdata = null;
+            double huffp = compressHuff(bytes, size, ref huffdata, ref huffcs);
+            if (huffp < 0.9)
+            {
+                UInt64 hufflz77cs = 0;
+                byte[] hufflz77data = null;
+                double hufflz77p = compressLZ77(huffdata, huffcs, ref hufflz77data, ref hufflz77cs) * huffp;
+                if (hufflz77p < 0.9)
+                {
+                    hufflz77p *= huffp;
+                    if (hufflz77p < huffp)
+                    {
+                        if (hufflz77p < p)
+                        {
+                            p = hufflz77p;
+                            cData = hufflz77data;
+                            cSize = hufflz77cs;
+                            compressed = 3;
+                            size2 = huffcs;
+                        }
+                    }
+                    else
+                    {
+                        if (huffp < p)
+                        {
+                            p = huffp;
+                            cData = huffdata;
+                            cSize = huffcs;
+                            compressed = 4;
+                        }
+                    }
+                }
+            }
+
+            if (p > 0.9)
+                return false;
+
+            if (data.compressed == byte.MaxValue)
                 path = Path.GetFileNameWithoutExtension(path);
 
-            data.filePath = Path.GetFileName(path) + ".lz77";
-            data.compressed = 1;
+            data.filePath = Path.GetFileName(path) + ".smc";
+            data.compressed = compressed;
             data.offset = 0;
             data.csize = data.size;
             data.zip = null;
-            data.size = cSize + sizeof(UInt64);
+            if (compressed == 1 || compressed == 3)
+                data.size = cSize + sizeof(UInt64) * 2;
+            else
+                data.size = cSize + sizeof(UInt64);
             using (BinaryWriter ofile = new BinaryWriter(File.Create(data.filePath)))
             {
-                ofile.Write(data.csize);
-                ofile.Write(cData);
                 
+                ofile.Write(data.csize);
+                if (compressed == 1 || compressed == 3)
+                    ofile.Write(size2);
+                ofile.Write(cData);
+
             }
 
 
             return true;
         }
+        private bool uncompressNode(TreeNode node)
+        {
+            TreeData data = (TreeData)node.Tag;
+            if (data.compressed == 0 || data.compressed == byte.MaxValue)
+                return false;
+            byte[] bytes;
+            UInt64 rsize = data.size - sizeof(UInt64);
+            UInt64 size;
+            UInt64 size2 = 0;
+            if (data.offset == 0)
+            {
+                FileInfo info = new FileInfo(data.filePath);
+
+                using (BinaryReader file = new BinaryReader(info.OpenRead()))
+                {
+                    size = file.ReadUInt64();
+
+                    if (data.compressed == 1 || data.compressed == 3)
+                    {
+                        size2 = file.ReadUInt64();
+                        rsize -= sizeof(UInt64);
+                    }
+
+                    bytes = file.ReadBytes(Convert.ToInt32(rsize));
+                }
+            }
+            else
+            {
+                using (BinaryReader file = new BinaryReader(File.Open(packOpenedPath, FileMode.Open)))
+                {
+                    file.BaseStream.Seek(-Convert.ToInt64(data.offset), SeekOrigin.End);
+                    size = file.ReadUInt64();
+                    if (data.compressed == 1 || data.compressed == 3)
+                    {
+                        size2 = file.ReadUInt64();
+                        rsize -= sizeof(UInt64);
+                    }
+
+                    bytes = file.ReadBytes(Convert.ToInt32(rsize));
+                    data.filePath = node.Text + data.ext;
+                }
+            }
+
+            byte[] rData = null;
+            if(data.compressed == 1)
+            {
+                // LZ77-huff
+                byte[] hData = null;
+                uncompressHuff(ref hData, size2, bytes, rsize);
+                uncompressLZ77(ref rData, size, hData, size2);
+            }
+            else if(data.compressed == 2)
+            {
+                // LZ77
+                uncompressLZ77(ref rData, size, bytes, rsize);
+            }
+            else if(data.compressed == 3)
+            {
+                // HUFF-LZ77
+                byte[] lz77Data = null;
+                uncompressHuff(ref lz77Data, size2, bytes, rsize);
+                uncompressLZ77(ref rData, size, lz77Data, size2);
+            }
+            else
+            {
+                // HUFF
+                uncompressHuff(ref rData, size, bytes, rsize);
+            }
+
+
+
+
+            File.Delete(data.filePath);
+            data.filePath = Path.GetFileNameWithoutExtension(data.filePath) + ".puc";
+            data.compressed = byte.MaxValue;
+            data.csize = 0;
+            data.size = size;
+            using (BinaryWriter ofile = new BinaryWriter(File.Create(data.filePath)))
+            {
+                ofile.Write(rData);
+            }
+            return true;
+        }
+
+
         private double compressLZ77(byte[] data, ulong size,ref byte[] cdata, ref ulong csize)
         {
            
             IntPtr cdataPtr = new IntPtr(0);
-            CompressLz77(data, size, ref csize, ref size, ref cdataPtr);
+            CompressLz77(data, size, ref csize, ref cdataPtr);
 
             double p = Convert.ToDouble(csize) / Convert.ToDouble(size);
             cdata = new byte[csize];
@@ -1359,48 +1473,35 @@ namespace Arfer
             return p;
 
         }
-        private bool uncompressNode(TreeNode node)
+        private double compressHuff(byte[] data, ulong size, ref byte[] cdata, ref ulong csize)
         {
-            TreeData data = (TreeData)node.Tag;
-            if (data.compressed == 0 || data.compressed == byte.MaxValue)
-                return false;
-            byte[] bytes;
-            UInt64 size;
-            if (data.offset == 0)
-            {
-                FileInfo info = new FileInfo(data.filePath);
+            IntPtr cdataPtr = new IntPtr(0);
+            CompressHuffman(data, size, ref csize, ref cdataPtr);
 
-                using (BinaryReader file = new BinaryReader(info.OpenRead()))
-                {
-                    size = file.ReadUInt64();
-                    bytes = file.ReadBytes(Convert.ToInt32(data.size - sizeof(UInt64)));
-                }
-            }
-            else
-            {
-                using (BinaryReader file = new BinaryReader(File.Open(packOpenedPath, FileMode.Open)))
-                {
-                    file.BaseStream.Seek(-Convert.ToInt64(data.offset), SeekOrigin.End);
-                    size = file.ReadUInt64();
-                    bytes = file.ReadBytes(Convert.ToInt32(data.size - sizeof(UInt64)));
-                    data.filePath = node.Text;
-                }
-            }
-            byte[] rdata = new byte[size];
-            UInt64 cSize = data.size - sizeof(UInt64);
-            UInt64 ucSize = 0;
-            UncompressLz77(rdata, cSize, ucSize, bytes);
+            double p = Convert.ToDouble(csize) / Convert.ToDouble(size);
+            cdata = new byte[csize];
+            if (p < 0.9)
+                Marshal.Copy(cdataPtr, cdata, 0, Convert.ToInt32(csize));
+            Marshal.FreeHGlobal(cdataPtr);
 
-            File.Delete(data.filePath);
-            data.filePath = Path.GetFileNameWithoutExtension(data.filePath) + ".puc";
-            data.compressed = byte.MaxValue;
-            data.csize = 0;
-            data.size = size;
-            using (BinaryWriter ofile = new BinaryWriter(File.Create(data.filePath)))
-            {
-                ofile.Write(rdata);
-            }
+            return p;
+        }
+        private bool uncompressLZ77(ref byte[] data, ulong size, byte[] cdata, ulong cSize)
+        {
+
+            data = new byte[size];
+            UncompressLz77(data, cSize, cdata);
+
            
+            return true;
+        }
+        private bool uncompressHuff(ref byte[] data, ulong size, byte[] cdata, ulong cSize)
+        {
+
+            data = new byte[size];
+            UncompressHuffman(data, size, cdata);
+
+
             return true;
         }
         private void compressToolStripMenuItem1_Click(object sender, EventArgs e)
