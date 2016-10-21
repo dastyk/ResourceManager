@@ -1,6 +1,6 @@
 #include "DarferLoader.h"
-
-
+#include "MemoryManager.h"
+#include <CompressLZ77.h>
 #include <string>
 #include <algorithm>
 void DarferLoader::ReadBinary(std::unordered_map<uint64_t, EntryData>& entries)
@@ -23,8 +23,7 @@ void DarferLoader::ReadBinary(std::unordered_map<uint64_t, EntryData>& entries)
 	{
 		EntryData entry;
 		entry.extHash = std::hash<std::string>{}(name.substr(name.find_last_of(".") + 1));
-		bool compressed = false;
-		drfFile.read((char*)&compressed, 1);
+		drfFile.read((char*)&entry.compressionType, sizeof(uint8_t));
 		drfFile.read((char*)&entry.offset, 8);
 		drfFile.read((char*)&entry.size, 8);
 
@@ -76,12 +75,61 @@ RawData DarferLoader::LoadResource(SM_GUID guid, std::function<char*(uint32_t da
 	int64_t s = -(int64_t)find->second.offset;
 	drfFile.seekg(s, std::ios_base::end);
 	data.size = find->second.size;
-	data.data = allocCallback(data.size);
-	if (data.data == nullptr)
+	uint64_t rawsize = find->second.size;
+	
+	if (find->second.compressionType)
 	{
-		throw std::runtime_error("Chunky Pool Allocator out of memory.");
-	}	
-	drfFile.read((char*)data.data, data.size);
+		uint64_t uncompressedSize;
+		drfFile.read((char*)&uncompressedSize, sizeof(uint64_t));
+
+		char* buffer = (char*)MemoryManager::Alloc(rawsize);
+		uint64_t secondUncompressionSize = 0;
+		if(find->second.compressionType == 1 || find->second.compressionType == 3)
+		{
+			drfFile.read((char*)&secondUncompressionSize, sizeof(uint64_t));
+		}
+		drfFile.read(buffer, rawsize);
+		data.data = allocCallback(uncompressedSize);
+		data.size = uncompressedSize;
+
+		if (data.data == nullptr)
+		{
+			MemoryManager::Release(buffer);
+			throw std::runtime_error("Chunky Pool Allocator out of memory.");
+		}
+		if (find->second.compressionType == 1)//LZ77 then huff
+		{
+			char* huffer = (char*)MemoryManager::Alloc(secondUncompressionSize);
+			UncompressLz77((void*)huffer, rawsize, (void*)buffer);
+			UncompressHuffman((void*)data.data, secondUncompressionSize, (void*)huffer);
+			MemoryManager::Release(huffer);
+		}
+		else if (find->second.compressionType == 2)//Only LZ77
+		{
+			UncompressLz77(data.data, rawsize, buffer);
+		}
+		else if (find->second.compressionType == 3)
+		{
+			char* zuffer = (char*)MemoryManager::Alloc(secondUncompressionSize);
+			UncompressHuffman(zuffer, rawsize, buffer);
+			UncompressLz77(data.data, secondUncompressionSize, zuffer);
+			MemoryManager::Release(zuffer);
+		}
+		else if (find->second.compressionType == 4)
+		{
+			UncompressHuffman(data.data, rawsize, buffer);
+		}
+		MemoryManager::Release(buffer);
+	}
+	else
+	{
+		data.data = allocCallback(data.size);
+		if (data.data == nullptr)
+		{
+			throw std::runtime_error("Chunky Pool Allocator out of memory.");
+		}
+		drfFile.read((char*)data.data, data.size);
+	}
 
 	auto find2 = _fileTypes.find(find->second.extHash);
 	if (find2 == _fileTypes.end())

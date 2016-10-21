@@ -9,6 +9,7 @@ class DarferLoader : public IAssetLoader
 {
 	struct EntryData
 	{
+		uint8_t compressionType;
 		uint32_t extHash;
 		uint64_t offset;
 		uint64_t size;

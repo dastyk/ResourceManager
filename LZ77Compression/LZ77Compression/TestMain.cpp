@@ -11,7 +11,30 @@
 #define lengthAnd 0x1f
 
 #include "CompressLZ77.h"
+struct CompressedData
+{
+	uint64_t sizeCompressed;
+	uint64_t sizeUncompressed;
+	unsigned char* data;
+};
 
+struct RawData
+{
+	RawData()
+	{
+		size = 0;
+		data = nullptr;
+	}
+
+	RawData(uint64_t s, unsigned char* d)
+	{
+		size = s;
+		data = d;
+	}
+
+	uint64_t size;
+	unsigned char* data;
+};
 struct CompressedData32
 {
 	uint64_t sizeCompressed;
@@ -630,28 +653,28 @@ void UncompressHuffman(void* rdata, uint64_t size, void* cdata)
 
 }
 
-int main()
-{
-	std::ifstream t1;
-	t1.open("Sphere0.arf", std::ios::binary);      // open input file
-	t1.seekg(0, std::ios::end);    // go to the end
-	uint64_t rSize = t1.tellg();           // report location (this is the length)
-	t1.seekg(0, std::ios::beg);    // go back to the beginning
-	unsigned char* rData = new unsigned char[rSize];    // allocate memory for a buffer of appropriate dimension
-	t1.read((char*)rData, rSize);       // read the whole file into the buffer
-	t1.close();
-
-	uint64_t lz77sizeC = 0;
-	void* lz77Data;
-	CompressLz77(rData, rSize, &lz77sizeC, &lz77Data);
-
-	uint64_t huffsizeC = 0;
-	void* huffData;
-	CompressHuffman(lz77Data, lz77sizeC, &huffsizeC, &huffData);
-
-	UncompressHuffman(lz77Data, lz77sizeC, huffData);
-
-}
+//int main()
+//{
+//	std::ifstream t1;
+//	t1.open("Sphere0.arf", std::ios::binary);      // open input file
+//	t1.seekg(0, std::ios::end);    // go to the end
+//	uint64_t rSize = t1.tellg();           // report location (this is the length)
+//	t1.seekg(0, std::ios::beg);    // go back to the beginning
+//	unsigned char* rData = new unsigned char[rSize];    // allocate memory for a buffer of appropriate dimension
+//	t1.read((char*)rData, rSize);       // read the whole file into the buffer
+//	t1.close();
+//
+//	uint64_t lz77sizeC = 0;
+//	void* lz77Data;
+//	CompressLz77(rData, rSize, &lz77sizeC, &lz77Data);
+//
+//	uint64_t huffsizeC = 0;
+//	void* huffData;
+//	CompressHuffman(lz77Data, lz77sizeC, &huffsizeC, &huffData);
+//
+//	UncompressHuffman(lz77Data, lz77sizeC, huffData);
+//
+//}
 
 
 //
