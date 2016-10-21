@@ -1148,7 +1148,7 @@ namespace Arfer
                                         byte[] buffer = new byte[2048];
                                         int bytesRead;
                                         long sizeToRead = Convert.ToInt64( data.size);
-                                        while (sizeToRead > 0 && (bytesRead = file.Read(buffer, 0, (int)Math.Min(buffer.Length, Convert.ToInt32( data.size)))) > 0)
+                                        while (sizeToRead > 0 && (bytesRead = file.Read(buffer, 0, (int)Math.Min(buffer.Length, Convert.ToInt32(sizeToRead)))) > 0)
                                         {
                                             writer.Write(buffer, 0, bytesRead);
                                             sizeToRead -= bytesRead;
