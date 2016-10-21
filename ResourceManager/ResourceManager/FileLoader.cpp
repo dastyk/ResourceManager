@@ -47,34 +47,36 @@ RawData FileLoader::LoadResource(SM_GUID guid, std::function<char*(uint32_t data
 	//Get file ending too
 	std::string filename = find->second;
 	std::string fileend;
-	for (std::string::const_reverse_iterator i = filename.crend(); i != filename.crbegin(); i++)
+	for (int i = filename.size() - 1; i > 0; i--)
 	{
-		if (*i != '.')
-			fileend.append(*i, 1);
+		if (filename[i] != '.')
+			fileend.insert(0, 1, filename[i]);
 		else
-			i = filename.crbegin();
+			i = 0;
 	}
 	uint32_t endhash = std::hash<std::string>{} (fileend);
 	auto& find2 = _fileTypes.find(endhash);
 	if (find2 == _fileTypes.end())
 		throw std::exception("Unknown filetype");
 
-	std::ifstream in(find->second);
+	std::ifstream in(find->second, std::ios_base::in | std::ios_base::binary);
 	if (in.fail())
 		throw std::exception("Could not open file to load");
 
 	std::streampos filesize = in.tellg();
 	in.seekg(0, std::ios::end);
 	filesize = in.tellg() - filesize;
-	in.seekg(0);
+	in.seekg(0, std::ios::beg);
 	size_t size = filesize;
 
 	RawData rd;
+	rd.fType = find2->second;
 	rd.size = size;
 	rd.data = allocCallback(size);
 	if (rd.data == nullptr)
 		throw std::exception("Chunky allocator out of memory");
 	in.read((char*)rd.data, filesize);
+
 
 	return rd;
 }

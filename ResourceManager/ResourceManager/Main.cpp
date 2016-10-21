@@ -14,6 +14,7 @@
 #include "flexbison\ObjParser.h"
 #include "ArfData.h"
 #include "DarferLoader.h"
+#include "FileLoader.h"
 #include "Scene.h"
 
 void ArfParser(const Resource::Ptr& resource);
@@ -64,6 +65,7 @@ int main(int argc, char** argv)
 	r.Init(20U * 1024U * 1024U);
 	r.SetEvictPolicy(ResourceManager::EvictPolicies::FirstFit);
 	//r.SetAssetLoader(new ZipLoader("data.dat"));
+	//r.SetAssetLoader(new FileLoader("filelist.txt"));
 	r.SetAssetLoader(new DarferLoader("data.drf"));
 	r.AddParser("jpg",
 		[](const Resource::Ptr& resource)
