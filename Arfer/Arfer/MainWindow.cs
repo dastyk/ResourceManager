@@ -1260,13 +1260,12 @@ namespace Arfer
            
 
         }
-
         private bool compressNode(TreeNode node)
         {
             TreeData data = (TreeData)node.Tag;
             if (data.compressed != 0 && data.compressed != byte.MaxValue)
                 return false;
-            UInt64 size = data.size;
+            
             byte[] bytes;
             string path = data.filePath;
             if (String.IsNullOrEmpty(data.zip))
@@ -1305,16 +1304,28 @@ namespace Arfer
                     }
                 }
             }
+
+
+            UInt64 size = data.size;
+            UInt64 lz77cs = 0;
+            byte[] lz77data = null;
             UInt64 cSize = 0;
-            UInt64 ucSize = 0;
-            IntPtr cdata = new IntPtr(0);
-            CompressLz77(bytes, size, ref cSize, ref ucSize, ref cdata);
-
-            double p = Convert.ToDouble(cSize) / Convert.ToDouble(size);
-            if (p > 0.90)
+            byte[] cData = null;
+            double lz77p = compressLZ77(bytes, size, ref lz77data, ref lz77cs);
+            if (lz77p < 0.9)
+            {
+                UInt64 lz77huffc = 0;
+                byte[] lz77huffdata = null;
+                //if(huff(balbal)
+                cSize = lz77cs;
+                cData = lz77data;
+            }
+            else
                 return false;
+            UInt64 huffc = 0;
+            byte[] huffdata = null;
 
-            if (data.compressed == byte.MaxValue)
+                        if (data.compressed == byte.MaxValue)
                 path = Path.GetFileNameWithoutExtension(path);
 
             data.filePath = Path.GetFileName(path) + ".lz77";
@@ -1325,15 +1336,28 @@ namespace Arfer
             data.size = cSize + sizeof(UInt64);
             using (BinaryWriter ofile = new BinaryWriter(File.Create(data.filePath)))
             {
-                byte[] myArray = new byte[Convert.ToInt32(cSize)];
-                Marshal.Copy(cdata, myArray, 0, Convert.ToInt32(cSize));
-                
                 ofile.Write(data.csize);
-                ofile.Write(myArray);
-                Marshal.FreeHGlobal(cdata);
+                ofile.Write(cData);
+                
             }
-   
+
+
             return true;
+        }
+        private double compressLZ77(byte[] data, ulong size,ref byte[] cdata, ref ulong csize)
+        {
+           
+            IntPtr cdataPtr = new IntPtr(0);
+            CompressLz77(data, size, ref csize, ref size, ref cdataPtr);
+
+            double p = Convert.ToDouble(csize) / Convert.ToDouble(size);
+            cdata = new byte[csize];
+            if(p < 0.9)
+                Marshal.Copy(cdataPtr, cdata, 0, Convert.ToInt32(csize));
+            Marshal.FreeHGlobal(cdataPtr);
+
+            return p;
+
         }
         private bool uncompressNode(TreeNode node)
         {
