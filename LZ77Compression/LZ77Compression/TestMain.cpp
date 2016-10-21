@@ -12,6 +12,13 @@
 
 #include "CompressLZ77.h"
 
+struct CompressedData32
+{
+	uint64_t sizeCompressed;
+	uint64_t sizeUncompressed;
+	uint32_t* data;
+};
+
 struct HuffmanNode
 {
 	char byte = '\0';
@@ -22,9 +29,38 @@ struct HuffmanNode
 
 struct HuffmanTableEntry
 {
-	unsigned int nrOfBits = 0;
+	uint32_t nrOfBits = 0;
 	uint32_t bits = '\0';
+
+	std::size_t operator()() const
+	{
+		uint64_t rValue = nrOfBits;
+		rValue << 16;
+		rValue += bits;
+		return rValue;
+	}
+
+	bool operator==(const HuffmanTableEntry& other) const
+	{
+		return (this->nrOfBits == other.nrOfBits && this->bits == other.bits);
+	}
 };
+
+namespace std
+{
+	template<> struct hash<HuffmanTableEntry>
+	{
+		typedef HuffmanTableEntry argument_type;
+		typedef std::size_t result_type;
+		result_type operator()(argument_type const& s) const
+		{
+			uint64_t rValue = s.nrOfBits;
+			rValue << 16;
+			rValue += s.bits;
+			return rValue;
+		}
+	};
+}
 
 struct pointer
 {
@@ -48,61 +84,6 @@ struct pointer
 	}
 
 };
-
-std::vector<HuffmanNode> CountBytes(unsigned char* data, int size)
-{
-	std::unordered_map<unsigned char, int> bytes;
-	std::vector<HuffmanNode> nodes;
-
-	for (int i = 0; i < size; i++)
-	{
-		std::unordered_map<unsigned char, int>::const_iterator got = bytes.find(data[i]);
-
-		if (got == bytes.end())
-		{
-			bytes[data[i]] = nodes.size();
-
-			HuffmanNode temp;
-			temp.byte = data[i];
-			temp.frequency = 1;
-
-			nodes.push_back(temp);
-		}
-		else
-		{
-			nodes[bytes[data[i]]].frequency += 1;
-		}
-
-		
-	}
-
-	printf("%d unique bytes found\n", bytes.size());
-	
-
-	return nodes;
-}
-
-std::string CreateHuffmanTable(HuffmanNode root, std::string prefix = std::string(""))
-{
-	RawData temp;
-
-	if (root.oneChild == nullptr)
-	{
-		//We found a leaf node
-
-		return std::string(prefix + " " + root.byte + "\n");
-	}
-	else
-	{
-		//Just send it down to the rest, adding on to the prefix as we go
-
-		std::string returnValue;
-		returnValue.append(CreateHuffmanTable(*root.oneChild, std::string(prefix + "1")));
-		returnValue.append(CreateHuffmanTable(*root.zeroChild, std::string(prefix + "0")));
-
-		return returnValue;
-	}
-}
 
 pointer FindMatch(unsigned char* window, int windowSize, unsigned char* lookAhead)
 {
@@ -159,312 +140,6 @@ pointer FindMatch(unsigned char* window, int windowSize, unsigned char* lookAhea
 	return returnValue;
 
 }
-
-unsigned char reverse(unsigned char b, uint8_t nrOfBits) // Needed to simplify reading when decompressing
-{
-	uint8_t top = nrOfBits - 1;
-	uint8_t bottom = 0;
-	uint8_t topBit = 0;
-	uint8_t bottomBit = 0;
-
-	if (nrOfBits >= 2)
-	{
-		while (top > bottom)
-		{
-			topBit = (b >> top) & 1;
-			bottomBit = (b >> bottom) & 1;
-
-			b ^= (-bottomBit ^ b) & (1 << top);
-			b ^= (-topBit ^ b) & (1 << bottom);
-
-			top--;
-			bottom++;
-		}
-	}
-	return b;
-}
-
-CompressedData HuffmanEncode(std::string table, RawData rData)
-{
-	//unsigned char check = reverse(3, 3);
-
-	std::unordered_map<unsigned char, HuffmanTableEntry> translatedTable;
-	HuffmanTableEntry temp;
-	uint32_t numberTranslated = 0;
-	unsigned int nrOfBitsFound = 0;
-
-	for (int i = 0; i < table.size(); i++)
-	{
-		if (table[i] == ' ')
-		{
-			unsigned char byte = table[i + 1];
-			temp.bits = numberTranslated;
-			temp.nrOfBits = nrOfBitsFound;
-
-			translatedTable[byte] = temp;
-			numberTranslated = 0;
-			nrOfBitsFound = 0;
-			i += 2;
-		}
-		else
-		{
-			nrOfBitsFound++;
-			numberTranslated *= 2;
-			numberTranslated += table[i] - '0';
-		}
-	}
-
-	//uint8_t posInByte = 0;
-	uint8_t remainingBitsToWrite = 0;
-	uint8_t remainingSpaceInByte = 8;
-	std::vector<unsigned char> cData;
-	char activeByte = '\0';
-	int totalBitsWritten = 0;
-	int totalBytesAllocated = 1;
-
-	for (int i = 0; i < rData.size; i++)
-	{
-		HuffmanTableEntry entry = translatedTable[rData.data[i]];
-		remainingBitsToWrite = entry.nrOfBits;
-		//remainingSpaceInByte = 8 - posInByte;
-		
-
-		if(remainingSpaceInByte >= remainingBitsToWrite)
-		{
-			unsigned char bits = reverse(entry.bits, entry.nrOfBits);
-			bits = bits << (8 - remainingSpaceInByte);
-			activeByte |= bits;
-			remainingSpaceInByte -= remainingBitsToWrite;
-			totalBitsWritten += remainingBitsToWrite;
-		}
-		else
-		{
-			unsigned char bits = reverse(entry.bits, entry.nrOfBits);
-			unsigned int bitsWritten = 0;
-
-			while (remainingBitsToWrite > 0)
-			{
-				activeByte |= (bits << (8 - remainingSpaceInByte));
-				bits = bits >> remainingSpaceInByte;
-
-				bitsWritten = __min(remainingBitsToWrite, remainingSpaceInByte);
-				remainingSpaceInByte -= bitsWritten;
-
-				if (remainingSpaceInByte == 0)
-				{
-					remainingSpaceInByte = 8;
-					cData.push_back(activeByte);
-					activeByte = '\0';
-					totalBytesAllocated++;
-				} 
-
-				totalBitsWritten += bitsWritten;
-
-				remainingBitsToWrite -= bitsWritten;
-			}
-
-			
-		}
-
-
-	}
-
-	if(activeByte != NULL)
-		cData.push_back(activeByte);
-
-	//Add on the table to the compressed data and then add the compressed data itself
-
-	CompressedData returnData;
-	returnData.sizeCompressed = cData.size() + sizeof(uint8_t) + table.size();
-	returnData.sizeUncompressed = rData.size;
-	returnData.data = new unsigned char[returnData.sizeCompressed];
-	uint8_t nrOfEntries = (uint8_t)translatedTable.size();
-
-	int bit = cData[13];
-
-	memcpy(returnData.data, &nrOfEntries, sizeof(uint8_t));
-
-	for (int i = sizeof(uint8_t); i < table.size() + sizeof(uint8_t); i++)
-	{
-		returnData.data[i] = table[i - sizeof(uint8_t)];
-	}
-
-	for (int i = table.size() + sizeof(uint8_t); i < cData.size() + table.size() + sizeof(uint8_t); i++)
-	{
-		returnData.data[i] = cData[i - (table.size() + sizeof(uint8_t))];
-	}
-
-	return returnData;
-}
-
-CompressedData CompressHuffman(RawData rData)
-{
-	//https://distributedalgorithm.wordpress.com/2016/01/02/huffman-coding-the-optimal-prefix-code/
-	printf("Started Huffman Compression\n");
-	std::vector<HuffmanNode> nodes = CountBytes(rData.data, rData.size);
-	HuffmanNode* temp1;
-	HuffmanNode* temp2;
-	long long int position;
-
-	//while (nodes.size())
-	//{
-	//	temp.frequency = UINT64_MAX;
-	//	position = -1;
-
-	//	for (int i = 0; i < nodes.size(); i++)
-	//	{
-	//		if (nodes[i].frequency < temp.frequency)
-	//		{
-	//			temp = nodes[i];
-	//			position = i;
-	//		}
-	//	}
-	//	
-	//	sortedList.push_back(temp); // KRASCHAR PÅ nodes size = 10
-	//	nodes.erase(nodes.begin() + position);
-	//}
-
-	//---------------------------------------------------------------------------------------------------------------
-	//create the tree
-
-	while (nodes.size() > 1)
-	{
-		temp1 = new HuffmanNode;
-		temp1->frequency = UINT64_MAX;
-		position = -1;
-
-		for (int i = 0; i < nodes.size(); i++)
-		{
-			if (nodes[i].frequency < temp1->frequency)
-			{
-				*temp1 = nodes[i];
-				position = i;
-			}
-		}
-
-		nodes.erase(nodes.begin() + position);
-
-		temp2 = new HuffmanNode;
-		temp2->frequency = UINT64_MAX;
-		position = -1;
-
-		for (int i = 0; i < nodes.size(); i++)
-		{
-			if (nodes[i].frequency < temp2->frequency)
-			{
-				*temp2 = nodes[i];
-				position = i;
-			}
-		}
-		
-		nodes.erase(nodes.begin() + position);
-
-
-		HuffmanNode temp3;
-		temp3.oneChild = temp1;
-		temp3.zeroChild = temp2;
-		temp3.frequency = temp1->frequency + temp2->frequency;
-
-		nodes.push_back(temp3);
-	}
-
-	//--------------------------------------------------------------------------------------------------------------
-	//Create the table
-
-	std::string table = CreateHuffmanTable(nodes[0]);
-
-	//--------------------------------------------------------------------------------------------------------------
-	
-	CompressedData cData = HuffmanEncode(table, rData);
-	printf("Huffman Compression complete\n");
-	return cData;
-}
-
-RawData UncompressHuffman(CompressedData cData)
-{
-	//Get the information stored in the start of the data
-	printf("Started Huffman Uncompression\n");
-	uint8_t nrOfEntries = cData.data[0];
-	uint8_t foundEndLines = 0;
-	std::string table;
-	unsigned int counter = 1;
-	char readByte;
-
-	while (foundEndLines < nrOfEntries)
-	{
-		readByte = (char)cData.data[counter];
-		table += readByte;
-
-		if (readByte == '\n')
-			foundEndLines++;
-
-		counter++;
-	}
-
-	std::unordered_map<unsigned char, HuffmanTableEntry> translatedTable;
-	std::unordered_map<std::string, unsigned char> translationTable;
-	HuffmanTableEntry temp;
-	unsigned int numberTranslated = 0;
-	std::string identifier("");
-	unsigned int nrOfBitsFound = 0;
-
-	for (int i = 0; i < table.size(); i++)
-	{
-		if (table[i] == ' ')
-		{
-
-			translationTable[identifier] = table[i + 1];
-			identifier.clear();
-			i += 2;
-		}
-		else
-		{
-			identifier += table[i];
-		}
-	}
-
-	uint8_t bit = 0;
-	uint8_t posInByte = 0;
-	std::string foundCode("");
-
-	RawData rData;
-	rData.data = new unsigned char[cData.sizeUncompressed];
-	rData.size = cData.sizeUncompressed;
-	unsigned int uncompressedCounter = 0;
-	
-	while (counter < cData.sizeCompressed)
-	{
-		bit = (cData.data[counter] >> posInByte) & 1;
-		foundCode += char('0' + bit);
-
-		std::unordered_map<std::string, unsigned char>::const_iterator got = translationTable.find(foundCode);
-
-		if (got == translationTable.end())
-		{
-			//not found, so keep looking
-		}
-		else
-		{
-			rData.data[uncompressedCounter] = got->second;
-			uncompressedCounter++;
-			foundCode.clear();
-		}
-
-		posInByte++;
-
-		if (posInByte == 8)
-		{
-			posInByte = 0;
-			counter++;
-		}
-	}
-
-	printf("Huffman Uncompression complete\n");
-	return rData;
-
-}
-
-
 
 void CompressLz77(void* rdata, uint64_t size, uint64_t* sizeCompressed, uint64_t* sizeUncompressed, void** cdata)
 {
@@ -538,14 +213,6 @@ void CompressLz77(void* rdata, uint64_t size, uint64_t* sizeCompressed, uint64_t
 	for (int i = 0; i < pointers.size(); i++)
 	{
 		pointers[i].AddHere(compressed + i * 3);
-
-		//uint8_t a = compressed[i*3];
-		//uint8_t b = compressed[i*3 + 1];
-		//char c = compressed[i*3 + 2];
-
-		//printf("%d,", a);
-		//printf("%d,", b);
-		//printf("%c\n", c);
 	}
 
 	*cdata = compressed;
@@ -574,9 +241,7 @@ void UncompressLz77(void** rdata, uint64_t* size, uint64_t sizeCompressed, uint6
 		else
 		{
 			uint8_t length = (((uint8_t)data[i + 1]) & lengthAnd);
-			//uint16_t offset = ((uint16_t)((cData.data[i] << 8) | cData.data[i]) >> (16 - 11));
 			uint16_t offset = (uint8_t)data[i];
-			//offset = offset >> 5;
 			offset = (offset << 3); // 3 because up 8 and then down 5 = 3 up (to align to 11 bit)
 			offset |= (data[i + 1] >> (16 - 11));
 
@@ -593,6 +258,392 @@ void UncompressLz77(void** rdata, uint64_t* size, uint64_t sizeCompressed, uint6
 
 
 }
+
+std::vector<HuffmanNode> CountBytes(unsigned char* data, int size)
+{
+	std::unordered_map<unsigned char, int> bytes;
+	std::vector<HuffmanNode> nodes;
+
+	for (int i = 0; i < size; i++)
+	{
+		std::unordered_map<unsigned char, int>::const_iterator got = bytes.find(data[i]);
+
+		if (got == bytes.end())
+		{
+			bytes[data[i]] = nodes.size();
+
+			HuffmanNode temp;
+			temp.byte = data[i];
+			temp.frequency = 1;
+
+			nodes.push_back(temp);
+		}
+		else
+		{
+			nodes[bytes[data[i]]].frequency += 1;
+		}
+
+
+	}
+
+	printf("%d unique bytes found\n", bytes.size());
+
+
+	return nodes;
+}
+
+std::string CreateHuffmanTable(HuffmanNode root, std::string prefix = std::string(""))
+{
+	RawData temp;
+
+	if (root.oneChild == nullptr)
+	{
+		//We found a leaf node
+
+		return std::string(prefix + " " + root.byte + "\n");
+	}
+	else
+	{
+		//Just send it down to the rest, adding on to the prefix as we go
+
+		std::string returnValue;
+		returnValue.append(CreateHuffmanTable(*root.oneChild, std::string(prefix + "1")));
+		returnValue.append(CreateHuffmanTable(*root.zeroChild, std::string(prefix + "0")));
+
+		return returnValue;
+	}
+}
+
+uint32_t reverse(uint32_t b, uint8_t nrOfBits) // Needed to simplify reading when decompressing
+{
+	uint8_t top = nrOfBits - 1;
+	uint8_t bottom = 0;
+	uint8_t topBit = 0;
+	uint8_t bottomBit = 0;
+
+	if (nrOfBits >= 2)
+	{
+		while (top > bottom)
+		{
+			topBit = (b >> top) & 1;
+			bottomBit = (b >> bottom) & 1;
+
+			b ^= (-bottomBit ^ b) & (1 << top);
+			b ^= (-topBit ^ b) & (1 << bottom);
+
+			top--;
+			bottom++;
+		}
+	}
+	return b;
+}
+
+CompressedData32 HuffmanEncode(std::string table, RawData rData)
+{
+
+	std::unordered_map<unsigned char, HuffmanTableEntry> translatedTable;
+	HuffmanTableEntry temp;
+	uint32_t numberTranslated = 0;
+	unsigned int nrOfBitsFound = 0;
+
+	for (int i = 0; i < table.size(); i++)
+	{
+		if (table[i] == ' ')
+		{
+			unsigned char byte = table[i + 1];
+			temp.bits = numberTranslated;
+			temp.nrOfBits = nrOfBitsFound;
+
+			translatedTable[byte] = temp;
+			numberTranslated = 0;
+			nrOfBitsFound = 0;
+			i += 2;
+		}
+		else
+		{
+			nrOfBitsFound++;
+			numberTranslated *= 2;
+			numberTranslated += table[i] - '0';
+		}
+	}
+
+	uint8_t remainingBitsToWrite = 0;
+	uint8_t remainingSpaceInByte = sizeof(uint32_t) * 8;
+	std::vector<uint32_t> cData;
+	uint32_t activeByte = '\0';
+	int totalBitsWritten = 0;
+	int totalBytesAllocated = 1;
+
+	for (int i = 0; i < rData.size; i++)
+	{
+		HuffmanTableEntry entry = translatedTable[rData.data[i]];
+		remainingBitsToWrite = entry.nrOfBits;
+
+
+		if (remainingSpaceInByte >= remainingBitsToWrite)
+		{
+			uint32_t bits = reverse(entry.bits, entry.nrOfBits);
+			bits = bits << (sizeof(uint32_t) * 8 - remainingSpaceInByte);
+			activeByte |= bits;
+			remainingSpaceInByte -= remainingBitsToWrite;
+			totalBitsWritten += remainingBitsToWrite;
+		}
+		else
+		{
+			uint32_t bits = reverse(entry.bits, entry.nrOfBits);
+			unsigned int bitsWritten = 0;
+
+			while (remainingBitsToWrite > 0)
+			{
+				if (remainingSpaceInByte == 0)
+				{
+					remainingSpaceInByte = sizeof(uint32_t) * 8;
+					cData.push_back(activeByte);
+					activeByte = '\0';
+					totalBytesAllocated++;
+				}
+
+				activeByte |= (bits << (sizeof(uint32_t) * 8 - remainingSpaceInByte));
+				bits = bits >> remainingSpaceInByte;
+
+				bitsWritten = __min(remainingBitsToWrite, remainingSpaceInByte);
+				remainingSpaceInByte -= bitsWritten;
+
+				totalBitsWritten += bitsWritten;
+
+				remainingBitsToWrite -= bitsWritten;
+			}
+
+
+		}
+
+
+	}
+
+	if (activeByte != NULL)
+		cData.push_back(activeByte);
+
+	//Add on the table to the compressed data and then add the compressed data itself
+
+	CompressedData32 returnData;
+	returnData.sizeCompressed = cData.size() * sizeof(uint32_t) + sizeof(uint8_t) + table.size() * sizeof(uint8_t);
+	returnData.sizeUncompressed = rData.size;
+	returnData.data = new uint32_t[returnData.sizeCompressed];
+	uint16_t nrOfEntries = (uint16_t)translatedTable.size();
+
+	memcpy(returnData.data, &nrOfEntries, sizeof(uint16_t));
+
+	unsigned int counter = 0;
+	while (counter < table.size())
+	{
+		memcpy((unsigned char*)returnData.data + sizeof(uint16_t) + counter, &table[counter], sizeof(char));
+		counter++;
+	}
+
+	unsigned int counter2 = 0;
+	while (counter2 < cData.size())
+	{
+		memcpy(((unsigned char*)returnData.data) + sizeof(uint16_t) + counter + counter2 * sizeof(uint32_t), &cData[counter2], sizeof(uint32_t));
+		counter2++;
+	}
+
+	return returnData;
+}
+
+CompressedData32 CompressHuffman(RawData rData)
+{
+	//https://distributedalgorithm.wordpress.com/2016/01/02/huffman-coding-the-optimal-prefix-code/
+	printf("Started Huffman Compression%c\n", rData.data[0]);
+	std::vector<HuffmanNode> nodes = CountBytes(rData.data, rData.size);
+	HuffmanNode* temp1;
+	HuffmanNode* temp2;
+	long long int position;
+
+	while (nodes.size() > 1)
+	{
+		temp1 = new HuffmanNode;
+		temp1->frequency = UINT64_MAX;
+		position = -1;
+
+		for (int i = 0; i < nodes.size(); i++)
+		{
+			if (nodes[i].frequency < temp1->frequency)
+			{
+				*temp1 = nodes[i];
+				position = i;
+			}
+		}
+
+		nodes.erase(nodes.begin() + position);
+
+		temp2 = new HuffmanNode;
+		temp2->frequency = UINT64_MAX;
+		position = -1;
+
+		for (int i = 0; i < nodes.size(); i++)
+		{
+			if (nodes[i].frequency < temp2->frequency)
+			{
+				*temp2 = nodes[i];
+				position = i;
+			}
+		}
+
+		nodes.erase(nodes.begin() + position);
+
+
+		HuffmanNode temp3;
+		temp3.oneChild = temp1;
+		temp3.zeroChild = temp2;
+		temp3.frequency = temp1->frequency + temp2->frequency;
+
+		nodes.push_back(temp3);
+	}
+
+	//--------------------------------------------------------------------------------------------------------------
+	//Create the table
+
+	std::string table = CreateHuffmanTable(nodes[0]);
+
+	//--------------------------------------------------------------------------------------------------------------
+
+	CompressedData32 cData = HuffmanEncode(table, rData);
+	printf("Huffman Compression complete\n");
+	return cData;
+}
+
+RawData UncompressHuffman(CompressedData32 cData)
+{
+	//Get the information stored in the start of the data
+	printf("Started Huffman Uncompression\n");
+	uint16_t foundEndLines = 0;
+	std::string table;
+	unsigned int counter = 2;
+	char readByte;
+
+	uint16_t nrOfEntries = 0;
+	memcpy(&nrOfEntries, &cData.data[0], sizeof(uint16_t));
+
+	while (foundEndLines < nrOfEntries)
+	{
+		memcpy(&readByte, (unsigned char*)cData.data + sizeof(unsigned char) * counter, sizeof(unsigned char));
+
+		table += readByte;
+
+		if (readByte == '\n')
+		{
+			memcpy(&readByte, (unsigned char*)cData.data + sizeof(unsigned char) * counter + 1, sizeof(unsigned char));
+
+			if (readByte != '\n')
+				foundEndLines++;
+		}
+
+		counter++;
+	}
+
+	std::unordered_map<unsigned char, HuffmanTableEntry> translatedTable;
+	std::unordered_map<std::string, unsigned char> translationTable;
+	std::unordered_map<HuffmanTableEntry, unsigned char> translationTable2; // might be reversed, again?
+	HuffmanTableEntry temp;
+	uint32_t numberTranslated = 0;
+	std::string identifier("");
+	HuffmanTableEntry identifier2;
+	uint32_t nrOfFoundBits = 0;
+	uint32_t nrOfBitsFound = 0;
+
+	for (int i = 0; i < table.size(); i++)
+	{
+		if (table[i] == ' ')
+		{
+
+			translationTable[identifier] = table[i + 1];
+			identifier.clear();
+
+			if (table[i + 1] == '#')
+			{
+				int a = 0;
+				a++;
+			}
+
+			translationTable2[identifier2] = table[i + 1];
+			identifier2.bits = 0;
+			identifier2.nrOfBits = 0;
+			nrOfFoundBits = 0;
+
+			i += 2;
+		}
+		else
+		{
+			identifier += table[i];
+
+			identifier2.bits += (table[i] - '0') * pow(2, nrOfFoundBits);
+			identifier2.nrOfBits++;
+			nrOfFoundBits++;
+		}
+	}
+
+	uint32_t bit = 0;
+	uint8_t posInByte = 0;
+	std::string foundCode("");
+
+	RawData rData;
+	rData.data = new unsigned char[cData.sizeUncompressed];
+	rData.size = cData.sizeUncompressed;
+	unsigned int uncompressedCounter = 0;
+
+	//--------------------------------------------------------------------------------------------------------------
+
+	unsigned int maxBits = sizeof(uint32_t) * 8;
+	unsigned int totalNumber = 0;
+	unsigned int translatedBytes = 0;
+	unsigned int counter2 = 0;
+	uint8_t lastFoundPos = 0;
+	uint32_t mask = 0;
+	uint32_t data = NULL;
+	HuffmanTableEntry toCheck;
+	uint64_t readBits = 0;
+
+	while (translatedBytes < cData.sizeUncompressed)
+	{
+		memcpy(&data, (unsigned char*)cData.data + counter + counter2 * sizeof(uint32_t), sizeof(uint32_t));
+
+		bit = (data >> posInByte) & 1;
+		toCheck.bits |= bit << toCheck.nrOfBits;
+		toCheck.nrOfBits++;
+
+		std::unordered_map<HuffmanTableEntry, unsigned char>::const_iterator got = translationTable2.find(toCheck);
+
+		if (got == translationTable2.end())
+		{
+			//not found, so keep looking
+		}
+		else
+		{
+			rData.data[uncompressedCounter] = got->second;
+			mask = 0;
+			toCheck.bits = 0;
+			toCheck.nrOfBits = 0;
+			uncompressedCounter++;
+			translatedBytes++;
+		}
+
+		posInByte++;
+		readBits++;
+
+		if (posInByte == sizeof(uint32_t) * 8)
+		{
+			posInByte = 0;
+			counter2++;
+		}
+
+	}
+
+
+	printf("Huffman Uncompression complete\n");
+	return rData;
+
+}
+
 //
 //int main()
 //{
