@@ -102,9 +102,11 @@ private:
 					{
 						if (data.refCount[i] == 0 && data.numBlocks[i] + num >= sizeOfLoadRequest)
 						{
+							printf("\tEvicting resource. GUID; %llu\n\n", data.guid[i].data);
 							rm->_resource.Modify();
 							rm->_allocator->Free(data.startBlock[i], data.numBlocks[i]);
 							rm->_resource.Remove(i);
+							data.pinned[i].unlock();
 							return true;
 						}
 						else
@@ -115,41 +117,43 @@ private:
 				}
 				return false;
 			}
-			//static bool FirstCumulativeFit(uint32_t sizeOfLoadRequest, ResourceManager* rm)
-			//{
-			//	uint32_t foundTot = 0;
-			//	std::vector<ResourceList*> found;
-			//	auto r = rm->_resources;
-			//	while (r)
-			//	{
-			//		if (r->resource._flags != Resource::Flag::PERSISTENT && r->resource._refCount == 0 && r->resource.GetState() == Resource::ResourceState::Loaded)
-			//		{
-			//			if (r->resource._numBlocks >= sizeOfLoadRequest)
-			//			{
-			//				printf("\tEvicting resource, GUID: %llu.\n\n", r->resource.ID.data);
-			//				rm->_RemoveResource(r, rm->_resources);
-			//				return true;
-			//			}
-			//			else
-			//			{
-			//			found.push_back(r);
-			//			foundTot += r->resource.GetData().size;
-			//			}
-			//		}
+			static bool FirstCumulativeFit(uint32_t sizeOfLoadRequest, ResourceManager* rm)
+			{
+				uint32_t num = rm->_allocator->FreeBlocks();
+				if (num >= sizeOfLoadRequest)
+				{
+					printf("\tWaiting for defrag\n\n");
+					return true;
+				}
 
-			//		if (foundTot >= sizeOfLoadRequest)
-			//		{
-			//			for (auto re : found)
-			//				rm->_RemoveResource(re, rm->_resources);
-			//			// IF THIS HAPPENS YOU MUST DEFRAG!!!!
-			//			//rm->_allocator->Defrag()
-			//			return true;
-			//		}
-			//		r = r->next;
-			//	}
+				uint32_t count = rm->_resource.count;
+				auto& data = rm->_resource.data;
+				for (uint32_t i = 0; i < count; i++)
+				{
+					bool pinned = data.pinned[i].try_lock();
+					if (pinned)
+					{
+						if (data.refCount[i] == 0)
+						{
+							printf("\tEvicting resource. GUID; %llu\n\n", data.guid[i].data);
+							num += data.numBlocks[i];
+							rm->_resource.Modify();
+							rm->_allocator->Free(data.startBlock[i], data.numBlocks[i]);
+							rm->_resource.Remove(i);
+							data.pinned[i].unlock();
+							if (num >= sizeOfLoadRequest)
+							{
+								return true;
+							}
+						}
+						else
+							data.pinned[i].unlock();
 
-			//	return false;
-			//}
+					}
+
+				}
+				return false;
+			}
 			//static bool LRU(uint32_t sizeOfLoadRequest, ResourceManager* rm)
 			//{
 			//	auto found = std::pair<uint64_t, ResourceList*>(UINT64_MAX, nullptr);
