@@ -60,14 +60,21 @@ int main(int argc, char** argv)
 	Core* core = Core::GetInstance();
 	core->Init(800, 600, false);
 	MemoryManager::CreateInstance();
-	MemoryManager::GetInstance()->Init(512U * 1024U * 1024U);
+	MemoryManager::GetInstance()->Init(1024U * 1024U * 1024U);
 	ResourceManager& r = ResourceManager::Instance(); // Kickstart at our will
-	r.Init(20U * 1024U * 1024U);
+	r.Init(512U * 1024U * 1024U);
 	r.SetEvictPolicy(ResourceManager::EvictPolicies::FirstFit);
 	//r.SetAssetLoader(new ZipLoader("data.dat"));
 	//r.SetAssetLoader(new FileLoader("filelist.txt"));
 	r.SetAssetLoader(new DarferLoader("data.drf"));
 	r.AddParser("jpg",
+		[](const Resource::Ptr& resource)
+	{
+		auto g = Core::GetInstance()->GetGraphics();
+		g->CreateShaderResource(resource.guid, resource.data, resource.size);
+		resource.RegisterObserver(g);
+	});
+	r.AddParser("png",
 		[](const Resource::Ptr& resource)
 	{
 		auto g = Core::GetInstance()->GetGraphics();
@@ -126,9 +133,7 @@ int main(int argc, char** argv)
 	bunnyObject.AddLODMesh("Bunny2.arf");
 	bunnyObject.AddLODMesh("Bunny3.arf");
 
-	bunnyObject.AddLODTexture("b0.jpg");
-	bunnyObject.AddLODTexture("b1.jpg");
-	bunnyObject.AddLODTexture("b2.jpg");
+	bunnyObject.AddLODTexture("blue.png");
 
 	DirectX::XMStoreFloat4x4(&bunnyObject.transform, DirectX::XMMatrixScaling(10, 10, 10) * DirectX::XMMatrixRotationY(DirectX::XM_PI)* DirectX::XMMatrixTranslation(-10.0f, 0.0f, 10.0f));
 	bunnyObject.pos = DirectX::XMFLOAT3(-10.0f, 0.0f, 10.0f);
@@ -143,9 +148,7 @@ int main(int argc, char** argv)
 	dragonObject.AddLODMesh("Dragon1.arf");
 	dragonObject.AddLODMesh("Dragon2.arf");
 
-	dragonObject.AddLODTexture("b0.jpg");
-	dragonObject.AddLODTexture("b1.jpg");
-	dragonObject.AddLODTexture("b2.jpg");
+	dragonObject.AddLODTexture("blue.png");
 
 	DirectX::XMStoreFloat4x4(&dragonObject.transform, DirectX::XMMatrixScaling(0.3, 0.3, 0.3) * DirectX::XMMatrixTranslation(10.0f, 0.0f, 10.0f));
 	dragonObject.pos = DirectX::XMFLOAT3(10.0f, 00.0f, 10.0f);
@@ -153,6 +156,81 @@ int main(int argc, char** argv)
 	dragonObject.radius = 0.3f;
 
 	testScene.AddGameObject(dragonObject);
+
+
+	GameObject cat;
+	cat.AddLODMesh("cat.arf");
+	cat.AddLODTexture("cat_diff.jpg");
+
+	cat.pos = DirectX::XMFLOAT3(10.0f, 00.0f, 5.0f);
+	cat.scale = 1.0f;
+	cat.radius = 1.0f;
+	DirectX::XMStoreFloat4x4(&cat.transform, DirectX::XMMatrixScaling(cat.scale, cat.scale, cat.scale) * DirectX::XMMatrixTranslationFromVector(DirectX::XMLoadFloat3(&cat.pos)));
+	
+	testScene.AddGameObject(cat);
+
+	GameObject doge;
+	doge.AddLODMesh("Doge.arf");
+	doge.AddLODTexture("Tex_0552_7.jpg");
+
+	doge.pos = DirectX::XMFLOAT3(-10.0f, 00.0f, 5.0f);
+	doge.scale = 0.025f;
+	doge.radius = 1.0f;
+	DirectX::XMStoreFloat4x4(&doge.transform, DirectX::XMMatrixScaling(doge.scale, doge.scale, doge.scale) * DirectX::XMMatrixTranslationFromVector(DirectX::XMLoadFloat3(&doge.pos)));
+
+	testScene.AddGameObject(doge);
+
+	GameObject earth;
+	earth.AddLODMesh("Sphere3.arf");
+	earth.AddLODTexture("4096_earth.jpg");
+
+	earth.pos = DirectX::XMFLOAT3(-10.0f, 00.0f, -5.0f);
+	earth.scale = 0.75f;
+	earth.radius = 1.0f;
+	DirectX::XMStoreFloat4x4(&earth.transform, DirectX::XMMatrixScaling(earth.scale, earth.scale, earth.scale) * DirectX::XMMatrixTranslationFromVector(DirectX::XMLoadFloat3(&earth.pos)));
+
+	testScene.AddGameObject(earth);
+
+
+	GameObject Astro;
+	Astro.AddLODMesh("Astronaut.arf");
+	Astro.AddLODTexture("Spacesuit_D.png");
+
+	Astro.pos = DirectX::XMFLOAT3(-10.0f, 0.55f, -5.0f);
+	Astro.scale = 0.75f;
+	Astro.radius = 1.0f;
+	DirectX::XMStoreFloat4x4(&Astro.transform, DirectX::XMMatrixScaling(Astro.scale, Astro.scale, Astro.scale) * DirectX::XMMatrixTranslationFromVector(DirectX::XMLoadFloat3(&Astro.pos)));
+
+	testScene.AddGameObject(Astro);
+
+
+
+	// 50 50 50
+	//sphereObject.pos = DirectX::XMFLOAT3(45.0f, 50.0f, 50.0f);
+	//sphereObject.scale = 0.4f;
+	//DirectX::XMStoreFloat4x4(&sphereObject.transform, DirectX::XMMatrixScaling(sphereObject.scale, sphereObject.scale, sphereObject.scale) * DirectX::XMMatrixTranslationFromVector(DirectX::XMLoadFloat3(&sphereObject.pos)));
+	//testScene.AddGameObject(sphereObject);
+	//sphereObject.pos = DirectX::XMFLOAT3(47.0f, 50.0f, 50.0f);
+	//sphereObject.scale = 0.4f;
+	//DirectX::XMStoreFloat4x4(&sphereObject.transform, DirectX::XMMatrixScaling(sphereObject.scale, sphereObject.scale, sphereObject.scale) * DirectX::XMMatrixTranslationFromVector(DirectX::XMLoadFloat3(&sphereObject.pos)));
+	//testScene.AddGameObject(sphereObject);
+	//sphereObject.pos = DirectX::XMFLOAT3(49.0f, 50.0f, 50.0f);
+	//sphereObject.scale = 0.4f;
+	//DirectX::XMStoreFloat4x4(&sphereObject.transform, DirectX::XMMatrixScaling(sphereObject.scale, sphereObject.scale, sphereObject.scale) * DirectX::XMMatrixTranslationFromVector(DirectX::XMLoadFloat3(&sphereObject.pos)));
+	//testScene.AddGameObject(sphereObject);
+
+	//bunnyObject.pos = DirectX::XMFLOAT3(45.0f, 52.0f, 50.0f);
+	//bunnyObject.scale = 1.8f;
+	//DirectX::XMStoreFloat4x4(&bunnyObject.transform, DirectX::XMMatrixScaling(bunnyObject.scale, bunnyObject.scale, bunnyObject.scale) * DirectX::XMMatrixTranslationFromVector(DirectX::XMLoadFloat3(&bunnyObject.pos)));
+	//testScene.AddGameObject(bunnyObject);
+	//bunnyObject.pos = DirectX::XMFLOAT3(47.0f, 52.0f, 50.0f);
+	//bunnyObject.scale = 1.8f;
+	//DirectX::XMStoreFloat4x4(&bunnyObject.transform, DirectX::XMMatrixScaling(bunnyObject.scale, bunnyObject.scale, bunnyObject.scale) * DirectX::XMMatrixTranslationFromVector(DirectX::XMLoadFloat3(&bunnyObject.pos)));
+	//testScene.AddGameObject(bunnyObject);
+	//bunnyObject.pos = DirectX::XMFLOAT3(49.0f, 52.0f, 50.0f);
+	//bunnyObject.scale = 1.8f;
+	//DirectX::XMStoreFloat4x4(&bunnyObject.transform, DirectX::XMMatrixScaling(bunnyObject.scale, bunnyObject.scale, bunnyObject.scale) * DirectX::XMMatrixTranslationFromVector(DirectX::XMLoadFloat3(&bunnyObject.pos)));
+	//testScene.AddGameObject(bunnyObject);
 
 	printf("<----||Starting Game loop||---->\n\n");
 	InputManager* input = core->GetInputManager();
@@ -177,6 +255,9 @@ int main(int argc, char** argv)
 		if (input->IsKeyDown(SDLK_a))
 			core->GetCameraManager()->MoveRight(-
 				4.0f * core->GetTimer()->GetDeltaTime());
+		if (input->WasKeyPressed(SDLK_2))
+			core->GetCameraManager()->TranslateActiveCamera(50, 50, 50);
+
 
 		float xrotation = input->GetMouseXMovement() * core->GetTimer()->GetDeltaTime() * 0.01f;
 		float yrotation = input->GetMouseYMovement() * core->GetTimer()->GetDeltaTime() * 0.01f;
@@ -262,11 +343,12 @@ void ArfParser(const Resource::Ptr& resource)
 				auto& ind = face.indices[r];
 				// Positions
 				memcpy(&vertices[index].pos, &_datap.positions[ind.index[0] - 1], sizeof(MeshData::Position));
+				vertices[index].pos.z = -vertices[index].pos.z;
 				// Normals
 				memcpy(&vertices[index].norm, &_datap.normals[ind.index[2] - 1], sizeof(MeshData::Normal));
 				// TexCoords
 				memcpy(&vertices[index].tex, &_datap.texCoords[ind.index[1] - 1], sizeof(MeshData::TexCoord));
-
+				vertices[index].tex.v = 1 - vertices[index].tex.v;
 				index++;
 			}
 		}
