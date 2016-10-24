@@ -101,6 +101,7 @@ RawData DarferLoader::LoadResource(SM_GUID guid, std::function<char*(uint32_t da
 		}
 		if (find->second.compressionType == 1)//LZ77 then huff
 		{
+		//	printf("Used Lz77 then huff, size %ld\n", uncompressedSize);
 			char* huffer = (char*)MemoryManager::Alloc(secondUncompressionSize);
 			UncompressHuffman(huffer, secondUncompressionSize, buffer);
 			UncompressLz77(data.data, secondUncompressionSize, huffer);
@@ -108,10 +109,12 @@ RawData DarferLoader::LoadResource(SM_GUID guid, std::function<char*(uint32_t da
 		}
 		else if (find->second.compressionType == 2)//Only LZ77
 		{
+		//	printf("Used Lz77, size %ld\n", uncompressedSize);
 			UncompressLz77(data.data, rawsize, buffer);
 		}
 		else if (find->second.compressionType == 3)
 		{
+		//	printf("Used huff then Lz77, size %ld\n", uncompressedSize);
 			char* zuffer = (char*)MemoryManager::Alloc(secondUncompressionSize);
 			UncompressLz77(zuffer, rawsize, buffer);
 			UncompressHuffman(data.data, uncompressedSize, zuffer);
@@ -119,12 +122,14 @@ RawData DarferLoader::LoadResource(SM_GUID guid, std::function<char*(uint32_t da
 		}
 		else if (find->second.compressionType == 4)
 		{
+		//	printf("Used huff, size %ld\n", uncompressedSize);
 			UncompressHuffman(data.data, uncompressedSize, buffer);
 		}
 		MemoryManager::Release(buffer);
 	}
 	else
 	{
+	//	printf("No comp, size %ld\n", data.size);
 		data.data = allocCallback(data.size);
 		if (data.data == nullptr)
 		{

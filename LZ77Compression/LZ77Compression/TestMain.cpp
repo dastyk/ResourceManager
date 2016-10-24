@@ -166,7 +166,7 @@ pointer FindMatch(unsigned char* window, int windowSize, unsigned char* lookAhea
 
 void CompressLz77(void* rdata, uint64_t size, uint64_t* csize, void** cdata)
 {
-	printf("Compressing\n");
+	//printf("Compressing\n");
 	unsigned char* inputStream = (unsigned char*)rdata;
 	int sizeOfInput = size;
 
@@ -187,7 +187,7 @@ void CompressLz77(void* rdata, uint64_t size, uint64_t* csize, void** cdata)
 
 		if ((100.0f * codingPosition) / sizeOfInput > percentDone)
 		{
-			printf("%d percent complete\n", percentDone);
+			//printf("%d percent complete\n", percentDone);
 			percentDone++;
 		}
 
@@ -230,7 +230,7 @@ void CompressLz77(void* rdata, uint64_t size, uint64_t* csize, void** cdata)
 		}
 
 	}
-	printf("Compression Complete\n");
+//	printf("Compression Complete\n");
 	unsigned char* compressed = new unsigned char[pointers.size() * 3];
 
 	for (int i = 0; i < pointers.size(); i++)
@@ -245,7 +245,7 @@ void CompressLz77(void* rdata, uint64_t size, uint64_t* csize, void** cdata)
 
 void UncompressLz77(void* rdata, uint64_t csize, void* cdata)
 {
-	printf("Uncompressing\n");
+//	printf("Uncompressing\n");
 	int currentPos = 0;
 	unsigned char* endData = (unsigned char*)rdata;
 	unsigned char* data = (unsigned char*)cdata;
@@ -271,7 +271,7 @@ void UncompressLz77(void* rdata, uint64_t csize, void* cdata)
 			currentPos += length;
 		}
 	}
-	printf("Uncompression Complete\n");
+//	printf("Uncompression Complete\n");
 
 }
 
@@ -302,7 +302,7 @@ std::vector<HuffmanNode> CountBytes(unsigned char* data, int size)
 
 	}
 
-	printf("%d unique bytes found\n", bytes.size());
+//	printf("%d unique bytes found\n", bytes.size());
 
 
 	return nodes;
@@ -467,7 +467,7 @@ void HuffmanEncode(std::string table, void* rdata, uint64_t size, uint64_t* csiz
 void CompressHuffman(void* rdata, uint64_t size, uint64_t* csize, void** cdata)
 {
 	//https://distributedalgorithm.wordpress.com/2016/01/02/huffman-coding-the-optimal-prefix-code/
-	printf("Started Huffman Compression\n");
+//	printf("Started Huffman Compression\n");
 	std::vector<HuffmanNode> nodes = CountBytes((unsigned char*)rdata, size);
 	HuffmanNode* temp1;
 	HuffmanNode* temp2;
@@ -522,13 +522,13 @@ void CompressHuffman(void* rdata, uint64_t size, uint64_t* csize, void** cdata)
 	//--------------------------------------------------------------------------------------------------------------
 
 	HuffmanEncode(table, (unsigned char*)rdata, size, csize, cdata);
-	printf("Huffman Compression complete\n");
+//	printf("Huffman Compression complete\n");
 }
 
 void UncompressHuffman(void* rdata, uint64_t size, void* cdata)
 {
 	//Get the information stored in the start of the data
-	printf("Started Huffman Uncompression\n");
+//	printf("Started Huffman Uncompression\n");
 	uint16_t foundEndLines = 0;
 	std::string table;
 	unsigned int counter = 2;
@@ -649,7 +649,7 @@ void UncompressHuffman(void* rdata, uint64_t size, void* cdata)
 	}
 
 
-	printf("Huffman Uncompression complete\n");
+//	printf("Huffman Uncompression complete\n");
 
 }
 

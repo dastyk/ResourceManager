@@ -6,6 +6,7 @@
 #include <iostream>
 #include "DebugLogger.h"
 #include <sstream>
+#include "Core.h"
 
 #define NR_OF_LOADING_THREADS 1
 #define NR_OF_PARSING_THREADS 2
@@ -462,7 +463,7 @@ void ResourceManager::_LoadingThread(uint16_t threadID)
 				const auto& data = _resource.data;
 				//Proudly write out what GUID we have started working on.
 				SM_GUID guid = data.guid[job];
-				printf("Started loading resource. GUID: %llu\n", guid.data);
+				//printf("Started loading resource. GUID: %llu\n", guid.data);
 
 
 				//Lock the loader so we can work in peace and quiet.
@@ -474,6 +475,7 @@ void ResourceManager::_LoadingThread(uint16_t threadID)
 
 				try
 				{
+					uint64_t timestamp = Core::GetInstance()->GetTimer()->GetTimeStamp();
 					RawData rawData = _assetLoader->LoadResource(guid, [this, &startBlock, &numBlocks](uint32_t dataSize) -> char*
 					{
 						char* data = nullptr;
@@ -488,11 +490,13 @@ void ResourceManager::_LoadingThread(uint16_t threadID)
 
 						return data;
 					});
+					timestamp = Core::GetInstance()->GetTimer()->GetTimeStamp() - timestamp;
 
 
 					_mutexLockLoader.unlock();
 
 					printf("Finished loading resource. GUID: %llu\n", guid.data);
+					printf("Loaded in %ld time units\n", timestamp);
 
 					data.rawData[job] = rawData.data;
 					data.type[job] = rawData.fType;
@@ -589,7 +593,7 @@ void ResourceManager::_ParserThread(uint16_t threadID)
 
 				
 				//Mark it as parsed, notify the user and start parsing it.
-				printf("Starting parsing resource. GUID: %llu\n", guid.data);
+				//printf("Starting parsing resource. GUID: %llu\n", guid.data);
 
 				_parser.ParseResource(resource);
 				data.loaded[job] = true;
@@ -597,7 +601,7 @@ void ResourceManager::_ParserThread(uint16_t threadID)
 
 
 				//The resource is now loaded and marked as such, the user is notified.
-				printf("Finished parsing resource. GUID: %llu\n", guid.data);
+				//printf("Finished parsing resource. GUID: %llu\n", guid.data);
 
 				_resource.DestroyPtr(resource);
 			}
