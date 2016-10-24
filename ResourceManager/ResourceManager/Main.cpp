@@ -204,6 +204,16 @@ int main(int argc, char** argv)
 	testScene.AddGameObject(Astro);
 
 
+	GameObject cube;
+	cube.mesh = "Cube.arf";
+	cube.texture = "tileable-light-wood-textures-5.jpg";
+
+	cube.pos = DirectX::XMFLOAT3(0.0f, -1.5f, 0.0f);
+	cube.scale = 0.75f;
+	cube.radius = 1.0f;
+	DirectX::XMStoreFloat4x4(&cube.transform, DirectX::XMMatrixScaling(100.0f, cube.scale, 100.0f) * DirectX::XMMatrixTranslationFromVector(DirectX::XMLoadFloat3(&cube.pos)));
+
+	//testScene.AddGameObject(cube);
 
 	// 50 50 50
 	//sphereObject.pos = DirectX::XMFLOAT3(45.0f, 50.0f, 50.0f);
@@ -231,6 +241,11 @@ int main(int argc, char** argv)
 	//bunnyObject.scale = 1.8f;
 	//DirectX::XMStoreFloat4x4(&bunnyObject.transform, DirectX::XMMatrixScaling(bunnyObject.scale, bunnyObject.scale, bunnyObject.scale) * DirectX::XMMatrixTranslationFromVector(DirectX::XMLoadFloat3(&bunnyObject.pos)));
 	//testScene.AddGameObject(bunnyObject);
+
+
+	r.LoadResource("Cube.arf", Resource::Flag::PERSISTENT | Resource::Flag::LOAD_AND_WAIT);
+	r.LoadResource("tileable-light-wood-textures-5.jpg", Resource::Flag::PERSISTENT | Resource::Flag::LOAD_AND_WAIT);
+
 
 	printf("<----||Starting Game loop||---->\n\n");
 	InputManager* input = core->GetInputManager();
@@ -276,12 +291,17 @@ int main(int argc, char** argv)
 			testScene.AddGameObject(sphereObject);
 		}
 
-		testScene.Update(core->GetCameraManager()->GetActiveCamera().position);
-
-		renderObjects.clear();
-		testScene.GetObjectsToRender(renderObjects);
+		if (input->IsKeyDown(SDLK_r))
+		{
 
 
+			testScene.Update(core->GetCameraManager()->GetActiveCamera().position);
+
+			renderObjects.clear();
+			testScene.GetObjectsToRender(renderObjects);
+		}
+		core->GetGraphics()->AddToRenderQueue(cube);
+		
 		for (int i = 0; i < renderObjects.size(); i++)
 		{
 			core->GetGraphics()->AddToRenderQueue(renderObjects[i]);

@@ -100,7 +100,7 @@ private:
 					bool pinned = data.pinned[i].try_lock();
 					if (pinned)
 					{
-						if (data.refCount[i] == 0 && data.numBlocks[i] + num >= sizeOfLoadRequest)
+						if (data.refCount[i] == 0 && !(data.flags[i] & Resource::Flag::PERSISTENT) && data.numBlocks[i] + num >= sizeOfLoadRequest)
 						{
 							printf("\tEvicting resource. GUID; %llu\n\n", data.guid[i].data);
 							rm->_resource.Modify();
@@ -133,7 +133,7 @@ private:
 					bool pinned = data.pinned[i].try_lock();
 					if (pinned)
 					{
-						if (data.refCount[i] == 0)
+						if (data.refCount[i] == 0 && !(data.flags[i] & Resource::Flag::PERSISTENT))
 						{
 							printf("\tEvicting resource. GUID; %llu\n\n", data.guid[i].data);
 							num += data.numBlocks[i];

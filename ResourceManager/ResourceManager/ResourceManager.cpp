@@ -94,9 +94,9 @@ const SM_GUID ResourceManager::LoadResource(SM_GUID guid, const Resource::Flag& 
 		data.type[count] = rawData.fType;
 		data.size[count] = rawData.size;
 
-		//_mutexLockLoader.unlock();
+		_mutexLockLoader.unlock();
 
-		_parser.ParseResource(_resource.MakePtr(count));
+		_parser.ParseResource(_resource.MakePtrNoLock(count));
 
 		data.loaded[count] = true;
 		printf("Resource finished loading. GUID: %llu\n", guid.data);
