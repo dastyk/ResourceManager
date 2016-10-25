@@ -35,6 +35,6 @@ PS_OUT main(VS_OUT input)
 	
 	output.Diffuse = DiffuseMap.Sample(AniSam, input.tex);
 	output.Diffuse.a = 1.0f;
-	output.Normal = NormalMap.Sample(AniSam, input.tex);
+	output.Normal = float4(normalize(input.normalVS), 0.0f);
 	return output;
 }

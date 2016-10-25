@@ -264,6 +264,9 @@ void ArfParser(const Resource::Ptr& resource)
 				memcpy(&vertices[index].pos, &_datap.positions[ind.index[0] - 1], sizeof(MeshData::Position));
 				// Normals
 				memcpy(&vertices[index].norm, &_datap.normals[ind.index[2] - 1], sizeof(MeshData::Normal));
+				//DirectX::XMVECTOR d = DirectX::XMVectorSet(vertices[index].norm.x, vertices[index].norm.y, vertices[index].norm.z, 0.0f);
+				//if (DirectX::XMVectorGetX(DirectX::XMVector3Length(d)) < 0.01f)
+				//	printf("SHIT IS FUCKED\n");
 				// TexCoords
 				memcpy(&vertices[index].tex, &_datap.texCoords[ind.index[1] - 1], sizeof(MeshData::TexCoord));
 
