@@ -95,9 +95,9 @@ const SM_GUID ResourceManager::LoadResource(SM_GUID guid, const Resource::Flag& 
 		data.type[count] = rawData.fType;
 		data.size[count] = rawData.size;
 
-		//_mutexLockLoader.unlock();
+		_mutexLockLoader.unlock();
 
-		_parser.ParseResource(_resource.MakePtr(count));
+		_parser.ParseResource(_resource.MakePtrNoLock(count));
 
 		data.loaded[count] = true;
 		printf("Resource finished loading. GUID: %llu\n", guid.data);
@@ -300,7 +300,7 @@ void ResourceManager::AddParser(const std::string& fileend, const std::function<
 	
 }
 
-void ResourceManager::SetEvictPolicy(const std::function<bool(uint32_t sizeOfLoadRequest, ResourceManager*rm)>& evictPolicy)
+void ResourceManager::SetEvictPolicy(evfunc evictPolicy)
 {
 	_mutexLockGeneral.lock();
 	_WhatToEvict = evictPolicy;
@@ -351,6 +351,9 @@ void ResourceManager::_Run()
 
 	while (_running)
 	{
+		if (_WhatToEvict == EvictPolicies::InstantEvict)
+			_WhatToEvict(0, this);
+
 		_defragList.clear();
 		_pinned.clear();
 

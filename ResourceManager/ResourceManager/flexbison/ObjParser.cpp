@@ -16,12 +16,19 @@ void ParseObj(const void* rawData, MeshData::MeshData& mdata)
 {
 	o = new Object;
 	fopen_s(&yyin, "temp", "r");
-
+	if (yyin == NULL) //if file does not exist, create it
+	{
+		fopen_s(&yyin,"temp", "w");
+		fclose(yyin);
+		fopen_s(&yyin, "temp", "r");
+	}
 	setbuf(yyin, (char*)rawData);
 
 	yy::parser parser;
 	if (parser.parse())
 		throw std::runtime_error("Could not parse obj");
+
+	o->Triangulate();
 
 	// Setup pointers
 	ArfData::Data& data = o->GetData();
