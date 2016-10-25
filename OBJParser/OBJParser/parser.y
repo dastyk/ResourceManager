@@ -60,6 +60,8 @@
 %type <void*> line
 %type <void*> statement
 %type <std::vector<std::vector<uint64_t>>> createface
+%type <std::string> optname
+%type <float> real
 %type <float> optreal
 %type <float> optreal2
 %type <std::vector<uint64_t>> indices
@@ -87,23 +89,31 @@ line			: statement									{ }
 				| line statement							{ }
 				;
 
-statement		: OBJECT NAME 								{ driver.AddSubMesh($2);}		
+statement		: OBJECT optname 							{ driver.AddSubMesh($2);}		
 				| MTLLIB NAME								{ }
-				| POSITION REAL REAL REAL optreal			{ driver.AddPosition(ArfData::Position($2,$3,$4)); }
-				| TEXCOORD REAL REAL optreal2				{ driver.AddTexCoord(ArfData::TexCoord($2,$3));}
-				| NORMAL REAL REAL REAL						{ driver.AddNormal(ArfData::Normal($2,$3,$4)); }
-				| POINT REAL REAL optreal					{ }
+				| POSITION real real real optreal			{ driver.AddPosition(ArfData::Position($2,$3,$4)); }
+				| TEXCOORD real real optreal2				{ driver.AddTexCoord(ArfData::TexCoord($2,$3));}
+				| NORMAL real real real						{ driver.AddNormal(ArfData::Normal($2,$3,$4)); }
+				| POINT real real optreal					{ }
 				| USEMTL NAME								{}					
 				| S BOOLEAN									{ }
 				| S INTEGER 								{ }
 				| FACE createface							{ driver.AddFace(ArfData::Face($2));}
 				;	
-	
-optreal			: REAL										{ $$ = $1; }
+
+real			: REAL										{ $$ = $1; }
+				| INTEGER									{ $$ = static_cast<float>($1);}
+				;
+
+optname			: NAME										{ $$= $1;}
+				|/*empty*/									{ $$ = "default";}
+				;
+					
+optreal			: real										{ $$ = $1; }
 				| /*empty*/									{ $$ = 1.0f; }
 				;
 				
-optreal2		: REAL										{ $$ = $1;}
+optreal2		: real										{ $$ = $1;}
 				| /*empty*/									{ $$ = 0.0f;}
 				;
 				
@@ -112,6 +122,7 @@ createface		: indices 									{ $$.push_back($1); }
 				;
 				
 indices			: INTEGER									{ $$.push_back($1); }
+				| indices SEP SEP INTEGER					{ $$ = $1; $$.push_back(UINT64_MAX); $$.push_back($4);}
 				| indices SEP INTEGER						{ $$ = $1; $$.push_back($3);}		
 				;	
 

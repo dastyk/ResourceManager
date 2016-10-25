@@ -249,6 +249,7 @@ namespace  ObjParser  {
       char dummy1[sizeof(bool)];
 
       // REAL
+      // real
       // optreal
       // optreal2
       char dummy2[sizeof(float)];
@@ -264,6 +265,7 @@ namespace  ObjParser  {
       // USEMTL
       // NAME
       // SEP
+      // optname
       char dummy3[sizeof(std::string)];
 
       // createface
@@ -566,7 +568,7 @@ namespace  ObjParser  {
   // number is the opposite.  If YYTABLE_NINF, syntax error.
   static const unsigned char yytable_[];
 
-  static const unsigned char yycheck_[];
+  static const signed char yycheck_[];
 
   // YYSTOS[STATE-NUM] -- The (internal number of the) accessing
   // symbol of state STATE-NUM.
@@ -681,10 +683,10 @@ namespace  ObjParser  {
     enum
     {
       yyeof_ = 0,
-      yylast_ = 41,           //< Last index in yytable_.
-      yynnts_ = 7,  //< Number of nonterminal symbols.
+      yylast_ = 51,           //< Last index in yytable_.
+      yynnts_ = 9,  //< Number of nonterminal symbols.
       yyempty_ = -2,
-      yyfinal_ = 24, //< Termination state number.
+      yyfinal_ = 27, //< Termination state number.
       yyterror_ = 1,
       yyerrcode_ = 256,
       yyntokens_ = 17    //< Number of tokens.
@@ -772,8 +774,9 @@ namespace  ObjParser  {
         break;
 
       case 3: // REAL
-      case 20: // optreal
-      case 21: // optreal2
+      case 20: // real
+      case 22: // optreal
+      case 23: // optreal2
         value.copy< float > (other.value);
         break;
 
@@ -788,14 +791,15 @@ namespace  ObjParser  {
       case 13: // USEMTL
       case 14: // NAME
       case 16: // SEP
+      case 21: // optname
         value.copy< std::string > (other.value);
         break;
 
-      case 22: // createface
+      case 24: // createface
         value.copy< std::vector<std::vector<uint64_t>> > (other.value);
         break;
 
-      case 23: // indices
+      case 25: // indices
         value.copy< std::vector<uint64_t> > (other.value);
         break;
 
@@ -830,8 +834,9 @@ namespace  ObjParser  {
         break;
 
       case 3: // REAL
-      case 20: // optreal
-      case 21: // optreal2
+      case 20: // real
+      case 22: // optreal
+      case 23: // optreal2
         value.copy< float > (v);
         break;
 
@@ -846,14 +851,15 @@ namespace  ObjParser  {
       case 13: // USEMTL
       case 14: // NAME
       case 16: // SEP
+      case 21: // optname
         value.copy< std::string > (v);
         break;
 
-      case 22: // createface
+      case 24: // createface
         value.copy< std::vector<std::vector<uint64_t>> > (v);
         break;
 
-      case 23: // indices
+      case 25: // indices
         value.copy< std::vector<uint64_t> > (v);
         break;
 
@@ -951,8 +957,9 @@ namespace  ObjParser  {
         break;
 
       case 3: // REAL
-      case 20: // optreal
-      case 21: // optreal2
+      case 20: // real
+      case 22: // optreal
+      case 23: // optreal2
         value.template destroy< float > ();
         break;
 
@@ -967,14 +974,15 @@ namespace  ObjParser  {
       case 13: // USEMTL
       case 14: // NAME
       case 16: // SEP
+      case 21: // optname
         value.template destroy< std::string > ();
         break;
 
-      case 22: // createface
+      case 24: // createface
         value.template destroy< std::vector<std::vector<uint64_t>> > ();
         break;
 
-      case 23: // indices
+      case 25: // indices
         value.template destroy< std::vector<uint64_t> > ();
         break;
 
@@ -1006,8 +1014,9 @@ namespace  ObjParser  {
         break;
 
       case 3: // REAL
-      case 20: // optreal
-      case 21: // optreal2
+      case 20: // real
+      case 22: // optreal
+      case 23: // optreal2
         value.move< float > (s.value);
         break;
 
@@ -1022,14 +1031,15 @@ namespace  ObjParser  {
       case 13: // USEMTL
       case 14: // NAME
       case 16: // SEP
+      case 21: // optname
         value.move< std::string > (s.value);
         break;
 
-      case 22: // createface
+      case 24: // createface
         value.move< std::vector<std::vector<uint64_t>> > (s.value);
         break;
 
-      case 23: // indices
+      case 25: // indices
         value.move< std::vector<uint64_t> > (s.value);
         break;
 
@@ -1204,7 +1214,7 @@ namespace  ObjParser  {
 
 #line 9 "parser.y" // lalr1.cc:371
 } //  ObjParser 
-#line 1208 "parser.tab.h" // lalr1.cc:371
+#line 1218 "parser.tab.h" // lalr1.cc:371
 
 
 

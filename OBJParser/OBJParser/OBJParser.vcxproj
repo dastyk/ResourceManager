@@ -130,7 +130,9 @@
     <ClInclude Include="stack.hh" />
   </ItemGroup>
   <ItemGroup>
-    <Bison Include="parser.y" />
+    <Bison Include="parser.y">
+      <Warnings Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">all</Warnings>
+    </Bison>
   </ItemGroup>
   <ItemGroup>
     <Flex Include="scanner.l" />

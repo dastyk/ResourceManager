@@ -47,10 +47,10 @@ int main(int argc, char **argv) {
 #ifdef _DEBUG
 	_CrtDumpMemoryLeaks();
 	_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
-
+	
 #endif // _DEBUG
     Interpreter i;
-	ifstream file("Cube.obj");
+	ifstream file("DUCK.OBJ");
 	ArfData::Data data;
 	ArfData::DataPointers dp;
 	if (file.is_open())
@@ -59,6 +59,9 @@ int main(int argc, char **argv) {
 		cout << "Parse complete. Result = " << res << endl;
 		cout << i.str() << endl;
 		operator delete(data.buffer);
+
+		getchar();
+
 		return res;
 	}
 	return 0;

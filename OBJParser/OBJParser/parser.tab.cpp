@@ -262,8 +262,9 @@ namespace  ObjParser  {
         break;
 
       case 3: // REAL
-      case 20: // optreal
-      case 21: // optreal2
+      case 20: // real
+      case 22: // optreal
+      case 23: // optreal2
         value.move< float > (that.value);
         break;
 
@@ -278,14 +279,15 @@ namespace  ObjParser  {
       case 13: // USEMTL
       case 14: // NAME
       case 16: // SEP
+      case 21: // optname
         value.move< std::string > (that.value);
         break;
 
-      case 22: // createface
+      case 24: // createface
         value.move< std::vector<std::vector<uint64_t>> > (that.value);
         break;
 
-      case 23: // indices
+      case 25: // indices
         value.move< std::vector<uint64_t> > (that.value);
         break;
 
@@ -318,8 +320,9 @@ namespace  ObjParser  {
         break;
 
       case 3: // REAL
-      case 20: // optreal
-      case 21: // optreal2
+      case 20: // real
+      case 22: // optreal
+      case 23: // optreal2
         value.copy< float > (that.value);
         break;
 
@@ -334,14 +337,15 @@ namespace  ObjParser  {
       case 13: // USEMTL
       case 14: // NAME
       case 16: // SEP
+      case 21: // optname
         value.copy< std::string > (that.value);
         break;
 
-      case 22: // createface
+      case 24: // createface
         value.copy< std::vector<std::vector<uint64_t>> > (that.value);
         break;
 
-      case 23: // indices
+      case 25: // indices
         value.copy< std::vector<uint64_t> > (that.value);
         break;
 
@@ -590,8 +594,9 @@ namespace  ObjParser  {
         break;
 
       case 3: // REAL
-      case 20: // optreal
-      case 21: // optreal2
+      case 20: // real
+      case 22: // optreal
+      case 23: // optreal2
         yylhs.value.build< float > ();
         break;
 
@@ -606,14 +611,15 @@ namespace  ObjParser  {
       case 13: // USEMTL
       case 14: // NAME
       case 16: // SEP
+      case 21: // optname
         yylhs.value.build< std::string > ();
         break;
 
-      case 22: // createface
+      case 24: // createface
         yylhs.value.build< std::vector<std::vector<uint64_t>> > ();
         break;
 
-      case 23: // indices
+      case 25: // indices
         yylhs.value.build< std::vector<uint64_t> > ();
         break;
 
@@ -644,127 +650,157 @@ namespace  ObjParser  {
         switch (yyn)
           {
   case 2:
-#line 86 "parser.y" // lalr1.cc:846
-    { }
-#line 650 "parser.tab.cpp" // lalr1.cc:846
-    break;
-
-  case 3:
-#line 87 "parser.y" // lalr1.cc:846
+#line 88 "parser.y" // lalr1.cc:846
     { }
 #line 656 "parser.tab.cpp" // lalr1.cc:846
     break;
 
-  case 4:
-#line 90 "parser.y" // lalr1.cc:846
-    { driver.AddSubMesh(yystack_[0].value.as< std::string > ());}
+  case 3:
+#line 89 "parser.y" // lalr1.cc:846
+    { }
 #line 662 "parser.tab.cpp" // lalr1.cc:846
     break;
 
-  case 5:
-#line 91 "parser.y" // lalr1.cc:846
-    { }
+  case 4:
+#line 92 "parser.y" // lalr1.cc:846
+    { driver.AddSubMesh(yystack_[0].value.as< std::string > ());}
 #line 668 "parser.tab.cpp" // lalr1.cc:846
     break;
 
-  case 6:
-#line 92 "parser.y" // lalr1.cc:846
-    { driver.AddPosition(ArfData::Position(yystack_[3].value.as< float > (),yystack_[2].value.as< float > (),yystack_[1].value.as< float > ())); }
+  case 5:
+#line 93 "parser.y" // lalr1.cc:846
+    { }
 #line 674 "parser.tab.cpp" // lalr1.cc:846
     break;
 
-  case 7:
-#line 93 "parser.y" // lalr1.cc:846
-    { driver.AddTexCoord(ArfData::TexCoord(yystack_[2].value.as< float > (),yystack_[1].value.as< float > ()));}
+  case 6:
+#line 94 "parser.y" // lalr1.cc:846
+    { driver.AddPosition(ArfData::Position(yystack_[3].value.as< float > (),yystack_[2].value.as< float > (),yystack_[1].value.as< float > ())); }
 #line 680 "parser.tab.cpp" // lalr1.cc:846
     break;
 
-  case 8:
-#line 94 "parser.y" // lalr1.cc:846
-    { driver.AddNormal(ArfData::Normal(yystack_[2].value.as< float > (),yystack_[1].value.as< float > (),yystack_[0].value.as< float > ())); }
+  case 7:
+#line 95 "parser.y" // lalr1.cc:846
+    { driver.AddTexCoord(ArfData::TexCoord(yystack_[2].value.as< float > (),yystack_[1].value.as< float > ()));}
 #line 686 "parser.tab.cpp" // lalr1.cc:846
     break;
 
-  case 9:
-#line 95 "parser.y" // lalr1.cc:846
-    { }
+  case 8:
+#line 96 "parser.y" // lalr1.cc:846
+    { driver.AddNormal(ArfData::Normal(yystack_[2].value.as< float > (),yystack_[1].value.as< float > (),yystack_[0].value.as< float > ())); }
 #line 692 "parser.tab.cpp" // lalr1.cc:846
     break;
 
-  case 10:
-#line 96 "parser.y" // lalr1.cc:846
-    {}
+  case 9:
+#line 97 "parser.y" // lalr1.cc:846
+    { }
 #line 698 "parser.tab.cpp" // lalr1.cc:846
     break;
 
-  case 11:
-#line 97 "parser.y" // lalr1.cc:846
-    { }
+  case 10:
+#line 98 "parser.y" // lalr1.cc:846
+    {}
 #line 704 "parser.tab.cpp" // lalr1.cc:846
     break;
 
-  case 12:
-#line 98 "parser.y" // lalr1.cc:846
+  case 11:
+#line 99 "parser.y" // lalr1.cc:846
     { }
 #line 710 "parser.tab.cpp" // lalr1.cc:846
     break;
 
-  case 13:
-#line 99 "parser.y" // lalr1.cc:846
-    { driver.AddFace(ArfData::Face(yystack_[0].value.as< std::vector<std::vector<uint64_t>> > ()));}
+  case 12:
+#line 100 "parser.y" // lalr1.cc:846
+    { }
 #line 716 "parser.tab.cpp" // lalr1.cc:846
     break;
 
-  case 14:
-#line 102 "parser.y" // lalr1.cc:846
-    { yylhs.value.as< float > () = yystack_[0].value.as< float > (); }
+  case 13:
+#line 101 "parser.y" // lalr1.cc:846
+    { driver.AddFace(ArfData::Face(yystack_[0].value.as< std::vector<std::vector<uint64_t>> > ()));}
 #line 722 "parser.tab.cpp" // lalr1.cc:846
     break;
 
-  case 15:
-#line 103 "parser.y" // lalr1.cc:846
-    { yylhs.value.as< float > () = 1.0f; }
+  case 14:
+#line 104 "parser.y" // lalr1.cc:846
+    { yylhs.value.as< float > () = yystack_[0].value.as< float > (); }
 #line 728 "parser.tab.cpp" // lalr1.cc:846
     break;
 
-  case 16:
-#line 106 "parser.y" // lalr1.cc:846
-    { yylhs.value.as< float > () = yystack_[0].value.as< float > ();}
+  case 15:
+#line 105 "parser.y" // lalr1.cc:846
+    { yylhs.value.as< float > () = static_cast<float>(yystack_[0].value.as< uint64_t > ());}
 #line 734 "parser.tab.cpp" // lalr1.cc:846
     break;
 
-  case 17:
-#line 107 "parser.y" // lalr1.cc:846
-    { yylhs.value.as< float > () = 0.0f;}
+  case 16:
+#line 108 "parser.y" // lalr1.cc:846
+    { yylhs.value.as< std::string > ()= yystack_[0].value.as< std::string > ();}
 #line 740 "parser.tab.cpp" // lalr1.cc:846
     break;
 
-  case 18:
-#line 110 "parser.y" // lalr1.cc:846
-    { yylhs.value.as< std::vector<std::vector<uint64_t>> > ().push_back(yystack_[0].value.as< std::vector<uint64_t> > ()); }
+  case 17:
+#line 109 "parser.y" // lalr1.cc:846
+    { yylhs.value.as< std::string > () = "default";}
 #line 746 "parser.tab.cpp" // lalr1.cc:846
     break;
 
-  case 19:
-#line 111 "parser.y" // lalr1.cc:846
-    { yylhs.value.as< std::vector<std::vector<uint64_t>> > () = yystack_[1].value.as< std::vector<std::vector<uint64_t>> > (); yylhs.value.as< std::vector<std::vector<uint64_t>> > ().push_back(yystack_[0].value.as< std::vector<uint64_t> > ());}
+  case 18:
+#line 112 "parser.y" // lalr1.cc:846
+    { yylhs.value.as< float > () = yystack_[0].value.as< float > (); }
 #line 752 "parser.tab.cpp" // lalr1.cc:846
     break;
 
-  case 20:
-#line 114 "parser.y" // lalr1.cc:846
-    { yylhs.value.as< std::vector<uint64_t> > ().push_back(yystack_[0].value.as< uint64_t > ()); }
+  case 19:
+#line 113 "parser.y" // lalr1.cc:846
+    { yylhs.value.as< float > () = 1.0f; }
 #line 758 "parser.tab.cpp" // lalr1.cc:846
     break;
 
-  case 21:
-#line 115 "parser.y" // lalr1.cc:846
-    { yylhs.value.as< std::vector<uint64_t> > () = yystack_[2].value.as< std::vector<uint64_t> > (); yylhs.value.as< std::vector<uint64_t> > ().push_back(yystack_[0].value.as< uint64_t > ());}
+  case 20:
+#line 116 "parser.y" // lalr1.cc:846
+    { yylhs.value.as< float > () = yystack_[0].value.as< float > ();}
 #line 764 "parser.tab.cpp" // lalr1.cc:846
     break;
 
+  case 21:
+#line 117 "parser.y" // lalr1.cc:846
+    { yylhs.value.as< float > () = 0.0f;}
+#line 770 "parser.tab.cpp" // lalr1.cc:846
+    break;
 
-#line 768 "parser.tab.cpp" // lalr1.cc:846
+  case 22:
+#line 120 "parser.y" // lalr1.cc:846
+    { yylhs.value.as< std::vector<std::vector<uint64_t>> > ().push_back(yystack_[0].value.as< std::vector<uint64_t> > ()); }
+#line 776 "parser.tab.cpp" // lalr1.cc:846
+    break;
+
+  case 23:
+#line 121 "parser.y" // lalr1.cc:846
+    { yylhs.value.as< std::vector<std::vector<uint64_t>> > () = yystack_[1].value.as< std::vector<std::vector<uint64_t>> > (); yylhs.value.as< std::vector<std::vector<uint64_t>> > ().push_back(yystack_[0].value.as< std::vector<uint64_t> > ());}
+#line 782 "parser.tab.cpp" // lalr1.cc:846
+    break;
+
+  case 24:
+#line 124 "parser.y" // lalr1.cc:846
+    { yylhs.value.as< std::vector<uint64_t> > ().push_back(yystack_[0].value.as< uint64_t > ()); }
+#line 788 "parser.tab.cpp" // lalr1.cc:846
+    break;
+
+  case 25:
+#line 125 "parser.y" // lalr1.cc:846
+    { yylhs.value.as< std::vector<uint64_t> > () = yystack_[3].value.as< std::vector<uint64_t> > (); yylhs.value.as< std::vector<uint64_t> > ().push_back(UINT64_MAX); yylhs.value.as< std::vector<uint64_t> > ().push_back(yystack_[0].value.as< uint64_t > ());}
+#line 794 "parser.tab.cpp" // lalr1.cc:846
+    break;
+
+  case 26:
+#line 126 "parser.y" // lalr1.cc:846
+    { yylhs.value.as< std::vector<uint64_t> > () = yystack_[2].value.as< std::vector<uint64_t> > (); yylhs.value.as< std::vector<uint64_t> > ().push_back(yystack_[0].value.as< uint64_t > ());}
+#line 800 "parser.tab.cpp" // lalr1.cc:846
+    break;
+
+
+#line 804 "parser.tab.cpp" // lalr1.cc:846
           default:
             break;
           }
@@ -1021,67 +1057,72 @@ namespace  ObjParser  {
   }
 
 
-  const signed char  Parser ::yypact_ninf_ = -13;
+  const signed char  Parser ::yypact_ninf_ = -25;
 
   const signed char  Parser ::yytable_ninf_ = -1;
 
   const signed char
    Parser ::yypact_[] =
   {
-      10,    -2,     1,    21,    22,    23,   -12,    -1,    12,    14,
-       0,   -13,    26,    27,    28,    29,   -13,    23,    17,   -13,
-     -13,   -13,   -13,   -13,   -13,   -13,    31,    32,    33,    34,
-      17,    35,    34,   -13,   -13,   -13,   -13,   -13,   -13,   -13
+      38,     1,     1,     1,     1,     2,    -7,    27,    -6,    -5,
+      12,   -25,   -25,   -25,     1,     1,     1,     1,   -25,     2,
+      11,   -25,   -25,   -25,   -25,   -25,   -25,   -25,   -25,     1,
+       1,     1,     1,    11,    22,     1,   -25,   -25,   -25,   -25,
+     -25,   -25,     6,   -25,   -25
   };
 
   const unsigned char
    Parser ::yydefact_[] =
   {
-       0,     0,     0,     0,     0,     0,     0,     0,     0,     0,
-       0,     2,     0,     0,     0,     0,    20,    13,    18,     4,
-      12,    11,     5,    10,     1,     3,     0,    17,     0,    15,
-      19,     0,    15,    16,     7,     8,    14,     9,    21,     6
+       0,     0,     0,     0,     0,     0,    17,     0,     0,     0,
+       0,     2,    14,    15,     0,     0,     0,     0,    24,    13,
+      22,    16,     4,    12,    11,     5,    10,     1,     3,     0,
+      21,     0,    19,    23,     0,    19,    20,     7,     8,    18,
+       9,    26,     0,     6,    25
   };
 
   const signed char
    Parser ::yypgoto_[] =
   {
-     -13,   -13,    30,     6,   -13,   -13,    24
+     -25,   -25,    23,    -1,   -25,   -24,   -25,   -25,    13
   };
 
   const signed char
    Parser ::yydefgoto_[] =
   {
-      -1,    10,    11,    37,    34,    17,    18
+      -1,    10,    11,    39,    22,    40,    37,    19,    20
   };
 
   const unsigned char
    Parser ::yytable_[] =
   {
-      24,    12,    19,    20,    13,     1,     2,     3,     4,     5,
-       6,     7,     8,     9,    21,     1,     2,     3,     4,     5,
-       6,     7,     8,     9,    14,    15,    22,    16,    23,    26,
-      27,    28,    29,    31,    32,    33,    35,    36,    39,    38,
-      25,    30
+      14,    15,    16,    17,    12,    13,    18,    21,    25,    26,
+      44,    43,    27,    29,    30,    31,    32,     1,     2,     3,
+       4,     5,     6,     7,     8,     9,    41,    34,    35,    36,
+      38,    23,    33,    28,     0,     0,     0,     0,    42,     0,
+       0,     0,    24,     1,     2,     3,     4,     5,     6,     7,
+       8,     9
   };
 
-  const unsigned char
+  const signed char
    Parser ::yycheck_[] =
   {
-       0,     3,    14,     4,     3,     5,     6,     7,     8,     9,
-      10,    11,    12,    13,    15,     5,     6,     7,     8,     9,
-      10,    11,    12,    13,     3,     3,    14,     4,    14,     3,
-       3,     3,     3,    16,     3,     3,     3,     3,    32,     4,
-      10,    17
+       1,     2,     3,     4,     3,     4,     4,    14,    14,    14,
+       4,    35,     0,    14,    15,    16,    17,     5,     6,     7,
+       8,     9,    10,    11,    12,    13,     4,    16,    29,    30,
+      31,     4,    19,    10,    -1,    -1,    -1,    -1,    16,    -1,
+      -1,    -1,    15,     5,     6,     7,     8,     9,    10,    11,
+      12,    13
   };
 
   const unsigned char
    Parser ::yystos_[] =
   {
        0,     5,     6,     7,     8,     9,    10,    11,    12,    13,
-      18,    19,     3,     3,     3,     3,     4,    22,    23,    14,
-       4,    15,    14,    14,     0,    19,     3,     3,     3,     3,
-      23,    16,     3,     3,    21,     3,     3,    20,     4,    20
+      18,    19,     3,     4,    20,    20,    20,    20,     4,    24,
+      25,    14,    21,     4,    15,    14,    14,     0,    19,    20,
+      20,    20,    20,    25,    16,    20,    20,    23,    20,    20,
+      22,     4,    16,    22,     4
   };
 
   const unsigned char
@@ -1089,15 +1130,15 @@ namespace  ObjParser  {
   {
        0,    17,    18,    18,    19,    19,    19,    19,    19,    19,
       19,    19,    19,    19,    20,    20,    21,    21,    22,    22,
-      23,    23
+      23,    23,    24,    24,    25,    25,    25
   };
 
   const unsigned char
    Parser ::yyr2_[] =
   {
        0,     2,     1,     2,     2,     2,     5,     4,     4,     4,
-       2,     2,     2,     2,     1,     0,     1,     0,     1,     2,
-       1,     3
+       2,     2,     2,     2,     1,     1,     1,     0,     1,     0,
+       1,     0,     1,     2,     1,     4,     3
   };
 
 
@@ -1109,17 +1150,17 @@ namespace  ObjParser  {
   {
   "\"end of file\"", "error", "$undefined", "REAL", "INTEGER", "POSITION",
   "TEXCOORD", "NORMAL", "POINT", "FACE", "OBJECT", "S", "MTLLIB", "USEMTL",
-  "NAME", "BOOLEAN", "SEP", "$accept", "line", "statement", "optreal",
-  "optreal2", "createface", "indices", YY_NULL
+  "NAME", "BOOLEAN", "SEP", "$accept", "line", "statement", "real",
+  "optname", "optreal", "optreal2", "createface", "indices", YY_NULL
   };
 
 #if YYDEBUG
   const unsigned char
    Parser ::yyrline_[] =
   {
-       0,    86,    86,    87,    90,    91,    92,    93,    94,    95,
-      96,    97,    98,    99,   102,   103,   106,   107,   110,   111,
-     114,   115
+       0,    88,    88,    89,    92,    93,    94,    95,    96,    97,
+      98,    99,   100,   101,   104,   105,   108,   109,   112,   113,
+     116,   117,   120,   121,   124,   125,   126
   };
 
   // Print the state stack on the debug stream.
@@ -1154,8 +1195,8 @@ namespace  ObjParser  {
 
 #line 9 "parser.y" // lalr1.cc:1156
 } //  ObjParser 
-#line 1158 "parser.tab.cpp" // lalr1.cc:1156
-#line 118 "parser.y" // lalr1.cc:1157
+#line 1199 "parser.tab.cpp" // lalr1.cc:1156
+#line 129 "parser.y" // lalr1.cc:1157
 
 
 // Bison expects us to provide implementation - otherwise linker complains
