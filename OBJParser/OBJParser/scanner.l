@@ -16,16 +16,7 @@
 	// This will track current scanner location.
 	// Action is called when length of the token is known.
 	#define YY_USER_ACTION m_driver.increaseLocation(yyleng);
-	
-	// !!!WARNING!!!
-	// Location API is used, but the location is not initialized, 'cause I'm lazy. When making
-	// a token with make_{something} method you can pass detailed token location. Current location
-	// is accessible with m_driver.location() method. All puzzle elements are there - just
-	// pass location value in every action code block below. I'm going to waste more time writing
-	// this excuse than putting this boilerplate below...
-	//
-	// Location class can be found in location.hh and posistion.hh files. It's just a bit too much
-	// boilerplate for this small example. Bummer.
+
 %}
 
 %option nodefault
