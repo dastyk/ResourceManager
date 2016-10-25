@@ -19,6 +19,8 @@
 
 class ResourceManager
 {
+private:
+	typedef bool(*evfunc)(uint32_t, ResourceManager*);
 public:
 
 
@@ -40,7 +42,7 @@ public:
 
 	void SetAssetLoader(IAssetLoader* loader);
 	void AddParser(const std::string& fileend,const std::function<void(const Resource::Ptr& resource)>& parseFunction);
-	void SetEvictPolicy(const std::function<bool(uint32_t sizeOfLoadRequest, ResourceManager* rm)>& evictPolicy);
+	void SetEvictPolicy(evfunc evictPolicy);
 	void Init(uint64_t maxMemory);
 	void ShutDown();
 	void Startup();
@@ -73,8 +75,9 @@ private:
 	void _ParserThread(uint16_t threadID);
 	//void _UpdatePriority(SM_GUID guid, const Resource::Flag& flag);
 
-	std::function<bool(uint32_t sizeOfLoadRequest, ResourceManager* rm) > _WhatToEvict;
-
+	//std::function<bool(uint32_t sizeOfLoadRequest, ResourceManager* rm) > _WhatToEvict;
+	
+	evfunc _WhatToEvict;
 	public:
 		struct EvictPolicies
 		{
@@ -153,6 +156,29 @@ private:
 
 				}
 				return false;
+			}
+			static bool InstantEvict(uint32_t sizeOfLoadRequest, ResourceManager* rm)
+			{
+				uint32_t count = rm->_resource.count;
+				auto& data = rm->_resource.data;
+				for (uint32_t i = 0; i < count; i++)
+				{
+					if (data.pinned[i].try_lock())
+					{
+						if (data.refCount[i] == 0 && !(data.flags[i] & Resource::Flag::PERSISTENT))
+						{
+							printf("\tEvicting resource. GUID; %llu\n\n", data.guid[i].data);
+
+							rm->_resource.Modify();
+							rm->_allocator->Free(data.startBlock[i], data.numBlocks[i]);
+							rm->_resource.Remove(i);
+
+						}
+						data.pinned[i].unlock();
+					}
+
+				}
+				return true;
 			}
 			//static bool LRU(uint32_t sizeOfLoadRequest, ResourceManager* rm)
 			//{
