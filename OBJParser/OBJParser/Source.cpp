@@ -13,25 +13,13 @@ int main(int argc, char* argv[])
 #ifdef _DEBUG
 	_CrtDumpMemoryLeaks();
 	_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
+	_crtBreakAlloc = 147;
 #endif // _DEBUG
 
 	Object o;
 
 	ParseObj("Cube.obj", o._data, o._datap);
 	o.Clear();
-	ParseObj("Cube.obj", o._data, o._datap);
-	o.Clear();
-	ParseObj("Cube.obj", o._data, o._datap);
-	o.Clear();
-	ParseObj("Cube.obj", o._data, o._datap);
-	o.Clear();
-	ParseObj("Cube.obj", o._data, o._datap);
-	o.Clear();
-	ParseObj("Cube.obj", o._data, o._datap);
-	o.Clear();
-	ParseObj("Cube.obj", o._data, o._datap);
-	o.Clear();
-	ParseObj("Cube.obj", o._data, o._datap);
-	o.Clear();
+
 	return 0;
 }

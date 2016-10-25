@@ -16,7 +16,6 @@ void yy::parser::error(std::string const&err)
 
 int ParseObj(const char* file, ArfData::Data& data, ArfData::DataPointers& pointers)
 {
-	o.Clear();
 	o.New();
 	fopen_s(&yyin, file, "r");
 	if (yyin == NULL)
@@ -27,6 +26,7 @@ int ParseObj(const char* file, ArfData::Data& data, ArfData::DataPointers& point
 	errors.clear();
 	
 	yy::parser parser;
+	
 	if (parser.parse())
 	{
 		for (auto s : errors)
@@ -45,7 +45,7 @@ int ParseObj(const char* file, ArfData::Data& data, ArfData::DataPointers& point
 
 int ParseObj(const void* rawData, uint32_t size, ArfData::Data& data, ArfData::DataPointers& pointers)
 {
-	o.Clear();
+
 	o.New();
 	if (rawData == nullptr)
 	{

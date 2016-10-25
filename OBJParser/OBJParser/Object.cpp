@@ -104,7 +104,7 @@ void Object::Alloc(int flag)
 
 Object::Object()
 {
-	Alloc(ALLOC_ALL);
+
 }
 //Object::Object(ifstream & file)
 //{
@@ -119,7 +119,7 @@ Object::Object()
 //}
 Object::~Object()
 {
-	operator delete(_data.buffer);
+
 }
 
 Object & Object::operator=(Object & other)
@@ -392,6 +392,7 @@ void Object::New()
 void Object::Clear()
 {
 	operator delete(_data.buffer);
+	_data.buffer = nullptr;
 }
 
 void Object::GenerateArf(ofstream & of, int flag)
