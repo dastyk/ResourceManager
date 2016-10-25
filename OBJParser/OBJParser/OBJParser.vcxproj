@@ -69,7 +69,9 @@
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
-  <PropertyGroup />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <IncludePath>C:\Users\GiS-3\Desktop\ResourceManager\OBJParser\OBJParser\FlexLexer;$(IncludePath)</IncludePath>
+  </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
@@ -81,7 +83,7 @@
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <SDLCheck>true</SDLCheck>
+      <SDLCheck>false</SDLCheck>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -111,25 +113,27 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="main.cpp" />
     <ClCompile Include="Object.cpp" />
     <ClCompile Include="ObjParser.cpp" />
-    <ClCompile Include="parser.flex.cpp" />
     <ClCompile Include="parser.tab.cpp" />
-    <ClCompile Include="Source.cpp" />
+    <ClCompile Include="scanner.flex.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ArfData.h" />
-    <ClInclude Include="FlexLexer.h" />
+    <ClInclude Include="location.hh" />
     <ClInclude Include="Object.h" />
     <ClInclude Include="ObjParser.h" />
     <ClInclude Include="parser.tab.h" />
+    <ClInclude Include="position.hh" />
+    <ClInclude Include="scanner.h" />
     <ClInclude Include="stack.hh" />
   </ItemGroup>
   <ItemGroup>
-    <Flex Include="parser.l" />
+    <Bison Include="parser.y" />
   </ItemGroup>
   <ItemGroup>
-    <Bison Include="parser.y" />
+    <Flex Include="scanner.l" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

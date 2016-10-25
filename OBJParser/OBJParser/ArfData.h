@@ -89,6 +89,7 @@ namespace ArfData
 		size_t SubMeshStart = 0;
 		uint32_t NumSubMesh = 0;
 		uint32_t SubMeshCap = 0;
+
 	};
 
 	struct DataPointers
