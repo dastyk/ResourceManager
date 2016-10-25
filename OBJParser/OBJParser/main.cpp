@@ -57,7 +57,7 @@ int main(int argc, char **argv) {
 	{
 		int res = i.parse(&file, &data, &dp);
 		cout << "Parse complete. Result = " << res << endl;
-		cout << i.str() << endl;
+ 		cout << i.str() << endl;
 		operator delete(data.buffer);
 
 		getchar();
