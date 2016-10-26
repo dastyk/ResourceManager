@@ -359,7 +359,7 @@ static yyconst flex_int32_t yy_ec[256] =
         1,    1,    1,    1,    1,    1,    1,    1,    1,    1,
         1,    2,    1,    1,    4,    1,    1,    1,    1,    1,
         1,    1,    5,    1,    5,    6,    7,    8,    8,    8,
-        8,    8,    8,    8,    8,    8,    8,    1,    1,    1,
+        8,    8,    8,    8,    8,    8,    8,    9,    1,    1,
         1,    1,    1,    1,    9,    9,    9,    9,   10,    9,
         9,    9,    9,    9,    9,    9,    9,    9,    9,    9,
         9,    9,    9,    9,    9,    9,    9,    9,    9,    9,
@@ -466,18 +466,9 @@ static yyconst flex_int16_t yy_chk[101] =
 	// This will track current scanner location.
 	// Action is called when length of the token is known.
 	#define YY_USER_ACTION m_driver.increaseLocation(yyleng);
-	
-	// !!!WARNING!!!
-	// Location API is used, but the location is not initialized, 'cause I'm lazy. When making
-	// a token with make_{something} method you can pass detailed token location. Current location
-	// is accessible with m_driver.location() method. All puzzle elements are there - just
-	// pass location value in every action code block below. I'm going to waste more time writing
-	// this excuse than putting this boilerplate below...
-	//
-	// Location class can be found in location.hh and posistion.hh files. It's just a bit too much
-	// boilerplate for this small example. Bummer.
 
-#line 481 "scanner.flex.cpp"
+
+#line 472 "scanner.flex.cpp"
 
 #define INITIAL 0
 #define comment 1
@@ -575,10 +566,10 @@ YY_DECL
 	register char *yy_cp, *yy_bp;
 	register int yy_act;
     
-#line 40 "scanner.l"
+#line 31 "scanner.l"
 
 
-#line 582 "scanner.flex.cpp"
+#line 573 "scanner.flex.cpp"
 
 	if ( !(yy_init) )
 		{
@@ -663,117 +654,117 @@ do_action:	/* This label is used only to access EOF actions. */
 
 case 1:
 YY_RULE_SETUP
-#line 42 "scanner.l"
+#line 33 "scanner.l"
 { BEGIN(comment); }
 	YY_BREAK
 case 2:
 /* rule 2 can match eol */
 YY_RULE_SETUP
-#line 43 "scanner.l"
+#line 34 "scanner.l"
 { BEGIN(INITIAL); }
 	YY_BREAK
 case 3:
 YY_RULE_SETUP
-#line 44 "scanner.l"
+#line 35 "scanner.l"
 { }
 	YY_BREAK
 case 4:
 /* rule 4 can match eol */
 YY_RULE_SETUP
-#line 47 "scanner.l"
+#line 38 "scanner.l"
 {}
 	YY_BREAK
 case 5:
 YY_RULE_SETUP
-#line 50 "scanner.l"
+#line 41 "scanner.l"
 { return ObjParser::Parser::make_INTEGER(stoul(yytext), ObjParser::location());}
 	YY_BREAK
 case 6:
 YY_RULE_SETUP
-#line 51 "scanner.l"
+#line 42 "scanner.l"
 { return ObjParser::Parser::make_REAL(std::stof(yytext), ObjParser::location());}
 	YY_BREAK
 case 7:
 YY_RULE_SETUP
-#line 52 "scanner.l"
+#line 43 "scanner.l"
 { return ObjParser::Parser::make_POSITION(yytext, ObjParser::location());}
 	YY_BREAK
 case 8:
 YY_RULE_SETUP
-#line 53 "scanner.l"
+#line 44 "scanner.l"
 { return ObjParser::Parser::make_TEXCOORD(yytext, ObjParser::location());}
 	YY_BREAK
 case 9:
 YY_RULE_SETUP
-#line 54 "scanner.l"
+#line 45 "scanner.l"
 { return ObjParser::Parser::make_NORMAL(yytext, ObjParser::location());}
 	YY_BREAK
 case 10:
 YY_RULE_SETUP
-#line 55 "scanner.l"
+#line 46 "scanner.l"
 { return ObjParser::Parser::make_POINT(yytext, ObjParser::location());}
 	YY_BREAK
 case 11:
 YY_RULE_SETUP
-#line 56 "scanner.l"
+#line 47 "scanner.l"
 { return ObjParser::Parser::make_OBJECT(yytext, ObjParser::location());}
 	YY_BREAK
 case 12:
 YY_RULE_SETUP
-#line 57 "scanner.l"
+#line 48 "scanner.l"
 { return ObjParser::Parser::make_OBJECT(yytext, ObjParser::location());}
 	YY_BREAK
 case 13:
 YY_RULE_SETUP
-#line 58 "scanner.l"
+#line 49 "scanner.l"
 { return ObjParser::Parser::make_S(yytext, ObjParser::location());}
 	YY_BREAK
 case 14:
 YY_RULE_SETUP
-#line 59 "scanner.l"
+#line 50 "scanner.l"
 { return ObjParser::Parser::make_FACE(yytext, ObjParser::location());}
 	YY_BREAK
 case 15:
 YY_RULE_SETUP
-#line 61 "scanner.l"
+#line 52 "scanner.l"
 { return ObjParser::Parser::make_MTLLIB(yytext, ObjParser::location());}
 	YY_BREAK
 case 16:
 YY_RULE_SETUP
-#line 62 "scanner.l"
+#line 53 "scanner.l"
 { return ObjParser::Parser::make_USEMTL(yytext, ObjParser::location());}
 	YY_BREAK
 case 17:
 YY_RULE_SETUP
-#line 64 "scanner.l"
+#line 55 "scanner.l"
 { return ObjParser::Parser::make_BOOLEAN(false, ObjParser::location());}
 	YY_BREAK
 case 18:
 YY_RULE_SETUP
-#line 65 "scanner.l"
+#line 56 "scanner.l"
 { return ObjParser::Parser::make_BOOLEAN(true, ObjParser::location());}
 	YY_BREAK
 case 19:
 YY_RULE_SETUP
-#line 67 "scanner.l"
+#line 58 "scanner.l"
 { return ObjParser::Parser::make_NAME(yytext, ObjParser::location());}
 	YY_BREAK
 case 20:
 YY_RULE_SETUP
-#line 69 "scanner.l"
+#line 60 "scanner.l"
 { return ObjParser::Parser::make_SEP("true", ObjParser::location());}
 	YY_BREAK
 case YY_STATE_EOF(INITIAL):
 case YY_STATE_EOF(comment):
-#line 70 "scanner.l"
+#line 61 "scanner.l"
 { return yyterminate(); }
 	YY_BREAK
 case 21:
 YY_RULE_SETUP
-#line 72 "scanner.l"
+#line 63 "scanner.l"
 YY_FATAL_ERROR( "flex scanner jammed" );
 	YY_BREAK
-#line 777 "scanner.flex.cpp"
+#line 768 "scanner.flex.cpp"
 
 	case YY_END_OF_BUFFER:
 		{
@@ -1669,7 +1660,7 @@ void ObjParser_free (void * ptr )
 
 #define YYTABLES_NAME "yytables"
 
-#line 71 "scanner.l"
+#line 62 "scanner.l"
 
 
 

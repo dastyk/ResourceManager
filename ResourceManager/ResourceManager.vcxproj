@@ -1,0 +1,199 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{85349DB8-548C-4066-A2DC-B582ABD381C0}</ProjectGuid>
+    <RootNamespace>ResourceManager</RootNamespace>
+    <WindowsTargetPlatformVersion>8.1</WindowsTargetPlatformVersion>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v140</PlatformToolset>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v140</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v140</PlatformToolset>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v140</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="Shared">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <IncludePath>$(SolutionDir)$(SolutionName)\Parsers;$(SolutionDir)$(SolutionName)\Compression;$(SolutionDir)$(SolutionName)\SDL2-2.0.4\include;$(SolutionDir)$(SolutionName)\zlib-1.2.7;$(IncludePath)</IncludePath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <IncludePath>$(SolutionDir)$(SolutionName)\Parsers;$(SolutionDir)$(SolutionName)\Compression;$(SolutionDir)$(SolutionName)\SDL2-2.0.4\include;$(SolutionDir)$(SolutionName)\zlib-1.2.7;$(IncludePath)</IncludePath>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <SDLCheck>true</SDLCheck>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <SDLCheck>false</SDLCheck>
+      <AdditionalIncludeDirectories>$(SolutionDir)$(SolutionName)\zlib-1.2.7;$(SolutionDir)$(SolutionName)\SDL2-2.0.4\include;$(SolutionDir)$(SolutionName)\Parsers;$(SolutionDir)$(SolutionName)\Compression;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ClCompile>
+    <Link>
+      <AdditionalLibraryDirectories>$(SolutionDir)$(SolutionName)\zlib-1.2.7;$(SolutionDir)$(SolutionName)\SDL2-2.0.4\lib\x64;$(SolutionDir)$(SolutionName)\Compression;$(SolutionDir)$(SolutionName)\Parsers;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>zlibstat.lib;OBJParser.lib;LZ77Compression.lib;SDL2.lib;SDL2main.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <SubSystem>Windows</SubSystem>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+    </ClCompile>
+    <Link>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>false</SDLCheck>
+      <AdditionalIncludeDirectories>$(SolutionDir)$(SolutionName)\zlib-1.2.7;$(SolutionDir)$(SolutionName)\SDL2-2.0.4\include;$(SolutionDir)$(SolutionName)\Parsers;$(SolutionDir)$(SolutionName)\Compression;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ClCompile>
+    <Link>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <AdditionalLibraryDirectories>$(SolutionDir)$(SolutionName)\zlib-1.2.7;$(SolutionDir)$(SolutionName)\SDL2-2.0.4\lib\x64;$(SolutionDir)$(SolutionName)\Compression;$(SolutionDir)$(SolutionName)\Parsers;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>zlibstat.lib;OBJParser.lib;LZ77Compression.lib;SDL2.lib;SDL2main.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <SubSystem>Windows</SubSystem>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClInclude Include="ResourceManager\AssetParser.h" />
+    <ClInclude Include="ResourceManager\CameraManager.h" />
+    <ClInclude Include="ResourceManager\ChunkyAllocator.h" />
+    <ClInclude Include="ResourceManager\Core.h" />
+    <ClInclude Include="ResourceManager\DarferLoader.h" />
+    <ClInclude Include="ResourceManager\DebugLogger.h" />
+    <ClInclude Include="ResourceManager\Direct3D11.h" />
+    <ClInclude Include="ResourceManager\DirectXTK\dds.h" />
+    <ClInclude Include="ResourceManager\DirectXTK\DDSTextureLoader.h" />
+    <ClInclude Include="ResourceManager\DirectXTK\DirectXHelpers.h" />
+    <ClInclude Include="ResourceManager\DirectXTK\pch.h" />
+    <ClInclude Include="ResourceManager\DirectXTK\PlatformHelpers.h" />
+    <ClInclude Include="ResourceManager\DirectXTK\WICTextureLoader.h" />
+    <ClInclude Include="ResourceManager\FileLoader.h" />
+    <ClInclude Include="ResourceManager\flags.h" />
+    <ClInclude Include="ResourceManager\GameObject.h" />
+    <ClInclude Include="ResourceManager\IAssetLoader.h" />
+    <ClInclude Include="ResourceManager\IGraphics.h" />
+    <ClInclude Include="ResourceManager\InputManager.h" />
+    <ClInclude Include="ResourceManager\Macros.h" />
+    <ClInclude Include="ResourceManager\MemoryManager.h" />
+    <ClInclude Include="ResourceManager\MeshData.h" />
+    <ClInclude Include="ResourceManager\Observer.h" />
+    <ClInclude Include="ResourceManager\PoolAllocator.h" />
+    <ClInclude Include="ResourceManager\Resource.h" />
+    <ClInclude Include="ResourceManager\ResourceManager.h" />
+    <ClInclude Include="ResourceManager\Scene.h" />
+    <ClInclude Include="ResourceManager\SM_GUID.h" />
+    <ClInclude Include="ResourceManager\StackAllocator.h" />
+    <ClInclude Include="ResourceManager\stdafx.h" />
+    <ClInclude Include="ResourceManager\Structs.h" />
+    <ClInclude Include="ResourceManager\targetver.h" />
+    <ClInclude Include="ResourceManager\TextureData.h" />
+    <ClInclude Include="ResourceManager\Timer.h" />
+    <ClInclude Include="ResourceManager\Types.h" />
+    <ClInclude Include="ResourceManager\unzipper.h" />
+    <ClInclude Include="ResourceManager\Window.h" />
+    <ClInclude Include="ResourceManager\ZipLoader.h" />
+    <ClInclude Include="ResourceManager\zipper.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="ResourceManager\AssetParser.cpp" />
+    <ClCompile Include="ResourceManager\CameraManager.cpp" />
+    <ClCompile Include="ResourceManager\ChunkyAllocator.cpp" />
+    <ClCompile Include="ResourceManager\Core.cpp" />
+    <ClCompile Include="ResourceManager\DarferLoader.cpp" />
+    <ClCompile Include="ResourceManager\DebugLogger.cpp" />
+    <ClCompile Include="ResourceManager\Direct3D11.cpp" />
+    <ClCompile Include="ResourceManager\DirectXTK\DDSTextureLoader.cpp" />
+    <ClCompile Include="ResourceManager\DirectXTK\WICTextureLoader.cpp" />
+    <ClCompile Include="ResourceManager\FileLoader.cpp" />
+    <ClCompile Include="ResourceManager\IGraphics.cpp" />
+    <ClCompile Include="ResourceManager\InputManager.cpp" />
+    <ClCompile Include="ResourceManager\Main.cpp" />
+    <ClCompile Include="ResourceManager\MemoryManager.cpp" />
+    <ClCompile Include="ResourceManager\PoolAllocator.cpp" />
+    <ClCompile Include="ResourceManager\Resource.cpp" />
+    <ClCompile Include="ResourceManager\ResourceManager.cpp" />
+    <ClCompile Include="ResourceManager\Scene.cpp" />
+    <ClCompile Include="ResourceManager\StackAllocator.cpp" />
+    <ClCompile Include="ResourceManager\stdafx.cpp" />
+    <ClCompile Include="ResourceManager\TestMain.cpp" />
+    <ClCompile Include="ResourceManager\Timer.cpp" />
+    <ClCompile Include="ResourceManager\unzipper.cpp" />
+    <ClCompile Include="ResourceManager\Window.cpp" />
+    <ClCompile Include="ResourceManager\ZipLoader.cpp" />
+    <ClCompile Include="ResourceManager\zipper.cpp" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

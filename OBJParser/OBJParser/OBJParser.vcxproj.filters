@@ -27,6 +27,9 @@
     <ClCompile Include="main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Parsers.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ArfData.h">
@@ -48,6 +51,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="stack.hh">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Parsers.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

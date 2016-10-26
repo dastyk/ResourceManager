@@ -21,7 +21,11 @@ int Interpreter::parse(std::istream *is, ArfData::Data* data, ArfData::DataPoint
 	AddSubMesh("default");
 	_scanner.switch_streams(is, NULL);
     m_location = 0;
-    return _parser.parse();
+	int ret = _parser.parse();
+
+	Alloc(ALLOC_SHRINK_TO_FIT);
+
+	return ret;
 }
 
 void Interpreter::clear()
@@ -144,7 +148,7 @@ void ObjParser::Interpreter::AddTexCoord(const ArfData::TexCoord & tex)
 
 void ObjParser::Interpreter::AddNormal(const ArfData::Normal & norm)
 {
-	if (_data->NumPos >= _data->PosCap)
+	if (_data->NumNorm >= _data->NormCap)
 	{
 		// Allocate more space
 		Alloc(ALLOC_NORMAL);

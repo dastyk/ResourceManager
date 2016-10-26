@@ -11,15 +11,13 @@
 
 #include "MeshData.h"
 #include "TextureData.h"
-#include "flexbison\ObjParser.h"
 #include "ArfData.h"
 #include "DarferLoader.h"
 #include "FileLoader.h"
 #include "Scene.h"
-
-
+#include "Parsers.h"
 void ArfParser(const Resource::Ptr& resource);
-void Objarser(const Resource::Ptr& resource);
+void ObjParser(const Resource::Ptr& resource);
 
 
 
@@ -64,7 +62,7 @@ int main(int argc, char** argv)
 	MemoryManager::GetInstance()->Init(1024U * 1024U * 1024U);
 	ResourceManager& r = ResourceManager::Instance(); // Kickstart at our will
 	r.Init(512U * 1024U * 1024U);
-	r.SetEvictPolicy(ResourceManager::EvictPolicies::InstantEvict);
+	r.SetEvictPolicy(ResourceManager::EvictPolicies::FirstCumulativeFit);
 	//r.SetAssetLoader(new ZipLoader("data.dat"));
 	//r.SetAssetLoader(new FileLoader("filelist.txt"));
 	r.SetAssetLoader(new DarferLoader("data.drf"));
@@ -85,7 +83,7 @@ int main(int argc, char** argv)
 
 	r.AddParser("arf", ArfParser);
 
-	r.AddParser("obj", Objarser);
+	r.AddParser("obj", ObjParser);
 
 	r.Startup();
 
@@ -145,6 +143,8 @@ int main(int argc, char** argv)
 	bunnyObject.AddLODMesh("Bunny1.arf");
 	bunnyObject.AddLODMesh("Bunny2.arf");
 	bunnyObject.AddLODMesh("Bunny3.arf");
+	bunnyObject.AddLODMesh("Bunny4.arf");
+	r.LoadResource("Bunny4.arf", Resource::Flag::PERSISTENT | Resource::Flag::LOAD_AND_WAIT);
 
 	bunnyObject.AddLODTexture("blue.png");
 
@@ -160,9 +160,11 @@ int main(int argc, char** argv)
 	dragonObject.AddLODMesh("Dragon0.arf");
 	dragonObject.AddLODMesh("Dragon1.arf");
 	dragonObject.AddLODMesh("Dragon2.arf");
-
+	dragonObject.AddLODMesh("Dragon3.arf");
+	dragonObject.AddLODMesh("Dragon4.arf");
 	dragonObject.AddLODTexture("blue.png");
-
+	r.LoadResource("Dragon4.arf", Resource::Flag::PERSISTENT | Resource::Flag::LOAD_AND_WAIT);
+	
 	DirectX::XMStoreFloat4x4(&dragonObject.transform, DirectX::XMMatrixScaling(0.3, 0.3, 0.3) * DirectX::XMMatrixTranslation(10.0f, 0.0f, 10.0f));
 	dragonObject.pos = DirectX::XMFLOAT3(10.0f, 00.0f, 10.0f);
 	dragonObject.scale = 0.25f;
@@ -172,7 +174,13 @@ int main(int argc, char** argv)
 
 
 	GameObject cat;
-	cat.AddLODMesh("cat.arf");
+	cat.AddLODMesh("Cat0.arf");
+	cat.AddLODMesh("Cat1.arf");
+	cat.AddLODMesh("Cat2.arf");
+	cat.AddLODMesh("Cat3.arf");
+	cat.AddLODMesh("Cat4.arf");
+	r.LoadResource("Cat4.arf", Resource::Flag::PERSISTENT | Resource::Flag::LOAD_AND_WAIT);
+
 	cat.AddLODTexture("cat_diff.jpg");
 
 	cat.pos = DirectX::XMFLOAT3(10.0f, 00.0f, 5.0f);
@@ -183,7 +191,13 @@ int main(int argc, char** argv)
 	testScene.AddGameObject(cat);
 
 	GameObject doge;
-	doge.AddLODMesh("Doge.arf");
+	doge.AddLODMesh("Dog0.arf");
+	doge.AddLODMesh("Dog1.arf");
+	doge.AddLODMesh("Dog2.arf");
+	doge.AddLODMesh("Dog3.arf");
+	doge.AddLODMesh("Dog4.arf");
+	r.LoadResource("Dog4.arf", Resource::Flag::PERSISTENT | Resource::Flag::LOAD_AND_WAIT);
+
 	doge.AddLODTexture("Tex_0552_7.jpg");
 
 	doge.pos = DirectX::XMFLOAT3(-10.0f, 00.0f, 5.0f);
@@ -206,7 +220,14 @@ int main(int argc, char** argv)
 
 
 	GameObject Astro;
-	Astro.AddLODMesh("Astronaut.arf");
+	Astro.AddLODMesh("Astronaut0.arf");
+	Astro.AddLODMesh("Astronaut1.arf");
+	Astro.AddLODMesh("Astronaut2.arf");
+	Astro.AddLODMesh("Astronaut3.arf");
+	Astro.AddLODMesh("Astronaut4.arf");
+	r.LoadResource("Astronaut4.arf", Resource::Flag::PERSISTENT | Resource::Flag::LOAD_AND_WAIT);
+
+
 	Astro.AddLODTexture("Spacesuit_D.png");
 
 	Astro.pos = DirectX::XMFLOAT3(-10.0f, 0.55f, -5.0f);
@@ -225,35 +246,6 @@ int main(int argc, char** argv)
 	cube.scale = 0.75f;
 	cube.radius = 1.0f;
 	DirectX::XMStoreFloat4x4(&cube.transform, DirectX::XMMatrixScaling(100.0f, cube.scale, 100.0f) * DirectX::XMMatrixTranslationFromVector(DirectX::XMLoadFloat3(&cube.pos)));
-
-	//testScene.AddGameObject(cube);
-
-	// 50 50 50
-	//sphereObject.pos = DirectX::XMFLOAT3(45.0f, 50.0f, 50.0f);
-	//sphereObject.scale = 0.4f;
-	//DirectX::XMStoreFloat4x4(&sphereObject.transform, DirectX::XMMatrixScaling(sphereObject.scale, sphereObject.scale, sphereObject.scale) * DirectX::XMMatrixTranslationFromVector(DirectX::XMLoadFloat3(&sphereObject.pos)));
-	//testScene.AddGameObject(sphereObject);
-	//sphereObject.pos = DirectX::XMFLOAT3(47.0f, 50.0f, 50.0f);
-	//sphereObject.scale = 0.4f;
-	//DirectX::XMStoreFloat4x4(&sphereObject.transform, DirectX::XMMatrixScaling(sphereObject.scale, sphereObject.scale, sphereObject.scale) * DirectX::XMMatrixTranslationFromVector(DirectX::XMLoadFloat3(&sphereObject.pos)));
-	//testScene.AddGameObject(sphereObject);
-	//sphereObject.pos = DirectX::XMFLOAT3(49.0f, 50.0f, 50.0f);
-	//sphereObject.scale = 0.4f;
-	//DirectX::XMStoreFloat4x4(&sphereObject.transform, DirectX::XMMatrixScaling(sphereObject.scale, sphereObject.scale, sphereObject.scale) * DirectX::XMMatrixTranslationFromVector(DirectX::XMLoadFloat3(&sphereObject.pos)));
-	//testScene.AddGameObject(sphereObject);
-
-	//bunnyObject.pos = DirectX::XMFLOAT3(45.0f, 52.0f, 50.0f);
-	//bunnyObject.scale = 1.8f;
-	//DirectX::XMStoreFloat4x4(&bunnyObject.transform, DirectX::XMMatrixScaling(bunnyObject.scale, bunnyObject.scale, bunnyObject.scale) * DirectX::XMMatrixTranslationFromVector(DirectX::XMLoadFloat3(&bunnyObject.pos)));
-	//testScene.AddGameObject(bunnyObject);
-	//bunnyObject.pos = DirectX::XMFLOAT3(47.0f, 52.0f, 50.0f);
-	//bunnyObject.scale = 1.8f;
-	//DirectX::XMStoreFloat4x4(&bunnyObject.transform, DirectX::XMMatrixScaling(bunnyObject.scale, bunnyObject.scale, bunnyObject.scale) * DirectX::XMMatrixTranslationFromVector(DirectX::XMLoadFloat3(&bunnyObject.pos)));
-	//testScene.AddGameObject(bunnyObject);
-	//bunnyObject.pos = DirectX::XMFLOAT3(49.0f, 52.0f, 50.0f);
-	//bunnyObject.scale = 1.8f;
-	//DirectX::XMStoreFloat4x4(&bunnyObject.transform, DirectX::XMMatrixScaling(bunnyObject.scale, bunnyObject.scale, bunnyObject.scale) * DirectX::XMMatrixTranslationFromVector(DirectX::XMLoadFloat3(&bunnyObject.pos)));
-	//testScene.AddGameObject(bunnyObject);
 
 
 	r.LoadResource("Cube.arf", Resource::Flag::PERSISTENT | Resource::Flag::LOAD_AND_WAIT);
@@ -349,49 +341,44 @@ int main(int argc, char** argv)
 	return 0;
 }
 
-
-void ArfParser(const Resource::Ptr& resource)
+void Interleave(const Resource::Ptr& resource, ArfData::Data& data, ArfData::DataPointers& datap)
 {
-	// Setup pointers
-	ArfData::Data* data = (ArfData::Data*)resource.data;
-	ArfData::DataPointers _datap;
-	void* pdata = (void*)((size_t)data + sizeof(ArfData::Data));
-	_datap.positions = (ArfData::Position*)((size_t)pdata + data->PosStart);
-	_datap.texCoords = (ArfData::TexCoord*)((size_t)pdata + data->TexStart);
-	_datap.normals = (ArfData::Normal*)((size_t)pdata + data->NormStart);
-	_datap.faces = (ArfData::Face*)((size_t)pdata + data->FaceStart);
-	_datap.subMesh = (ArfData::SubMesh*)((size_t)pdata + data->SubMeshStart);
-
 	// Interleave data
-	uint32_t numVertices = data->NumFace * 3;
+	uint32_t numVertices = data.NumFace * 3;
 	MeshData::Vertex* vertices = new MeshData::Vertex[numVertices];
 	uint32_t index = 0;
-	for (uint32_t i = 0; i < data->NumSubMesh; i++)
+	for (uint32_t i = 0; i < data.NumSubMesh; i++)
 	{
-		for (uint32_t j = _datap.subMesh[i].faceStart; j < _datap.subMesh[i].faceCount; j++)
+		for (uint32_t j = datap.subMesh[i].faceStart; j < datap.subMesh[i].faceCount; j++)
 		{
-			auto& face = _datap.faces[j];
+			auto& face = datap.faces[j];
 
 			for (uint8_t r = 0; r < face.indexCount; r++)
 			{
 				auto& ind = face.indices[r];
 				// Positions
-				memcpy(&vertices[index].pos, &_datap.positions[ind.index[0] - 1], sizeof(MeshData::Position));
+				memcpy(&vertices[index].pos, &datap.positions[ind.index[0] - 1], sizeof(MeshData::Position));
 				vertices[index].pos.z = -vertices[index].pos.z;
 				// Normals
-				memcpy(&vertices[index].norm, &_datap.normals[ind.index[2] - 1], sizeof(MeshData::Normal));
-				//DirectX::XMVECTOR d = DirectX::XMVectorSet(vertices[index].norm.x, vertices[index].norm.y, vertices[index].norm.z, 0.0f);
-				//if (DirectX::XMVectorGetX(DirectX::XMVector3Length(d)) < 0.01f)
-				//	printf("SHIT IS FUCKED\n");
+				memcpy(&vertices[index].norm, &datap.normals[ind.index[2] - 1], sizeof(MeshData::Normal));
 				// TexCoords
-				memcpy(&vertices[index].tex, &_datap.texCoords[ind.index[1] - 1], sizeof(MeshData::TexCoord));
-				vertices[index].tex.v = 1 - vertices[index].tex.v;
+				if (ind.index[1] == UINT32_MAX)
+				{
+					memcpy(&vertices[index].tex, &datap.texCoords[0], sizeof(MeshData::TexCoord));
+					vertices[index].tex.v = 1 - vertices[index].tex.v;
+				}
+				else
+				{
+					memcpy(&vertices[index].tex, &datap.texCoords[ind.index[1] - 1], sizeof(MeshData::TexCoord));
+					vertices[index].tex.v = 1 - vertices[index].tex.v;
+				}
 				index++;
+
 			}
 		}
 	}
 
-	uint32_t indexCount = data->NumFace * 3;
+	uint32_t indexCount = data.NumFace * 3;
 	uint32_t* indices = new uint32_t[indexCount];
 	for (uint32_t i = 0; i < indexCount; i++)
 	{
@@ -404,16 +391,26 @@ void ArfParser(const Resource::Ptr& resource)
 	delete[] vertices;
 	delete[] indices;
 }
-
-void Objarser(const Resource::Ptr& resource)
+void ArfParser(const Resource::Ptr& resource)
 {
-	MeshData::MeshData pdata;
-	ParseObj(resource.data, pdata);
+	// Setup pointers
+	ArfData::Data* data = (ArfData::Data*)resource.data;
+	ArfData::DataPointers datap;
+	datap.buffer = (void*)(data + 1);
+	datap.positions = (ArfData::Position*)(datap.buffer);
+	datap.texCoords = (ArfData::TexCoord*)(datap.positions + data->NumPos);
+	datap.normals = (ArfData::Normal*)(datap.texCoords + data->NumTex);
+	datap.faces = (ArfData::Face*)(datap.normals + data->NumNorm);
+	datap.subMesh = (ArfData::SubMesh*)(datap.faces + data->NumFace);
 
-	auto g = Core::GetInstance()->GetGraphics();
-	g->CreateMeshBuffers(resource.guid, pdata.vertices, pdata.NumVertices, pdata.Indices, pdata.IndexCount);
-	resource.RegisterObserver(g);
+	Interleave(resource, *data, datap);
+}
 
-	delete[] pdata.vertices;
-	delete[] pdata.Indices;
+void ObjParser(const Resource::Ptr& resource)
+{
+	ArfData::Data data;
+	ArfData::DataPointers dp;
+	ParseObj(resource.data, resource.size, &data, &dp);
+
+	Interleave(resource, data, dp);
 }
