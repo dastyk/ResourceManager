@@ -72,6 +72,8 @@ const SM_GUID ResourceManager::LoadResource(SM_GUID guid, const Resource::Flag& 
 		uint32_t startBlock = 0;
 		uint32_t numBlocks = 0;
 
+
+		uint64_t timestamp = Core::GetInstance()->GetTimer()->GetTimeStamp();
 		RawData rawData = _assetLoader->LoadResource( guid, [this, &startBlock, &numBlocks](uint32_t dataSize) -> char*
 		{
 			char* data = nullptr;
@@ -90,7 +92,8 @@ const SM_GUID ResourceManager::LoadResource(SM_GUID guid, const Resource::Flag& 
 
 			return data;
 		} );
-
+		timestamp = Core::GetInstance()->GetTimer()->GetTimeStamp() - timestamp;
+		printf("Loaded in %ld time units\n", timestamp);
 		data.rawData[count] = rawData.data;
 		data.type[count] = rawData.fType;
 		data.size[count] = rawData.size;
@@ -452,12 +455,6 @@ void ResourceManager::_LoadingThread(uint16_t threadID)
 
 			_loadingQueue.pop();
 
-			if (guid.data == 16376063061694915042)
-			{
-				int k = 5;
-				k++;
-			}
-
 			_mutexLockLoadingQueue.unlock();
 			
 			uint32_t job = _resource.FindLock(guid);
@@ -478,7 +475,7 @@ void ResourceManager::_LoadingThread(uint16_t threadID)
 
 				try
 				{
-					uint64_t timestamp = Core::GetInstance()->GetTimer()->GetTimeStamp();
+					//uint64_t timestamp = Core::GetInstance()->GetTimer()->GetTimeStamp();
 					RawData rawData = _assetLoader->LoadResource(guid, [this, &startBlock, &numBlocks](uint32_t dataSize) -> char*
 					{
 						char* data = nullptr;
@@ -493,13 +490,13 @@ void ResourceManager::_LoadingThread(uint16_t threadID)
 
 						return data;
 					});
-					timestamp = Core::GetInstance()->GetTimer()->GetTimeStamp() - timestamp;
+					//timestamp = Core::GetInstance()->GetTimer()->GetTimeStamp() - timestamp;
 
 
 					_mutexLockLoader.unlock();
 
 					printf("Finished loading resource. GUID: %llu\n", guid.data);
-					printf("Loaded in %ld time units\n", timestamp);
+				//	printf("Loaded in %ld time units\n", timestamp);
 
 					data.rawData[job] = rawData.data;
 					data.type[job] = rawData.fType;

@@ -17,6 +17,7 @@
 #include "FileLoader.h"
 #include "Scene.h"
 
+
 void ArfParser(const Resource::Ptr& resource);
 void Objarser(const Resource::Ptr& resource);
 
@@ -63,7 +64,7 @@ int main(int argc, char** argv)
 	MemoryManager::GetInstance()->Init(1024U * 1024U * 1024U);
 	ResourceManager& r = ResourceManager::Instance(); // Kickstart at our will
 	r.Init(512U * 1024U * 1024U);
-	r.SetEvictPolicy(ResourceManager::EvictPolicies::FirstCumulativeFit);
+	r.SetEvictPolicy(ResourceManager::EvictPolicies::InstantEvict);
 	//r.SetAssetLoader(new ZipLoader("data.dat"));
 	//r.SetAssetLoader(new FileLoader("filelist.txt"));
 	r.SetAssetLoader(new DarferLoader("data.drf"));
@@ -91,6 +92,14 @@ int main(int argc, char** argv)
 
 
 	r.TestAlloc();
+
+	//for (int i = 0; i < 100; i++)
+	//{
+	//	ResourceManager::Instance().LoadResource("b5.jpg", Resource::Flag::LOAD_AND_WAIT);
+	//	Sleep(1550);
+	//	ResourceManager::Instance().UnloadResource("b5.jpg");
+	//	Sleep(1550);
+	//}
 
 	//DarferLoader drfLoader("test.drf");
 

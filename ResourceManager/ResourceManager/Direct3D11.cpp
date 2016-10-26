@@ -267,6 +267,8 @@ void Direct3D11::Draw()
 	XMMATRIX view = core->GetCameraManager()->GetView();
 	XMMATRIX proj = core->GetCameraManager()->GetProj();
 
+	_deviceContext->RSSetState(_rasterizerStates[RasterizerStates::RS_WIREFRAME]);
+
 	for (const auto &meshes : _renderBatches.meshes)
 	{
 		_deviceContext->IASetVertexBuffers(0, 1, &_vertexBuffers[meshes.mesh].buffer, &stride, &offset);
@@ -329,6 +331,7 @@ void Direct3D11::Draw()
 	_deviceContext->PSSetShaderResources(RenderTargets::RT_COUNT, 1, &_depth.SRV);
 
 	_deviceContext->PSSetConstantBuffers(1, 1, &_constantBuffers[ConstantBuffers::CB_PER_FRAME]);
+	_deviceContext->RSSetState(_rasterizerStates[RasterizerStates::RS_CULL_NONE]);
 
 	_deviceContext->Draw(3, 0);
 	
@@ -572,7 +575,7 @@ void Direct3D11::_CreateRasterizerState()
 	//rd.CullMode = D3D11_CULL_BACK;
 	hr = _device->CreateRasterizerState(&rd, &_rasterizerStates[RasterizerStates::RS_WIREFRAME]);
 
-	_deviceContext->RSSetState(_rasterizerStates[RasterizerStates::RS_CULL_NONE]);
+	_deviceContext->RSSetState(_rasterizerStates[RasterizerStates::RS_CULL_BACK]);
 }
 
 void Direct3D11::_CreateConstantBuffers()
