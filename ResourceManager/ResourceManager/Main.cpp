@@ -111,6 +111,10 @@ int main(int argc, char** argv)
 
 	//ResourceManager::Instance().LoadResource("Sphere0.arf", Resource::Flag::LOAD_AND_WAIT);
 
+	GameObject cunt;
+	cunt.mesh = ResourceManager::Instance().LoadResource("Sphere2.arf", Resource::Flag::LOAD_AND_WAIT);
+	cunt.texture = ResourceManager::Instance().LoadResource("b5.jpg", Resource::Flag::LOAD_AND_WAIT);
+	DirectX::XMStoreFloat4x4(&cunt.transform, DirectX::XMMatrixTranslation(0.0f, 5.0f, 0.0f));
 	
 
 	GameObject sphereObject;
@@ -310,6 +314,7 @@ int main(int argc, char** argv)
 			testScene.GetObjectsToRender(renderObjects);
 		}
 		core->GetGraphics()->AddToRenderQueue(cube);
+		core->GetGraphics()->AddToRenderQueue(cunt);
 		
 		for (int i = 0; i < renderObjects.size(); i++)
 		{

@@ -45,5 +45,12 @@ VS_OUT main(VS_IN input)
 	output.posVS = mul(float4(input.pos, 1.0f), gPOB[input.instanceID].gWorldView);
 	output.tex = input.tex;
 	output.normalVS = mul(float4(input.nor,0.0f), gPOB[input.instanceID].gWorldViewInvTrp);
+	float4 dumb = float4(0.00001f, 0.0f, 0.0f, 0.0f);
+	dumb = mul(dumb, gPOB[input.instanceID].gWorld);
+	output.tex.x += dumb.x;
+	//output.normalVS = mul(float4(input.nor, 0.0f), gPOB[input.instanceID].gWorld);
+	//output.normalVS = normalize(mul(float4(input.nor, 0.0f), gPOB[input.instanceID].gWorld)).xyz;
+	//output.normalVS = mul(float4(output.normalVS.xyz, 0.0f), gView).xyz;
+	//output.normalVS = (output.normalVS + 1.0f) / 2.0f;
 	return output;
 }

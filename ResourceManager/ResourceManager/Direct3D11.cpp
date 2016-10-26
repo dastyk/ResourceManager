@@ -293,10 +293,13 @@ void Direct3D11::Draw()
 				for (int j = 0; j < instancesThisIteration; j++)
 				{
 					XMMATRIX world = XMLoadFloat4x4(&textures.transforms[j + MAX_INSTANCES * i]);
+					XMStoreFloat4x4(&pob[j].WVP, XMMatrixTranspose(world * view * proj));
+					XMStoreFloat4x4(&pob[j].WorldViewInvTrp, XMMatrixInverse(nullptr, world * view));
+					//XMStoreFloat4x4(&pob[j].WorldViewInvTrp, XMMatrixTranspose(XMMatrixTranspose(XMMatrixInverse(nullptr, world)) * view));
 					XMStoreFloat4x4(&pob[j].World, XMMatrixTranspose(world));
 					XMStoreFloat4x4(&pob[j].WorldView, XMMatrixTranspose(world * view));
-					XMStoreFloat4x4(&pob[j].WorldViewInvTrp, XMMatrixInverse(nullptr,world * view));
-					XMStoreFloat4x4(&pob[j].WVP, XMMatrixTranspose(world * view * proj));
+					
+					
 				}
 				D3D11_MAPPED_SUBRESOURCE msr;
 				_deviceContext->Map(_constantBuffers[ConstantBuffers::CB_PER_INSTANCE], 0, D3D11_MAP_WRITE_DISCARD, 0, &msr);

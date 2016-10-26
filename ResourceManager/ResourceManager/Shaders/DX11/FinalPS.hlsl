@@ -48,7 +48,7 @@ float4 main(VS_OUT input) : SV_TARGET
 	//float4 posVS = mul(projPos, gInvProj);
 	//posVS.xyz /= posVS.w;
 	float3 normal = Normal.Sample(AniSam, input.tex).rgb;
-	normal = normalize((normal * 2.0f) - 1.0f);
+	//normal = normalize((normal * 2.0f) - 1.0f);
 	float3 diffuse = Diffuse.Sample(AniSam, input.tex).rgb;
 	
 	float3 lightDir = float3(-10.0f, -15.0f, 5.0f);
@@ -63,6 +63,6 @@ float4 main(VS_OUT input) : SV_TARGET
 	else
 		fincol = diffuse * 0.35f;
 
-	return float4(fincol, 1.0f);
+	return float4((normal + 1.0f) / 2.0f, 1.0f);
 	
 }
