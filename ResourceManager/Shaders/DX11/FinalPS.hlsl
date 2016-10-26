@@ -55,7 +55,7 @@ float4 main(VS_OUT input) : SV_TARGET
 	float3 lightCol = float3(1.0f, 1.0f, 0.70f);
 	lightDir = -normalize(lightDir);
 	lightDir = mul(float4(lightDir, 0.0f), gView).xyz;
-	float intensity = 4.0f;
+	float intensity = 1.0f;
 	float NdL = dot(normal, lightDir);
 	float3 fincol;
 	if (NdL > 0.0f)
@@ -63,6 +63,6 @@ float4 main(VS_OUT input) : SV_TARGET
 	else
 		fincol = diffuse * 0.35f;
 
-	return float4((normal + 1.0f) / 2.0f, 1.0f);
+	return float4(fincol, 1.0f);
 	
 }

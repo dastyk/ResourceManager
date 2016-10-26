@@ -19,6 +19,9 @@
     <Filter Include="Source Files\Graphics">
       <UniqueIdentifier>{77ab7eb3-26b3-49ad-a9bb-5357c734aaa2}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\Graphics\Shaders">
+      <UniqueIdentifier>{e3b3ed5e-2e4d-4389-82b6-e907b6ee2b3a}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ResourceManager\DirectXTK\dds.h">
@@ -218,5 +221,22 @@
     <ClCompile Include="ResourceManager\Direct3D11.cpp">
       <Filter>Source Files\Graphics</Filter>
     </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Shaders\DX11\FinalPS.hlsl">
+      <Filter>Source Files\Graphics\Shaders</Filter>
+    </None>
+    <None Include="Shaders\DX11\FinalVS.hlsl">
+      <Filter>Source Files\Graphics\Shaders</Filter>
+    </None>
+    <None Include="Shaders\DX11\InstancedStaticMeshVS.hlsl">
+      <Filter>Source Files\Graphics\Shaders</Filter>
+    </None>
+    <None Include="Shaders\DX11\StaticMeshPS.hlsl">
+      <Filter>Source Files\Graphics\Shaders</Filter>
+    </None>
+    <None Include="Shaders\DX11\StaticMeshVS.hlsl">
+      <Filter>Source Files\Graphics\Shaders</Filter>
+    </None>
   </ItemGroup>
 </Project>
