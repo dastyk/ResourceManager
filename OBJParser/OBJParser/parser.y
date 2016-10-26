@@ -59,15 +59,15 @@
 
 %type <void*> line
 %type <void*> statement
-%type <std::vector<std::vector<uint64_t>>> createface
+%type <std::vector<std::vector<uint32_t>>> createface
 %type <std::string> optname
 %type <float> real
 %type <float> optreal
 %type <float> optreal2
-%type <std::vector<uint64_t>> indices
+%type <std::vector<uint32_t>> indices
 
 %token <float> REAL
-%token <uint64_t> INTEGER
+%token <uint32_t> INTEGER
 %token <std::string> POSITION
 %token <std::string> TEXCOORD
 %token <std::string> NORMAL

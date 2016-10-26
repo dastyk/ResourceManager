@@ -11,6 +11,7 @@ typedef nullptr NULL;
 
 namespace ArfData
 {
+#define SUBMESH_NAME_MAX_LENGHT 20
 	struct Position
 	{
 		float x, y, z;
@@ -35,18 +36,18 @@ namespace ArfData
 	struct Indices
 	{
 		uint8_t indexCount;
-		uint64_t index[3];// array of size 4.
+		uint32_t index[3];// array of size 4.
 	};
 
 	struct Face
 	{
 		uint8_t indexCount;
-		Indices indices[3]; // Array of size 4.
-		Face(std::vector<std::vector<uint64_t>>& face) : indexCount(0)
+		Indices indices[4]; // Array of size 4.
+		Face(std::vector<std::vector<uint32_t>>& face) : indexCount(0)
 		{
 			indexCount = face.size();
 
-			for (uint8_t i = 0; i < face.size(); i++)
+			for (uint8_t i = 0; i < indexCount; i++)
 			{
 				indices[i].indexCount = face[i].size();
 				for (uint8_t j = 0; j < face[i].size(); j++)
@@ -60,40 +61,41 @@ namespace ArfData
 
 	struct SubMesh
 	{
-		char name[20];
-		uint64_t faceStart;
-		uint64_t faceCount;
+		char name[SUBMESH_NAME_MAX_LENGHT];
+		uint32_t faceStart;
+		uint32_t faceCount;
 	};
 
 	struct Data
 	{
-		void* buffer = nullptr;
 		size_t allocated = 0;
 
-		size_t PosStart = 0;
-		uint64_t NumPos = 0;
-		uint64_t PosCap = 0;
+		
+		uint32_t NumPos = 0;
+		uint32_t PosCap = 0;
 
-		size_t TexStart = 0;
-		uint64_t NumTex = 0;
-		uint64_t TexCap = 0;
+		
+		uint32_t NumTex = 0;
+		uint32_t TexCap = 0;
 
-		size_t NormStart = 0;
-		uint64_t NumNorm = 0;
-		uint64_t NormCap = 0;
+	
+		uint32_t NumNorm = 0;
+		uint32_t NormCap = 0;
 
-		size_t FaceStart = 0;
-		uint64_t NumFace = 0;
-		uint64_t FaceCap = 0;
+		
+		uint32_t NumFace = 0;
+		uint32_t FaceCap = 0;
 
-		size_t SubMeshStart = 0;
-		uint32_t NumSubMesh = 0;
-		uint32_t SubMeshCap = 0;
+	
+		uint8_t NumSubMesh = 0;
+		uint8_t SubMeshCap = 0;
 
 	};
 
 	struct DataPointers
 	{
+		void* buffer = nullptr;
+
 		Position* positions;
 		TexCoord* texCoords;
 		Normal* normals;

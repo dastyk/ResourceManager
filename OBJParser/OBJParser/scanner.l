@@ -47,7 +47,7 @@ ws      [ \t\n]+
 {ws}									{}
 
 
-[0-9]+												{ return ObjParser::Parser::make_INTEGER(stol(yytext), ObjParser::location());}
+[0-9]+												{ return ObjParser::Parser::make_INTEGER(stoul(yytext), ObjParser::location());}
 [-+]?[0-9]*\.?[0-9]+([eE][-+]?[0-9]+)?				{ return ObjParser::Parser::make_REAL(std::stof(yytext), ObjParser::location());}
 v													{ return ObjParser::Parser::make_POSITION(yytext, ObjParser::location());}
 vt													{ return ObjParser::Parser::make_TEXCOORD(yytext, ObjParser::location());}

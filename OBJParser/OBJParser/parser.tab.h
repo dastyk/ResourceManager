@@ -269,13 +269,13 @@ namespace  ObjParser  {
       char dummy3[sizeof(std::string)];
 
       // createface
-      char dummy4[sizeof(std::vector<std::vector<uint64_t>>)];
+      char dummy4[sizeof(std::vector<std::vector<uint32_t>>)];
 
       // indices
-      char dummy5[sizeof(std::vector<uint64_t>)];
+      char dummy5[sizeof(std::vector<uint32_t>)];
 
       // INTEGER
-      char dummy6[sizeof(uint64_t)];
+      char dummy6[sizeof(uint32_t)];
 
       // line
       // statement
@@ -357,11 +357,11 @@ namespace  ObjParser  {
 
   basic_symbol (typename Base::kind_type t, const std::string v, const location_type& l);
 
-  basic_symbol (typename Base::kind_type t, const std::vector<std::vector<uint64_t>> v, const location_type& l);
+  basic_symbol (typename Base::kind_type t, const std::vector<std::vector<uint32_t>> v, const location_type& l);
 
-  basic_symbol (typename Base::kind_type t, const std::vector<uint64_t> v, const location_type& l);
+  basic_symbol (typename Base::kind_type t, const std::vector<uint32_t> v, const location_type& l);
 
-  basic_symbol (typename Base::kind_type t, const uint64_t v, const location_type& l);
+  basic_symbol (typename Base::kind_type t, const uint32_t v, const location_type& l);
 
   basic_symbol (typename Base::kind_type t, const void* v, const location_type& l);
 
@@ -433,7 +433,7 @@ namespace  ObjParser  {
 
     static inline
     symbol_type
-    make_INTEGER (const uint64_t& v, const location_type& l);
+    make_INTEGER (const uint32_t& v, const location_type& l);
 
     static inline
     symbol_type
@@ -796,15 +796,15 @@ namespace  ObjParser  {
         break;
 
       case 24: // createface
-        value.copy< std::vector<std::vector<uint64_t>> > (other.value);
+        value.copy< std::vector<std::vector<uint32_t>> > (other.value);
         break;
 
       case 25: // indices
-        value.copy< std::vector<uint64_t> > (other.value);
+        value.copy< std::vector<uint32_t> > (other.value);
         break;
 
       case 4: // INTEGER
-        value.copy< uint64_t > (other.value);
+        value.copy< uint32_t > (other.value);
         break;
 
       case 18: // line
@@ -856,15 +856,15 @@ namespace  ObjParser  {
         break;
 
       case 24: // createface
-        value.copy< std::vector<std::vector<uint64_t>> > (v);
+        value.copy< std::vector<std::vector<uint32_t>> > (v);
         break;
 
       case 25: // indices
-        value.copy< std::vector<uint64_t> > (v);
+        value.copy< std::vector<uint32_t> > (v);
         break;
 
       case 4: // INTEGER
-        value.copy< uint64_t > (v);
+        value.copy< uint32_t > (v);
         break;
 
       case 18: // line
@@ -909,21 +909,21 @@ namespace  ObjParser  {
   {}
 
   template <typename Base>
-   Parser ::basic_symbol<Base>::basic_symbol (typename Base::kind_type t, const std::vector<std::vector<uint64_t>> v, const location_type& l)
+   Parser ::basic_symbol<Base>::basic_symbol (typename Base::kind_type t, const std::vector<std::vector<uint32_t>> v, const location_type& l)
     : Base (t)
     , value (v)
     , location (l)
   {}
 
   template <typename Base>
-   Parser ::basic_symbol<Base>::basic_symbol (typename Base::kind_type t, const std::vector<uint64_t> v, const location_type& l)
+   Parser ::basic_symbol<Base>::basic_symbol (typename Base::kind_type t, const std::vector<uint32_t> v, const location_type& l)
     : Base (t)
     , value (v)
     , location (l)
   {}
 
   template <typename Base>
-   Parser ::basic_symbol<Base>::basic_symbol (typename Base::kind_type t, const uint64_t v, const location_type& l)
+   Parser ::basic_symbol<Base>::basic_symbol (typename Base::kind_type t, const uint32_t v, const location_type& l)
     : Base (t)
     , value (v)
     , location (l)
@@ -979,15 +979,15 @@ namespace  ObjParser  {
         break;
 
       case 24: // createface
-        value.template destroy< std::vector<std::vector<uint64_t>> > ();
+        value.template destroy< std::vector<std::vector<uint32_t>> > ();
         break;
 
       case 25: // indices
-        value.template destroy< std::vector<uint64_t> > ();
+        value.template destroy< std::vector<uint32_t> > ();
         break;
 
       case 4: // INTEGER
-        value.template destroy< uint64_t > ();
+        value.template destroy< uint32_t > ();
         break;
 
       case 18: // line
@@ -1036,15 +1036,15 @@ namespace  ObjParser  {
         break;
 
       case 24: // createface
-        value.move< std::vector<std::vector<uint64_t>> > (s.value);
+        value.move< std::vector<std::vector<uint32_t>> > (s.value);
         break;
 
       case 25: // indices
-        value.move< std::vector<uint64_t> > (s.value);
+        value.move< std::vector<uint32_t> > (s.value);
         break;
 
       case 4: // INTEGER
-        value.move< uint64_t > (s.value);
+        value.move< uint32_t > (s.value);
         break;
 
       case 18: // line
@@ -1121,7 +1121,7 @@ namespace  ObjParser  {
   }
 
    Parser ::symbol_type
-   Parser ::make_INTEGER (const uint64_t& v, const location_type& l)
+   Parser ::make_INTEGER (const uint32_t& v, const location_type& l)
   {
     return symbol_type (token::TOKEN_INTEGER, v, l);
 
