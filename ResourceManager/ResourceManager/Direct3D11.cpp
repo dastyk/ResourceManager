@@ -266,8 +266,17 @@ void Direct3D11::Draw()
 	
 	XMMATRIX view = core->GetCameraManager()->GetView();
 	XMMATRIX proj = core->GetCameraManager()->GetProj();
+	if (Core::GetInstance()->GetInputManager()->WasKeyPressed(SDLK_t))
+	{
+		if (_currentRasterizerState == _rasterizerStates[RasterizerStates::RS_WIREFRAME])
+			_currentRasterizerState = _rasterizerStates[RasterizerStates::RS_CULL_BACK];
+		else
+			_currentRasterizerState = _rasterizerStates[RasterizerStates::RS_WIREFRAME];
 
-	_deviceContext->RSSetState(_rasterizerStates[RasterizerStates::RS_WIREFRAME]);
+
+
+	}
+	_deviceContext->RSSetState(_currentRasterizerState);
 
 	for (const auto &meshes : _renderBatches.meshes)
 	{
@@ -576,6 +585,7 @@ void Direct3D11::_CreateRasterizerState()
 	hr = _device->CreateRasterizerState(&rd, &_rasterizerStates[RasterizerStates::RS_WIREFRAME]);
 
 	_deviceContext->RSSetState(_rasterizerStates[RasterizerStates::RS_CULL_BACK]);
+	_currentRasterizerState = _rasterizerStates[RasterizerStates::RS_CULL_BACK];
 }
 
 void Direct3D11::_CreateConstantBuffers()
