@@ -15,7 +15,7 @@ errorlog.txt
 
 
 *.drf
-
+*.rar
 
 # Build results
 [Dd]ebug/
