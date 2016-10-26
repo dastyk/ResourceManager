@@ -41,6 +41,7 @@
 #undef yyFlexLexer
 #define yyFlexLexer ObjParser_FlexLexer // the trick with prefix; no namespace here :(
 #include <FlexLexer.h>
+
 #endif
 
 // Scanner method signature is defined by this macro. Original yylex() returns int.

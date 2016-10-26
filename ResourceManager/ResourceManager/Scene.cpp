@@ -28,7 +28,7 @@ void Scene::Update(DirectX::XMFLOAT3 playerPos)
 
 		uint32_t meshlods = gameObjects[i].GetNrOfMeshLODLevels();
 		uint32_t texlods = gameObjects[i].GetNrOfTextureLODLevels();
-		float farplane = Core::GetInstance()->GetCameraManager()->GetFarPlaneDistance();
+		float farplane = Core::GetInstance()->GetCameraManager()->GetFarPlaneDistance()*0.5f;
 		float meshStep = farplane / meshlods;
 		float texStep = farplane / texlods;
 		float dist = DistanceBetweenPoints(playerPos, gameObjects[i].GetPos());
