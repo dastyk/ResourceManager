@@ -75,8 +75,14 @@
             this.removeToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.toolStripMenuItem7 = new System.Windows.Forms.ToolStripSeparator();
             this.compressToolStripMenuItem1 = new System.Windows.Forms.ToolStripMenuItem();
+            this.selectiveToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.lZ77ToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.huffmanToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.lZ77HuffmanToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.huffmanLZ77ToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.uncompressToolStripMenuItem1 = new System.Windows.Forms.ToolStripMenuItem();
             this.nodeInfoBox = new System.Windows.Forms.GroupBox();
+            this.compRate = new System.Windows.Forms.Label();
             this.ucSizeInfo = new System.Windows.Forms.Label();
             this.fileData = new System.Windows.Forms.Label();
             this.nodeExt = new System.Windows.Forms.Label();
@@ -95,7 +101,6 @@
             this.uncompressWorker = new System.ComponentModel.BackgroundWorker();
             this.selcW = new System.ComponentModel.BackgroundWorker();
             this.selucW = new System.ComponentModel.BackgroundWorker();
-            this.compRate = new System.Windows.Forms.Label();
             this.menuStrip1.SuspendLayout();
             this.itemTreeNodeRCCM.SuspendLayout();
             this.itemTreeFileNodeRCCM.SuspendLayout();
@@ -452,10 +457,50 @@
             // 
             // compressToolStripMenuItem1
             // 
+            this.compressToolStripMenuItem1.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.selectiveToolStripMenuItem,
+            this.lZ77ToolStripMenuItem,
+            this.huffmanToolStripMenuItem,
+            this.lZ77HuffmanToolStripMenuItem,
+            this.huffmanLZ77ToolStripMenuItem});
             this.compressToolStripMenuItem1.Name = "compressToolStripMenuItem1";
             this.compressToolStripMenuItem1.Size = new System.Drawing.Size(140, 22);
-            this.compressToolStripMenuItem1.Text = "Compress";
-            this.compressToolStripMenuItem1.Click += new System.EventHandler(this.compressToolStripMenuItem1_Click);
+            this.compressToolStripMenuItem1.Text = "Compress...";
+            // 
+            // selectiveToolStripMenuItem
+            // 
+            this.selectiveToolStripMenuItem.Name = "selectiveToolStripMenuItem";
+            this.selectiveToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
+            this.selectiveToolStripMenuItem.Text = "Selective";
+            this.selectiveToolStripMenuItem.Click += new System.EventHandler(this.selectiveToolStripMenuItem_Click);
+            // 
+            // lZ77ToolStripMenuItem
+            // 
+            this.lZ77ToolStripMenuItem.Name = "lZ77ToolStripMenuItem";
+            this.lZ77ToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
+            this.lZ77ToolStripMenuItem.Text = "LZ77";
+            this.lZ77ToolStripMenuItem.Click += new System.EventHandler(this.lZ77ToolStripMenuItem_Click);
+            // 
+            // huffmanToolStripMenuItem
+            // 
+            this.huffmanToolStripMenuItem.Name = "huffmanToolStripMenuItem";
+            this.huffmanToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
+            this.huffmanToolStripMenuItem.Text = "Huffman";
+            this.huffmanToolStripMenuItem.Click += new System.EventHandler(this.huffmanToolStripMenuItem_Click);
+            // 
+            // lZ77HuffmanToolStripMenuItem
+            // 
+            this.lZ77HuffmanToolStripMenuItem.Name = "lZ77HuffmanToolStripMenuItem";
+            this.lZ77HuffmanToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
+            this.lZ77HuffmanToolStripMenuItem.Text = "LZ77-Huffman";
+            this.lZ77HuffmanToolStripMenuItem.Click += new System.EventHandler(this.lZ77HuffmanToolStripMenuItem_Click);
+            // 
+            // huffmanLZ77ToolStripMenuItem
+            // 
+            this.huffmanLZ77ToolStripMenuItem.Name = "huffmanLZ77ToolStripMenuItem";
+            this.huffmanLZ77ToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
+            this.huffmanLZ77ToolStripMenuItem.Text = "Huffman-LZ77";
+            this.huffmanLZ77ToolStripMenuItem.Click += new System.EventHandler(this.huffmanLZ77ToolStripMenuItem_Click);
             // 
             // uncompressToolStripMenuItem1
             // 
@@ -477,6 +522,16 @@
             this.nodeInfoBox.Size = new System.Drawing.Size(290, 500);
             this.nodeInfoBox.TabIndex = 3;
             this.nodeInfoBox.TabStop = false;
+            // 
+            // compRate
+            // 
+            this.compRate.AutoSize = true;
+            this.compRate.Location = new System.Drawing.Point(139, 41);
+            this.compRate.Name = "compRate";
+            this.compRate.Size = new System.Drawing.Size(35, 13);
+            this.compRate.TabIndex = 5;
+            this.compRate.Text = "label1";
+            this.compRate.Visible = false;
             // 
             // ucSizeInfo
             // 
@@ -640,16 +695,6 @@
             this.selucW.ProgressChanged += new System.ComponentModel.ProgressChangedEventHandler(this.selucW_ProgressChanged);
             this.selucW.RunWorkerCompleted += new System.ComponentModel.RunWorkerCompletedEventHandler(this.selucW_RunWorkerCompleted);
             // 
-            // compRate
-            // 
-            this.compRate.AutoSize = true;
-            this.compRate.Location = new System.Drawing.Point(139, 41);
-            this.compRate.Name = "compRate";
-            this.compRate.Size = new System.Drawing.Size(35, 13);
-            this.compRate.TabIndex = 5;
-            this.compRate.Text = "label1";
-            this.compRate.Visible = false;
-            // 
             // Arfer
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -750,6 +795,11 @@
         private System.ComponentModel.BackgroundWorker selcW;
         private System.ComponentModel.BackgroundWorker selucW;
         private System.Windows.Forms.Label compRate;
+        private System.Windows.Forms.ToolStripMenuItem selectiveToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem lZ77ToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem huffmanToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem lZ77HuffmanToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem huffmanLZ77ToolStripMenuItem;
     }
 }
 

@@ -32,7 +32,7 @@
 
 /**
  ** \file parser.tab.h
- ** Define the yy::parser class.
+ ** Define the  ObjParser ::parser class.
  */
 
 // C++ LALR(1) parser skeleton written by Akim Demaille.
@@ -40,22 +40,30 @@
 #ifndef YY_YY_PARSER_TAB_H_INCLUDED
 # define YY_YY_PARSER_TAB_H_INCLUDED
 // //                    "%code requires" blocks.
-#line 5 "parser.y" // lalr1.cc:371
+#line 11 "parser.y" // lalr1.cc:371
 
-	#include "Object.h"
-	#include <vector>
-	#include <stdint.h>
+    #include <iostream>
+    #include <string>
+    #include <vector>
+    #include <stdint.h>
 
-#line 50 "parser.tab.h" // lalr1.cc:371
+    using namespace std;
 
+    namespace ObjParser {
+        class Scanner;
+        class Interpreter;
+    }
 
+#line 58 "parser.tab.h" // lalr1.cc:371
+
+# include <cassert>
 # include <vector>
 # include <iostream>
 # include <stdexcept>
 # include <string>
 # include "stack.hh"
-
-
+# include "location.hh"
+#include <typeinfo>
 #ifndef YYASSERT
 # include <cassert>
 # define YYASSERT assert
@@ -64,12 +72,12 @@
 
 /* Debug traces.  */
 #ifndef YYDEBUG
-# define YYDEBUG 0
+# define YYDEBUG 1
 #endif
 
-
-namespace yy {
-#line 73 "parser.tab.h" // lalr1.cc:371
+#line 9 "parser.y" // lalr1.cc:371
+namespace  ObjParser  {
+#line 81 "parser.tab.h" // lalr1.cc:371
 
 
 
@@ -86,11 +94,13 @@ namespace yy {
 
     /// Empty construction.
     variant ()
+      : yytname_ (YY_NULL)
     {}
 
     /// Construct and fill.
     template <typename T>
     variant (const T& t)
+      : yytname_ (typeid (T).name ())
     {
       YYASSERT (sizeof (T) <= S);
       new (yyas_<T> ()) T (t);
@@ -98,13 +108,18 @@ namespace yy {
 
     /// Destruction, allowed only if empty.
     ~variant ()
-    {}
+    {
+      YYASSERT (!yytname_);
+    }
 
     /// Instantiate an empty \a T in here.
     template <typename T>
     T&
     build ()
     {
+      YYASSERT (!yytname_);
+      YYASSERT (sizeof (T) <= S);
+      yytname_ = typeid (T).name ();
       return *new (yyas_<T> ()) T;
     }
 
@@ -113,6 +128,9 @@ namespace yy {
     T&
     build (const T& t)
     {
+      YYASSERT (!yytname_);
+      YYASSERT (sizeof (T) <= S);
+      yytname_ = typeid (T).name ();
       return *new (yyas_<T> ()) T (t);
     }
 
@@ -121,6 +139,8 @@ namespace yy {
     T&
     as ()
     {
+      YYASSERT (yytname_ == typeid (T).name ());
+      YYASSERT (sizeof (T) <= S);
       return *yyas_<T> ();
     }
 
@@ -129,6 +149,8 @@ namespace yy {
     const T&
     as () const
     {
+      YYASSERT (yytname_ == typeid (T).name ());
+      YYASSERT (sizeof (T) <= S);
       return *yyas_<T> ();
     }
 
@@ -144,6 +166,8 @@ namespace yy {
     void
     swap (self_type& other)
     {
+      YYASSERT (yytname_);
+      YYASSERT (yytname_ == other.yytname_);
       std::swap (as<T> (), other.as<T> ());
     }
 
@@ -154,6 +178,7 @@ namespace yy {
     void
     move (self_type& other)
     {
+      YYASSERT (!yytname_);
       build<T> ();
       swap<T> (other);
       other.destroy<T> ();
@@ -173,6 +198,7 @@ namespace yy {
     destroy ()
     {
       as<T> ().~T ();
+      yytname_ = YY_NULL;
     }
 
   private:
@@ -205,11 +231,14 @@ namespace yy {
       /// A buffer large enough to store any of the semantic values.
       char yyraw[S];
     } yybuffer_;
+
+    /// Whether the content is built: if defined, the name of the stored type.
+    const char *yytname_;
   };
 
 
   /// A Bison parser.
-  class parser
+  class  Parser 
   {
   public:
 #ifndef YYSTYPE
@@ -220,6 +249,7 @@ namespace yy {
       char dummy1[sizeof(bool)];
 
       // REAL
+      // real
       // optreal
       // optreal2
       char dummy2[sizeof(float)];
@@ -235,16 +265,17 @@ namespace yy {
       // USEMTL
       // NAME
       // SEP
+      // optname
       char dummy3[sizeof(std::string)];
 
       // createface
-      char dummy4[sizeof(std::vector<std::vector<uint64_t>>)];
+      char dummy4[sizeof(std::vector<std::vector<uint32_t>>)];
 
       // indices
-      char dummy5[sizeof(std::vector<uint64_t>)];
+      char dummy5[sizeof(std::vector<uint32_t>)];
 
       // INTEGER
-      char dummy6[sizeof(uint64_t)];
+      char dummy6[sizeof(uint32_t)];
 
       // line
       // statement
@@ -256,11 +287,14 @@ namespace yy {
 #else
     typedef YYSTYPE semantic_type;
 #endif
+    /// Symbol locations.
+    typedef location location_type;
 
     /// Syntax errors thrown from user actions.
     struct syntax_error : std::runtime_error
     {
-      syntax_error (const std::string& m);
+      syntax_error (const location_type& l, const std::string& m);
+      location_type location;
     };
 
     /// Tokens.
@@ -268,21 +302,21 @@ namespace yy {
     {
       enum yytokentype
       {
-        END = 0,
-        REAL = 258,
-        INTEGER = 259,
-        POSITION = 260,
-        TEXCOORD = 261,
-        NORMAL = 262,
-        POINT = 263,
-        FACE = 264,
-        OBJECT = 265,
-        S = 266,
-        MTLLIB = 267,
-        USEMTL = 268,
-        NAME = 269,
-        BOOLEAN = 270,
-        SEP = 271
+        TOKEN_END = 0,
+        TOKEN_REAL = 258,
+        TOKEN_INTEGER = 259,
+        TOKEN_POSITION = 260,
+        TOKEN_TEXCOORD = 261,
+        TOKEN_NORMAL = 262,
+        TOKEN_POINT = 263,
+        TOKEN_FACE = 264,
+        TOKEN_OBJECT = 265,
+        TOKEN_S = 266,
+        TOKEN_MTLLIB = 267,
+        TOKEN_USEMTL = 268,
+        TOKEN_NAME = 269,
+        TOKEN_BOOLEAN = 270,
+        TOKEN_SEP = 271
       };
     };
 
@@ -300,7 +334,7 @@ namespace yy {
     /// Expects its Base type to provide access to the symbol type
     /// via type_get().
     ///
-    /// Provide access to semantic value.
+    /// Provide access to semantic value and location.
     template <typename Base>
     struct basic_symbol : Base
     {
@@ -315,26 +349,27 @@ namespace yy {
 
       /// Constructor for valueless symbols, and symbols from each type.
 
-  basic_symbol (typename Base::kind_type t);
+  basic_symbol (typename Base::kind_type t, const location_type& l);
 
-  basic_symbol (typename Base::kind_type t, const bool v);
+  basic_symbol (typename Base::kind_type t, const bool v, const location_type& l);
 
-  basic_symbol (typename Base::kind_type t, const float v);
+  basic_symbol (typename Base::kind_type t, const float v, const location_type& l);
 
-  basic_symbol (typename Base::kind_type t, const std::string v);
+  basic_symbol (typename Base::kind_type t, const std::string v, const location_type& l);
 
-  basic_symbol (typename Base::kind_type t, const std::vector<std::vector<uint64_t>> v);
+  basic_symbol (typename Base::kind_type t, const std::vector<std::vector<uint32_t>> v, const location_type& l);
 
-  basic_symbol (typename Base::kind_type t, const std::vector<uint64_t> v);
+  basic_symbol (typename Base::kind_type t, const std::vector<uint32_t> v, const location_type& l);
 
-  basic_symbol (typename Base::kind_type t, const uint64_t v);
+  basic_symbol (typename Base::kind_type t, const uint32_t v, const location_type& l);
 
-  basic_symbol (typename Base::kind_type t, const void* v);
+  basic_symbol (typename Base::kind_type t, const void* v, const location_type& l);
 
 
       /// Constructor for symbols with semantic value.
       basic_symbol (typename Base::kind_type t,
-                    const semantic_type& v);
+                    const semantic_type& v,
+                    const location_type& l);
 
       ~basic_symbol ();
 
@@ -343,6 +378,9 @@ namespace yy {
 
       /// The semantic value.
       semantic_type value;
+
+      /// The location.
+      location_type location;
 
     private:
       /// Assignment operator.
@@ -387,68 +425,68 @@ namespace yy {
     // Symbol constructors declarations.
     static inline
     symbol_type
-    make_END ();
+    make_END (const location_type& l);
 
     static inline
     symbol_type
-    make_REAL (const float& v);
+    make_REAL (const float& v, const location_type& l);
 
     static inline
     symbol_type
-    make_INTEGER (const uint64_t& v);
+    make_INTEGER (const uint32_t& v, const location_type& l);
 
     static inline
     symbol_type
-    make_POSITION (const std::string& v);
+    make_POSITION (const std::string& v, const location_type& l);
 
     static inline
     symbol_type
-    make_TEXCOORD (const std::string& v);
+    make_TEXCOORD (const std::string& v, const location_type& l);
 
     static inline
     symbol_type
-    make_NORMAL (const std::string& v);
+    make_NORMAL (const std::string& v, const location_type& l);
 
     static inline
     symbol_type
-    make_POINT (const std::string& v);
+    make_POINT (const std::string& v, const location_type& l);
 
     static inline
     symbol_type
-    make_FACE (const std::string& v);
+    make_FACE (const std::string& v, const location_type& l);
 
     static inline
     symbol_type
-    make_OBJECT (const std::string& v);
+    make_OBJECT (const std::string& v, const location_type& l);
 
     static inline
     symbol_type
-    make_S (const std::string& v);
+    make_S (const std::string& v, const location_type& l);
 
     static inline
     symbol_type
-    make_MTLLIB (const std::string& v);
+    make_MTLLIB (const std::string& v, const location_type& l);
 
     static inline
     symbol_type
-    make_USEMTL (const std::string& v);
+    make_USEMTL (const std::string& v, const location_type& l);
 
     static inline
     symbol_type
-    make_NAME (const std::string& v);
+    make_NAME (const std::string& v, const location_type& l);
 
     static inline
     symbol_type
-    make_BOOLEAN (const bool& v);
+    make_BOOLEAN (const bool& v, const location_type& l);
 
     static inline
     symbol_type
-    make_SEP (const std::string& v);
+    make_SEP (const std::string& v, const location_type& l);
 
 
     /// Build a parser object.
-    parser ();
-    virtual ~parser ();
+     Parser  (ObjParser::Scanner &scanner_yyarg, ObjParser::Interpreter &driver_yyarg);
+    virtual ~ Parser  ();
 
     /// Parse.
     /// \returns  0 iff parsing succeeded.
@@ -469,16 +507,17 @@ namespace yy {
 #endif
 
     /// Report a syntax error.
+    /// \param loc    where the syntax error is found.
     /// \param msg    a description of the syntax error.
-    virtual void error (const std::string& msg);
+    virtual void error (const location_type& loc, const std::string& msg);
 
     /// Report a syntax error.
     void error (const syntax_error& err);
 
   private:
     /// This class is not copyable.
-    parser (const parser&);
-    parser& operator= (const parser&);
+     Parser  (const  Parser &);
+     Parser & operator= (const  Parser &);
 
     /// State numbers.
     typedef int state_type;
@@ -529,7 +568,7 @@ namespace yy {
   // number is the opposite.  If YYTABLE_NINF, syntax error.
   static const unsigned char yytable_[];
 
-  static const unsigned char yycheck_[];
+  static const signed char yycheck_[];
 
   // YYSTOS[STATE-NUM] -- The (internal number of the) accessing
   // symbol of state STATE-NUM.
@@ -542,10 +581,13 @@ namespace yy {
   static const unsigned char yyr2_[];
 
 
-#if YYDEBUG
+    /// Convert the symbol name \a n to a form suitable for a diagnostic.
+    static std::string yytnamerr_ (const char *n);
+
+
     /// For a symbol, its name in clear.
     static const char* const yytname_[];
-
+#if YYDEBUG
   // YYRLINE[YYN] -- Source line where rule number YYN was defined.
   static const unsigned char yyrline_[];
     /// Report on the debug stream that the rule \a r is going to be reduced.
@@ -641,22 +683,25 @@ namespace yy {
     enum
     {
       yyeof_ = 0,
-      yylast_ = 41,           //< Last index in yytable_.
-      yynnts_ = 7,  //< Number of nonterminal symbols.
+      yylast_ = 51,           //< Last index in yytable_.
+      yynnts_ = 9,  //< Number of nonterminal symbols.
       yyempty_ = -2,
-      yyfinal_ = 24, //< Termination state number.
+      yyfinal_ = 27, //< Termination state number.
       yyterror_ = 1,
       yyerrcode_ = 256,
       yyntokens_ = 17    //< Number of tokens.
     };
 
 
+    // User arguments.
+    ObjParser::Scanner &scanner;
+    ObjParser::Interpreter &driver;
   };
 
   // Symbol number corresponding to token number t.
   inline
-  parser::token_number_type
-  parser::yytranslate_ (token_type t)
+   Parser ::token_number_type
+   Parser ::yytranslate_ (token_type t)
   {
     static
     const token_number_type
@@ -703,22 +748,24 @@ namespace yy {
   }
 
   inline
-  parser::syntax_error::syntax_error (const std::string& m)
+   Parser ::syntax_error::syntax_error (const location_type& l, const std::string& m)
     : std::runtime_error (m)
+    , location (l)
   {}
 
   // basic_symbol.
   template <typename Base>
   inline
-  parser::basic_symbol<Base>::basic_symbol ()
+   Parser ::basic_symbol<Base>::basic_symbol ()
     : value ()
   {}
 
   template <typename Base>
   inline
-  parser::basic_symbol<Base>::basic_symbol (const basic_symbol& other)
+   Parser ::basic_symbol<Base>::basic_symbol (const basic_symbol& other)
     : Base (other)
     , value ()
+    , location (other.location)
   {
       switch (other.type_get ())
     {
@@ -727,8 +774,9 @@ namespace yy {
         break;
 
       case 3: // REAL
-      case 20: // optreal
-      case 21: // optreal2
+      case 20: // real
+      case 22: // optreal
+      case 23: // optreal2
         value.copy< float > (other.value);
         break;
 
@@ -743,19 +791,20 @@ namespace yy {
       case 13: // USEMTL
       case 14: // NAME
       case 16: // SEP
+      case 21: // optname
         value.copy< std::string > (other.value);
         break;
 
-      case 22: // createface
-        value.copy< std::vector<std::vector<uint64_t>> > (other.value);
+      case 24: // createface
+        value.copy< std::vector<std::vector<uint32_t>> > (other.value);
         break;
 
-      case 23: // indices
-        value.copy< std::vector<uint64_t> > (other.value);
+      case 25: // indices
+        value.copy< std::vector<uint32_t> > (other.value);
         break;
 
       case 4: // INTEGER
-        value.copy< uint64_t > (other.value);
+        value.copy< uint32_t > (other.value);
         break;
 
       case 18: // line
@@ -772,9 +821,10 @@ namespace yy {
 
   template <typename Base>
   inline
-  parser::basic_symbol<Base>::basic_symbol (typename Base::kind_type t, const semantic_type& v)
+   Parser ::basic_symbol<Base>::basic_symbol (typename Base::kind_type t, const semantic_type& v, const location_type& l)
     : Base (t)
     , value ()
+    , location (l)
   {
     (void) v;
       switch (this->type_get ())
@@ -784,8 +834,9 @@ namespace yy {
         break;
 
       case 3: // REAL
-      case 20: // optreal
-      case 21: // optreal2
+      case 20: // real
+      case 22: // optreal
+      case 23: // optreal2
         value.copy< float > (v);
         break;
 
@@ -800,19 +851,20 @@ namespace yy {
       case 13: // USEMTL
       case 14: // NAME
       case 16: // SEP
+      case 21: // optname
         value.copy< std::string > (v);
         break;
 
-      case 22: // createface
-        value.copy< std::vector<std::vector<uint64_t>> > (v);
+      case 24: // createface
+        value.copy< std::vector<std::vector<uint32_t>> > (v);
         break;
 
-      case 23: // indices
-        value.copy< std::vector<uint64_t> > (v);
+      case 25: // indices
+        value.copy< std::vector<uint32_t> > (v);
         break;
 
       case 4: // INTEGER
-        value.copy< uint64_t > (v);
+        value.copy< uint32_t > (v);
         break;
 
       case 18: // line
@@ -829,57 +881,65 @@ namespace yy {
   // Implementation of basic_symbol constructor for each type.
 
   template <typename Base>
-  parser::basic_symbol<Base>::basic_symbol (typename Base::kind_type t)
+   Parser ::basic_symbol<Base>::basic_symbol (typename Base::kind_type t, const location_type& l)
     : Base (t)
     , value ()
+    , location (l)
   {}
 
   template <typename Base>
-  parser::basic_symbol<Base>::basic_symbol (typename Base::kind_type t, const bool v)
+   Parser ::basic_symbol<Base>::basic_symbol (typename Base::kind_type t, const bool v, const location_type& l)
     : Base (t)
     , value (v)
+    , location (l)
   {}
 
   template <typename Base>
-  parser::basic_symbol<Base>::basic_symbol (typename Base::kind_type t, const float v)
+   Parser ::basic_symbol<Base>::basic_symbol (typename Base::kind_type t, const float v, const location_type& l)
     : Base (t)
     , value (v)
+    , location (l)
   {}
 
   template <typename Base>
-  parser::basic_symbol<Base>::basic_symbol (typename Base::kind_type t, const std::string v)
+   Parser ::basic_symbol<Base>::basic_symbol (typename Base::kind_type t, const std::string v, const location_type& l)
     : Base (t)
     , value (v)
+    , location (l)
   {}
 
   template <typename Base>
-  parser::basic_symbol<Base>::basic_symbol (typename Base::kind_type t, const std::vector<std::vector<uint64_t>> v)
+   Parser ::basic_symbol<Base>::basic_symbol (typename Base::kind_type t, const std::vector<std::vector<uint32_t>> v, const location_type& l)
     : Base (t)
     , value (v)
+    , location (l)
   {}
 
   template <typename Base>
-  parser::basic_symbol<Base>::basic_symbol (typename Base::kind_type t, const std::vector<uint64_t> v)
+   Parser ::basic_symbol<Base>::basic_symbol (typename Base::kind_type t, const std::vector<uint32_t> v, const location_type& l)
     : Base (t)
     , value (v)
+    , location (l)
   {}
 
   template <typename Base>
-  parser::basic_symbol<Base>::basic_symbol (typename Base::kind_type t, const uint64_t v)
+   Parser ::basic_symbol<Base>::basic_symbol (typename Base::kind_type t, const uint32_t v, const location_type& l)
     : Base (t)
     , value (v)
+    , location (l)
   {}
 
   template <typename Base>
-  parser::basic_symbol<Base>::basic_symbol (typename Base::kind_type t, const void* v)
+   Parser ::basic_symbol<Base>::basic_symbol (typename Base::kind_type t, const void* v, const location_type& l)
     : Base (t)
     , value (v)
+    , location (l)
   {}
 
 
   template <typename Base>
   inline
-  parser::basic_symbol<Base>::~basic_symbol ()
+   Parser ::basic_symbol<Base>::~basic_symbol ()
   {
     // User destructor.
     symbol_number_type yytype = this->type_get ();
@@ -897,8 +957,9 @@ namespace yy {
         break;
 
       case 3: // REAL
-      case 20: // optreal
-      case 21: // optreal2
+      case 20: // real
+      case 22: // optreal
+      case 23: // optreal2
         value.template destroy< float > ();
         break;
 
@@ -913,19 +974,20 @@ namespace yy {
       case 13: // USEMTL
       case 14: // NAME
       case 16: // SEP
+      case 21: // optname
         value.template destroy< std::string > ();
         break;
 
-      case 22: // createface
-        value.template destroy< std::vector<std::vector<uint64_t>> > ();
+      case 24: // createface
+        value.template destroy< std::vector<std::vector<uint32_t>> > ();
         break;
 
-      case 23: // indices
-        value.template destroy< std::vector<uint64_t> > ();
+      case 25: // indices
+        value.template destroy< std::vector<uint32_t> > ();
         break;
 
       case 4: // INTEGER
-        value.template destroy< uint64_t > ();
+        value.template destroy< uint32_t > ();
         break;
 
       case 18: // line
@@ -942,7 +1004,7 @@ namespace yy {
   template <typename Base>
   inline
   void
-  parser::basic_symbol<Base>::move (basic_symbol& s)
+   Parser ::basic_symbol<Base>::move (basic_symbol& s)
   {
     super_type::move(s);
       switch (this->type_get ())
@@ -952,8 +1014,9 @@ namespace yy {
         break;
 
       case 3: // REAL
-      case 20: // optreal
-      case 21: // optreal2
+      case 20: // real
+      case 22: // optreal
+      case 23: // optreal2
         value.move< float > (s.value);
         break;
 
@@ -968,19 +1031,20 @@ namespace yy {
       case 13: // USEMTL
       case 14: // NAME
       case 16: // SEP
+      case 21: // optname
         value.move< std::string > (s.value);
         break;
 
-      case 22: // createface
-        value.move< std::vector<std::vector<uint64_t>> > (s.value);
+      case 24: // createface
+        value.move< std::vector<std::vector<uint32_t>> > (s.value);
         break;
 
-      case 23: // indices
-        value.move< std::vector<uint64_t> > (s.value);
+      case 25: // indices
+        value.move< std::vector<uint32_t> > (s.value);
         break;
 
       case 4: // INTEGER
-        value.move< uint64_t > (s.value);
+        value.move< uint32_t > (s.value);
         break;
 
       case 18: // line
@@ -992,27 +1056,28 @@ namespace yy {
         break;
     }
 
+    location = s.location;
   }
 
   // by_type.
   inline
-  parser::by_type::by_type ()
+   Parser ::by_type::by_type ()
      : type (empty)
   {}
 
   inline
-  parser::by_type::by_type (const by_type& other)
+   Parser ::by_type::by_type (const by_type& other)
     : type (other.type)
   {}
 
   inline
-  parser::by_type::by_type (token_type t)
+   Parser ::by_type::by_type (token_type t)
     : type (yytranslate_ (t))
   {}
 
   inline
   void
-  parser::by_type::move (by_type& that)
+   Parser ::by_type::move (by_type& that)
   {
     type = that.type;
     that.type = empty;
@@ -1020,14 +1085,14 @@ namespace yy {
 
   inline
   int
-  parser::by_type::type_get () const
+   Parser ::by_type::type_get () const
   {
     return type;
   }
 
   inline
-  parser::token_type
-  parser::by_type::token () const
+   Parser ::token_type
+   Parser ::by_type::token () const
   {
     // YYTOKNUM[NUM] -- (External) token number corresponding to the
     // (internal) symbol number NUM (which must be that of a token).  */
@@ -1041,115 +1106,115 @@ namespace yy {
     return static_cast<token_type> (yytoken_number_[type]);
   }
   // Implementation of make_symbol for each symbol type.
-  parser::symbol_type
-  parser::make_END ()
+   Parser ::symbol_type
+   Parser ::make_END (const location_type& l)
   {
-    return symbol_type (token::END);
+    return symbol_type (token::TOKEN_END, l);
 
   }
 
-  parser::symbol_type
-  parser::make_REAL (const float& v)
+   Parser ::symbol_type
+   Parser ::make_REAL (const float& v, const location_type& l)
   {
-    return symbol_type (token::REAL, v);
+    return symbol_type (token::TOKEN_REAL, v, l);
 
   }
 
-  parser::symbol_type
-  parser::make_INTEGER (const uint64_t& v)
+   Parser ::symbol_type
+   Parser ::make_INTEGER (const uint32_t& v, const location_type& l)
   {
-    return symbol_type (token::INTEGER, v);
+    return symbol_type (token::TOKEN_INTEGER, v, l);
 
   }
 
-  parser::symbol_type
-  parser::make_POSITION (const std::string& v)
+   Parser ::symbol_type
+   Parser ::make_POSITION (const std::string& v, const location_type& l)
   {
-    return symbol_type (token::POSITION, v);
+    return symbol_type (token::TOKEN_POSITION, v, l);
 
   }
 
-  parser::symbol_type
-  parser::make_TEXCOORD (const std::string& v)
+   Parser ::symbol_type
+   Parser ::make_TEXCOORD (const std::string& v, const location_type& l)
   {
-    return symbol_type (token::TEXCOORD, v);
+    return symbol_type (token::TOKEN_TEXCOORD, v, l);
 
   }
 
-  parser::symbol_type
-  parser::make_NORMAL (const std::string& v)
+   Parser ::symbol_type
+   Parser ::make_NORMAL (const std::string& v, const location_type& l)
   {
-    return symbol_type (token::NORMAL, v);
+    return symbol_type (token::TOKEN_NORMAL, v, l);
 
   }
 
-  parser::symbol_type
-  parser::make_POINT (const std::string& v)
+   Parser ::symbol_type
+   Parser ::make_POINT (const std::string& v, const location_type& l)
   {
-    return symbol_type (token::POINT, v);
+    return symbol_type (token::TOKEN_POINT, v, l);
 
   }
 
-  parser::symbol_type
-  parser::make_FACE (const std::string& v)
+   Parser ::symbol_type
+   Parser ::make_FACE (const std::string& v, const location_type& l)
   {
-    return symbol_type (token::FACE, v);
+    return symbol_type (token::TOKEN_FACE, v, l);
 
   }
 
-  parser::symbol_type
-  parser::make_OBJECT (const std::string& v)
+   Parser ::symbol_type
+   Parser ::make_OBJECT (const std::string& v, const location_type& l)
   {
-    return symbol_type (token::OBJECT, v);
+    return symbol_type (token::TOKEN_OBJECT, v, l);
 
   }
 
-  parser::symbol_type
-  parser::make_S (const std::string& v)
+   Parser ::symbol_type
+   Parser ::make_S (const std::string& v, const location_type& l)
   {
-    return symbol_type (token::S, v);
+    return symbol_type (token::TOKEN_S, v, l);
 
   }
 
-  parser::symbol_type
-  parser::make_MTLLIB (const std::string& v)
+   Parser ::symbol_type
+   Parser ::make_MTLLIB (const std::string& v, const location_type& l)
   {
-    return symbol_type (token::MTLLIB, v);
+    return symbol_type (token::TOKEN_MTLLIB, v, l);
 
   }
 
-  parser::symbol_type
-  parser::make_USEMTL (const std::string& v)
+   Parser ::symbol_type
+   Parser ::make_USEMTL (const std::string& v, const location_type& l)
   {
-    return symbol_type (token::USEMTL, v);
+    return symbol_type (token::TOKEN_USEMTL, v, l);
 
   }
 
-  parser::symbol_type
-  parser::make_NAME (const std::string& v)
+   Parser ::symbol_type
+   Parser ::make_NAME (const std::string& v, const location_type& l)
   {
-    return symbol_type (token::NAME, v);
+    return symbol_type (token::TOKEN_NAME, v, l);
 
   }
 
-  parser::symbol_type
-  parser::make_BOOLEAN (const bool& v)
+   Parser ::symbol_type
+   Parser ::make_BOOLEAN (const bool& v, const location_type& l)
   {
-    return symbol_type (token::BOOLEAN, v);
+    return symbol_type (token::TOKEN_BOOLEAN, v, l);
 
   }
 
-  parser::symbol_type
-  parser::make_SEP (const std::string& v)
+   Parser ::symbol_type
+   Parser ::make_SEP (const std::string& v, const location_type& l)
   {
-    return symbol_type (token::SEP, v);
+    return symbol_type (token::TOKEN_SEP, v, l);
 
   }
 
 
-
-} // yy
-#line 1153 "parser.tab.h" // lalr1.cc:371
+#line 9 "parser.y" // lalr1.cc:371
+} //  ObjParser 
+#line 1218 "parser.tab.h" // lalr1.cc:371
 
 
 

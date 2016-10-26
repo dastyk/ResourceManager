@@ -1235,6 +1235,139 @@ namespace Arfer
             [MarshalAs(UnmanagedType.LPArray)] byte[] rdata, UInt64 size,
             [In, MarshalAs(UnmanagedType.LPArray)] byte[] cdata);
 
+        private bool compressNode(TreeNode node, byte method)
+        {
+            TreeData data = (TreeData)node.Tag;
+            if (data.compressed != 0 && data.compressed != byte.MaxValue)
+                return false;
+
+            byte[] bytes;
+            string path = data.filePath;
+            if (String.IsNullOrEmpty(data.zip))
+            {
+                if (data.offset == 0)
+                {
+                    FileInfo info = new FileInfo(data.filePath);
+
+                    using (BinaryReader file = new BinaryReader(info.OpenRead()))
+                    {
+                        bytes = file.ReadBytes(Convert.ToInt32(data.size));
+                    }
+
+
+
+                }
+                else
+                {
+                    using (BinaryReader file = new BinaryReader(File.Open(packOpenedPath, FileMode.Open)))
+                    {
+                        file.BaseStream.Seek(-Convert.ToInt64(data.offset), SeekOrigin.End);
+                        bytes = file.ReadBytes(Convert.ToInt32(data.size));
+                        path = node.Text + data.ext;
+                    }
+                }
+            }
+            else
+            {
+                using (ZipArchive archive = ZipFile.OpenRead(data.zip))
+                {
+                    ZipArchiveEntry entry = archive.GetEntry(data.filePath);
+                    using (BinaryReader file = new BinaryReader(entry.Open()))
+                    {
+                        bytes = file.ReadBytes(Convert.ToInt32(data.size));
+
+                    }
+                }
+            }
+
+
+            UInt64 cSize = 0;
+            UInt64 size2 = 0;
+            double p = 1.0;
+            byte[] cData = null;
+            UInt64 size = data.size;
+
+            if (method == 1)
+            {
+
+                UInt64 lz77cs = 0;
+                byte[] lz77data = null;
+
+
+                double lz77p = compressLZ77(bytes, size, ref lz77data, ref lz77cs);
+
+                UInt64 lz77huffcs = 0;
+                byte[] lz77huffdata = null;
+                double lz77huffp = compressHuff(lz77data, lz77cs, ref lz77huffdata, ref lz77huffcs);
+
+                p = lz77huffp * lz77p;
+                cData = lz77huffdata;
+                cSize = lz77huffcs;
+                size2 = lz77cs;
+            }
+            else if (method == 2)
+            {
+                UInt64 lz77cs = 0;
+                byte[] lz77data = null;
+
+                double lz77p = compressLZ77(bytes, size, ref lz77data, ref lz77cs);
+                p = lz77p;
+                cData = lz77data;
+                cSize = lz77cs;
+            }
+            else if (method == 3)
+            {
+                UInt64 huffcs = 0;
+                byte[] huffdata = null;
+                double huffp = compressHuff(bytes, size, ref huffdata, ref huffcs);
+
+
+                UInt64 hufflz77cs = 0;
+                byte[] hufflz77data = null;
+                double hufflz77p = compressLZ77(huffdata, huffcs, ref hufflz77data, ref hufflz77cs);
+
+                p = hufflz77p * huffp;
+                cData = hufflz77data;
+                cSize = hufflz77cs;
+                size2 = huffcs;
+            }
+            else
+            {
+                UInt64 huffcs = 0;
+                byte[] huffdata = null;
+                double huffp = compressHuff(bytes, size, ref huffdata, ref huffcs);
+
+                p = huffp;
+                cData = huffdata;
+                cSize = huffcs;
+            }     
+
+            if (data.compressed == byte.MaxValue)
+                path = Path.GetFileNameWithoutExtension(path);
+
+            data.filePath = Path.GetFileName(path) + ".smc";
+            data.compressed = method;
+            data.offset = 0;
+            data.csize = data.size;
+            data.zip = null;
+            data.rate = p;
+            if (method == 1 || method == 3)
+                data.size = cSize + sizeof(UInt64) * 2;
+            else
+                data.size = cSize + sizeof(UInt64);
+            using (BinaryWriter ofile = new BinaryWriter(File.Create(data.filePath)))
+            {
+
+                ofile.Write(data.csize);
+                if (method == 1 || method == 3)
+                    ofile.Write(size2);
+                ofile.Write(cData);
+
+            }
+
+
+            return true;
+        }
 
         private bool compressNode(TreeNode node)
         {
@@ -1462,9 +1595,9 @@ namespace Arfer
             else if(data.compressed == 3)
             {
                 // HUFF-LZ77
-                byte[] lz77Data = null;
-                uncompressHuff(ref lz77Data, size2, bytes, rsize);
-                uncompressLZ77(ref rData, size, lz77Data, size2);
+                byte[] lz77Data = null;             
+                uncompressLZ77(ref lz77Data, size2, bytes, rsize);
+                uncompressHuff(ref rData, size, lz77Data, size2);
             }
             else
             {
@@ -1534,14 +1667,7 @@ namespace Arfer
 
             return true;
         }
-        private void compressToolStripMenuItem1_Click(object sender, EventArgs e)
-        {
-            if (compressNode(itemTree.SelectedNode))
-            {
-                setSelectedNode(itemTree.SelectedNode);
-                changed();
-            }
-        }
+
 
         private void uncompressToolStripMenuItem1_Click(object sender, EventArgs e)
         {
@@ -1728,6 +1854,53 @@ namespace Arfer
             setSelectedNode(itemTree.SelectedNode);
             progLab.Visible = false;
             progressBar1.Visible = false;
+        }
+
+        private void selectiveToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+
+            if (compressNode(itemTree.SelectedNode))
+            {
+                setSelectedNode(itemTree.SelectedNode);
+                changed();
+            }
+
+        }
+
+        private void lZ77ToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if(compressNode(itemTree.SelectedNode, 2))
+            {
+                setSelectedNode(itemTree.SelectedNode);
+                changed();
+            }
+        }
+
+        private void huffmanToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (compressNode(itemTree.SelectedNode, 4))
+            {
+                setSelectedNode(itemTree.SelectedNode);
+                changed();
+            }
+        }
+
+        private void lZ77HuffmanToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (compressNode(itemTree.SelectedNode, 1))
+            {
+                setSelectedNode(itemTree.SelectedNode);
+                changed();
+            }
+        }
+
+        private void huffmanLZ77ToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (compressNode(itemTree.SelectedNode, 3))
+            {
+                setSelectedNode(itemTree.SelectedNode);
+                changed();
+            }
         }
     }
 
