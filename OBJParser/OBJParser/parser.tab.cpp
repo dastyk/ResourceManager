@@ -284,15 +284,15 @@ namespace  ObjParser  {
         break;
 
       case 24: // createface
-        value.move< std::vector<std::vector<uint64_t>> > (that.value);
+        value.move< std::vector<std::vector<uint32_t>> > (that.value);
         break;
 
       case 25: // indices
-        value.move< std::vector<uint64_t> > (that.value);
+        value.move< std::vector<uint32_t> > (that.value);
         break;
 
       case 4: // INTEGER
-        value.move< uint64_t > (that.value);
+        value.move< uint32_t > (that.value);
         break;
 
       case 18: // line
@@ -342,15 +342,15 @@ namespace  ObjParser  {
         break;
 
       case 24: // createface
-        value.copy< std::vector<std::vector<uint64_t>> > (that.value);
+        value.copy< std::vector<std::vector<uint32_t>> > (that.value);
         break;
 
       case 25: // indices
-        value.copy< std::vector<uint64_t> > (that.value);
+        value.copy< std::vector<uint32_t> > (that.value);
         break;
 
       case 4: // INTEGER
-        value.copy< uint64_t > (that.value);
+        value.copy< uint32_t > (that.value);
         break;
 
       case 18: // line
@@ -616,15 +616,15 @@ namespace  ObjParser  {
         break;
 
       case 24: // createface
-        yylhs.value.build< std::vector<std::vector<uint64_t>> > ();
+        yylhs.value.build< std::vector<std::vector<uint32_t>> > ();
         break;
 
       case 25: // indices
-        yylhs.value.build< std::vector<uint64_t> > ();
+        yylhs.value.build< std::vector<uint32_t> > ();
         break;
 
       case 4: // INTEGER
-        yylhs.value.build< uint64_t > ();
+        yylhs.value.build< uint32_t > ();
         break;
 
       case 18: // line
@@ -717,7 +717,7 @@ namespace  ObjParser  {
 
   case 13:
 #line 101 "parser.y" // lalr1.cc:846
-    { driver.AddFace(ArfData::Face(yystack_[0].value.as< std::vector<std::vector<uint64_t>> > ()));}
+    { driver.AddFace(ArfData::Face(yystack_[0].value.as< std::vector<std::vector<uint32_t>> > ()));}
 #line 722 "parser.tab.cpp" // lalr1.cc:846
     break;
 
@@ -729,7 +729,7 @@ namespace  ObjParser  {
 
   case 15:
 #line 105 "parser.y" // lalr1.cc:846
-    { yylhs.value.as< float > () = static_cast<float>(yystack_[0].value.as< uint64_t > ());}
+    { yylhs.value.as< float > () = static_cast<float>(yystack_[0].value.as< uint32_t > ());}
 #line 734 "parser.tab.cpp" // lalr1.cc:846
     break;
 
@@ -771,31 +771,31 @@ namespace  ObjParser  {
 
   case 22:
 #line 120 "parser.y" // lalr1.cc:846
-    { yylhs.value.as< std::vector<std::vector<uint64_t>> > ().push_back(yystack_[0].value.as< std::vector<uint64_t> > ()); }
+    { yylhs.value.as< std::vector<std::vector<uint32_t>> > ().push_back(yystack_[0].value.as< std::vector<uint32_t> > ()); }
 #line 776 "parser.tab.cpp" // lalr1.cc:846
     break;
 
   case 23:
 #line 121 "parser.y" // lalr1.cc:846
-    { yylhs.value.as< std::vector<std::vector<uint64_t>> > () = yystack_[1].value.as< std::vector<std::vector<uint64_t>> > (); yylhs.value.as< std::vector<std::vector<uint64_t>> > ().push_back(yystack_[0].value.as< std::vector<uint64_t> > ());}
+    { yylhs.value.as< std::vector<std::vector<uint32_t>> > () = yystack_[1].value.as< std::vector<std::vector<uint32_t>> > (); yylhs.value.as< std::vector<std::vector<uint32_t>> > ().push_back(yystack_[0].value.as< std::vector<uint32_t> > ());}
 #line 782 "parser.tab.cpp" // lalr1.cc:846
     break;
 
   case 24:
 #line 124 "parser.y" // lalr1.cc:846
-    { yylhs.value.as< std::vector<uint64_t> > ().push_back(yystack_[0].value.as< uint64_t > ()); }
+    { yylhs.value.as< std::vector<uint32_t> > ().push_back(yystack_[0].value.as< uint32_t > ()); }
 #line 788 "parser.tab.cpp" // lalr1.cc:846
     break;
 
   case 25:
 #line 125 "parser.y" // lalr1.cc:846
-    { yylhs.value.as< std::vector<uint64_t> > () = yystack_[3].value.as< std::vector<uint64_t> > (); yylhs.value.as< std::vector<uint64_t> > ().push_back(UINT64_MAX); yylhs.value.as< std::vector<uint64_t> > ().push_back(yystack_[0].value.as< uint64_t > ());}
+    { yylhs.value.as< std::vector<uint32_t> > () = yystack_[3].value.as< std::vector<uint32_t> > (); yylhs.value.as< std::vector<uint32_t> > ().push_back(UINT64_MAX); yylhs.value.as< std::vector<uint32_t> > ().push_back(yystack_[0].value.as< uint32_t > ());}
 #line 794 "parser.tab.cpp" // lalr1.cc:846
     break;
 
   case 26:
 #line 126 "parser.y" // lalr1.cc:846
-    { yylhs.value.as< std::vector<uint64_t> > () = yystack_[2].value.as< std::vector<uint64_t> > (); yylhs.value.as< std::vector<uint64_t> > ().push_back(yystack_[0].value.as< uint64_t > ());}
+    { yylhs.value.as< std::vector<uint32_t> > () = yystack_[2].value.as< std::vector<uint32_t> > (); yylhs.value.as< std::vector<uint32_t> > ().push_back(yystack_[0].value.as< uint32_t > ());}
 #line 800 "parser.tab.cpp" // lalr1.cc:846
     break;
 

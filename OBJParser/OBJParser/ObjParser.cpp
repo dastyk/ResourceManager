@@ -16,8 +16,9 @@ Interpreter::Interpreter() :
 int Interpreter::parse(std::istream *is, ArfData::Data* data, ArfData::DataPointers* datap)
 {
 	_data = data;
-	_datap = datap;
+	_datap = datap;	
 	Alloc(ALLOC_ALL);
+	AddSubMesh("default");
 	_scanner.switch_streams(is, NULL);
     m_location = 0;
     return _parser.parse();
@@ -37,9 +38,6 @@ void ObjParser::Interpreter::Alloc(int flag)
 	{
 	case ALLOC_ALL:
 	{
-		_data->buffer = operator new(sizeof(ArfData::Data));
-		memset(_data->buffer, 0, sizeof(ArfData::Data));
-
 		_data->PosCap = 10000;
 		_data->TexCap = 10000;
 		_data->NormCap = 10000;
@@ -92,30 +90,20 @@ void ObjParser::Interpreter::Alloc(int flag)
 		break;
 	}
 	*ndat = *_data;
-	ndat->allocated = sizeof(ArfData::Data) +
+	ndat->allocated = 
 		_data->PosCap * sizeof(ArfData::Position) +
 		_data->TexCap * sizeof(ArfData::TexCoord) +
 		_data->NormCap * sizeof(ArfData::Normal) +
 		_data->FaceCap * sizeof(ArfData::Face) +
 		_data->SubMeshCap * sizeof(ArfData::SubMesh);
-	ndat->buffer = operator new(ndat->allocated);
+	ndatap->buffer = operator new(ndat->allocated);
 
-	memcpy(ndat->buffer, _data->buffer, sizeof(ArfData::Data));
 
-	_data->PosStart = sizeof(ArfData::Data);
-	ndatap->positions = (ArfData::Position*)((size_t)ndat->buffer + ndat->PosStart);
-
-	ndat->TexStart = ndat->PosStart + ndat->PosCap * sizeof(ArfData::Position);
-	ndatap->texCoords = (ArfData::TexCoord*)((size_t)ndat->buffer + ndat->TexStart);
-
-	ndat->NormStart = ndat->TexStart + ndat->TexCap * sizeof(ArfData::TexCoord);
-	ndatap->normals = (ArfData::Normal*)((size_t)ndat->buffer + ndat->NormStart);
-
-	ndat->FaceStart = ndat->NormStart + ndat->NormCap * sizeof(ArfData::Normal);
-	ndatap->faces = (ArfData::Face*)((size_t)ndat->buffer + ndat->FaceStart);
-
-	ndat->SubMeshStart = ndat->FaceStart + ndat->FaceCap * sizeof(ArfData::Face);
-	ndatap->subMesh = (ArfData::SubMesh*)((size_t)ndat->buffer + ndat->SubMeshStart);
+	ndatap->positions = (ArfData::Position*)ndatap->buffer;
+	ndatap->texCoords = (ArfData::TexCoord*)(ndatap->positions + ndat->PosCap);
+	ndatap->normals = (ArfData::Normal*)(ndatap->texCoords + ndat->TexCap);
+	ndatap->faces = (ArfData::Face*)(ndatap->normals + ndat->NormCap);
+	ndatap->subMesh = (ArfData::SubMesh*)(ndatap->faces + ndat->FaceCap);
 
 	memcpy(ndatap->positions, _datap->positions, ndat->NumPos * sizeof(ArfData::Position));
 	memcpy(ndatap->texCoords, _datap->texCoords, ndat->NumTex * sizeof(ArfData::TexCoord));
@@ -123,7 +111,7 @@ void ObjParser::Interpreter::Alloc(int flag)
 	memcpy(ndatap->faces, _datap->faces, ndat->NumFace * sizeof(ArfData::Face));
 	memcpy(ndatap->subMesh, _datap->subMesh, ndat->NumSubMesh * sizeof(ArfData::SubMesh));
 
-	operator delete(_data->buffer);
+	operator delete(_datap->buffer);
 	*_data = *ndat;
 	*_datap = *ndatap;
 	delete ndat;
@@ -174,10 +162,50 @@ void ObjParser::Interpreter::AddFace(const ArfData::Face & face)
 		Alloc(ALLOC_FACE);
 	}
 
-	_datap->faces[_data->NumFace] = face;
-	if (_data->NumSubMesh)
-		_datap->subMesh[_data->NumSubMesh - 1].faceCount++;
-	_data->NumFace++;
+	if (face.indexCount == 4)
+	{
+		std::vector<std::vector<uint32_t>> face1v;
+		for (uint8_t i = 0; i < 3; i++)
+		{
+			std::vector<uint32_t> in;
+			for (uint8_t j = 0; j < face.indices[i].indexCount; j++)
+			{
+				in.push_back(face.indices[i].index[j]);
+			}
+			face1v.push_back(in);
+		}
+		_datap->faces[_data->NumFace] = ArfData::Face(face1v);
+		if (_data->NumSubMesh)
+			_datap->subMesh[_data->NumSubMesh - 1].faceCount++;
+		_data->NumFace++;
+
+		uint32_t indices[] = { 2, 3 ,0 };
+		face1v.clear();
+		for (uint8_t i = 0; i < 3; i++)
+		{
+			std::vector<uint32_t> in;
+			for (uint8_t j = 0; j < face.indices[indices[i]].indexCount; j++)
+			{
+				in.push_back(face.indices[indices[i]].index[j]);
+			}
+			face1v.push_back(in);
+		}
+		_datap->faces[_data->NumFace] = ArfData::Face(face1v);
+		if (_data->NumSubMesh)
+			_datap->subMesh[_data->NumSubMesh - 1].faceCount++;
+		_data->NumFace++;
+	}
+	else if (face.indexCount == 2)
+		throw "Fuck yo lines bitch";
+	else
+	{
+
+
+		_datap->faces[_data->NumFace] = face;
+		if (_data->NumSubMesh)
+			_datap->subMesh[_data->NumSubMesh - 1].faceCount++;
+		_data->NumFace++;
+	}
 }
 
 void ObjParser::Interpreter::AddSubMesh(const string & name)
@@ -187,15 +215,19 @@ void ObjParser::Interpreter::AddSubMesh(const string & name)
 		// Allocate more space->
 		Alloc(ALLOC_SUB_MESH);
 	}
+	int size = min((int)name.size(), SUBMESH_NAME_MAX_LENGHT - 1);
 	if (_data->NumSubMesh == 1)
 	{
 		if (std::string(_datap->subMesh[0].name) == "default")
 		{
-			memcpy(_datap->subMesh[0].name, name.c_str(), name.size() + 1);
+			
+			memcpy(_datap->subMesh[0].name, name.c_str(), size);
+			_datap->subMesh[0].name[size] = '\0';
 			return;
 		}
 	}
-	memcpy(_datap->subMesh[_data->NumSubMesh].name, name.c_str(), name.size() + 1);
+	memcpy(_datap->subMesh[_data->NumSubMesh].name, name.c_str(), size);
+	_datap->subMesh[_data->NumSubMesh].name[size] = '\0';
 	_datap->subMesh[_data->NumSubMesh].faceStart = _data->NumFace;
 	_datap->subMesh[_data->NumSubMesh].faceCount = 0;
 	_data->NumSubMesh++;

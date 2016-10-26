@@ -23,7 +23,7 @@ int main(int argc, char **argv) {
 	
 #endif // _DEBUG
     Interpreter i;
-	ifstream file("DUCK.OBJ");
+	ifstream file("test.obj");
 	ArfData::Data data;
 	ArfData::DataPointers dp;
 	if (file.is_open())
@@ -31,7 +31,7 @@ int main(int argc, char **argv) {
 		int res = i.parse(&file, &data, &dp);
 		cout << "Parse complete. Result = " << res << endl;
  		cout << i.str() << endl;
-		operator delete(data.buffer);
+		operator delete(dp.buffer);
 
 		getchar();
 

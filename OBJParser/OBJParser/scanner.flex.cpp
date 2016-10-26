@@ -686,7 +686,7 @@ YY_RULE_SETUP
 case 5:
 YY_RULE_SETUP
 #line 50 "scanner.l"
-{ return ObjParser::Parser::make_INTEGER(stol(yytext), ObjParser::location());}
+{ return ObjParser::Parser::make_INTEGER(stoul(yytext), ObjParser::location());}
 	YY_BREAK
 case 6:
 YY_RULE_SETUP
