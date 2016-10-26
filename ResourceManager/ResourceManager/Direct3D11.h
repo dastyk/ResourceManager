@@ -163,6 +163,7 @@ private:
 	ID3D11InputLayout* _inputLayouts[InputLayouts::LAYOUT_COUNT] = { nullptr };
 	ID3D11SamplerState* _samplerStates[Samplers::SAM_COUNT] = { nullptr };
 	ID3D11RasterizerState* _rasterizerStates[RasterizerStates::RS_COUNT] = { nullptr };
+	ID3D11RasterizerState* _currentRasterizerState = nullptr; //ONLY A REFERENCE TO THE STATE IN THE ARRAY _rasterizerStates DO NOT CREATE NEW ONE
 	
 
 	void _CreateShadersAndInputLayouts();

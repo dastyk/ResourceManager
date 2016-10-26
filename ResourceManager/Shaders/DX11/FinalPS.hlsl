@@ -47,10 +47,22 @@ float4 main(VS_OUT input) : SV_TARGET
 	//
 	//float4 posVS = mul(projPos, gInvProj);
 	//posVS.xyz /= posVS.w;
-	//float3 normal = Normal.Sample(AniSam, input.tex).rgb;
-	//normal = normalize((normal * 2.0f) - 1.0f);
-	float3 diffuse = float3(1.0f,0.0f,0.0f);
-	diffuse = Diffuse.Sample(AniSam, input.tex).rgb;
-	return float4(diffuse, 1.0f);
+	float3 normal = Normal.Sample(AniSam, input.tex).rgb;
+	normal = normalize((normal * 2.0f) - 1.0f);
+	float3 diffuse = Diffuse.Sample(AniSam, input.tex).rgb;
+	
+	float3 lightDir = float3(-10.0f, -15.0f, 5.0f);
+	float3 lightCol = float3(1.0f, 1.0f, 0.70f);
+	lightDir = -normalize(lightDir);
+	lightDir = mul(float4(lightDir, 0.0f), gView).xyz;
+	float intensity = 4.0f;
+	float NdL = dot(normal, lightDir);
+	float3 fincol;
+	if (NdL > 0.0f)
+		fincol = intensity * NdL * lightCol * diffuse + diffuse * 0.35f;
+	else
+		fincol = diffuse * 0.35f;
+
+	return float4(fincol, 1.0f);
 	
 }

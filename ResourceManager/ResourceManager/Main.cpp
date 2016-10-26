@@ -62,7 +62,7 @@ int main(int argc, char** argv)
 	MemoryManager::GetInstance()->Init(1024U * 1024U * 1024U);
 	ResourceManager& r = ResourceManager::Instance(); // Kickstart at our will
 	r.Init(512U * 1024U * 1024U);
-	r.SetEvictPolicy(ResourceManager::EvictPolicies::FirstCumulativeFit);
+	r.SetEvictPolicy(ResourceManager::EvictPolicies::InstantEvict);
 	//r.SetAssetLoader(new ZipLoader("data.dat"));
 	//r.SetAssetLoader(new FileLoader("filelist.txt"));
 	r.SetAssetLoader(new DarferLoader("data.drf"));
@@ -90,6 +90,14 @@ int main(int argc, char** argv)
 
 
 	r.TestAlloc();
+
+	//for (int i = 0; i < 100; i++)
+	//{
+	//	ResourceManager::Instance().LoadResource("b5.jpg", Resource::Flag::LOAD_AND_WAIT);
+	//	Sleep(1550);
+	//	ResourceManager::Instance().UnloadResource("b5.jpg");
+	//	Sleep(1550);
+	//}
 
 	//DarferLoader drfLoader("test.drf");
 
@@ -131,6 +139,8 @@ int main(int argc, char** argv)
 	bunnyObject.AddLODMesh("Bunny1.arf");
 	bunnyObject.AddLODMesh("Bunny2.arf");
 	bunnyObject.AddLODMesh("Bunny3.arf");
+	bunnyObject.AddLODMesh("Bunny4.arf");
+	r.LoadResource("Bunny4.arf", Resource::Flag::PERSISTENT | Resource::Flag::LOAD_AND_WAIT);
 
 	bunnyObject.AddLODTexture("blue.png");
 
@@ -146,9 +156,11 @@ int main(int argc, char** argv)
 	dragonObject.AddLODMesh("Dragon0.arf");
 	dragonObject.AddLODMesh("Dragon1.arf");
 	dragonObject.AddLODMesh("Dragon2.arf");
-
+	dragonObject.AddLODMesh("Dragon3.arf");
+	dragonObject.AddLODMesh("Dragon4.arf");
 	dragonObject.AddLODTexture("blue.png");
-
+	r.LoadResource("Dragon4.arf", Resource::Flag::PERSISTENT | Resource::Flag::LOAD_AND_WAIT);
+	
 	DirectX::XMStoreFloat4x4(&dragonObject.transform, DirectX::XMMatrixScaling(0.3, 0.3, 0.3) * DirectX::XMMatrixTranslation(10.0f, 0.0f, 10.0f));
 	dragonObject.pos = DirectX::XMFLOAT3(10.0f, 00.0f, 10.0f);
 	dragonObject.scale = 0.25f;
@@ -158,7 +170,13 @@ int main(int argc, char** argv)
 
 
 	GameObject cat;
-	cat.AddLODMesh("cat.arf");
+	cat.AddLODMesh("Cat0.arf");
+	cat.AddLODMesh("Cat1.arf");
+	cat.AddLODMesh("Cat2.arf");
+	cat.AddLODMesh("Cat3.arf");
+	cat.AddLODMesh("Cat4.arf");
+	r.LoadResource("Cat4.arf", Resource::Flag::PERSISTENT | Resource::Flag::LOAD_AND_WAIT);
+
 	cat.AddLODTexture("cat_diff.jpg");
 
 	cat.pos = DirectX::XMFLOAT3(10.0f, 00.0f, 5.0f);
@@ -169,7 +187,13 @@ int main(int argc, char** argv)
 	testScene.AddGameObject(cat);
 
 	GameObject doge;
-	doge.AddLODMesh("Doge.arf");
+	doge.AddLODMesh("Dog0.arf");
+	doge.AddLODMesh("Dog1.arf");
+	doge.AddLODMesh("Dog2.arf");
+	doge.AddLODMesh("Dog3.arf");
+	doge.AddLODMesh("Dog4.arf");
+	r.LoadResource("Dog4.arf", Resource::Flag::PERSISTENT | Resource::Flag::LOAD_AND_WAIT);
+
 	doge.AddLODTexture("Tex_0552_7.jpg");
 
 	doge.pos = DirectX::XMFLOAT3(-10.0f, 00.0f, 5.0f);
@@ -192,7 +216,14 @@ int main(int argc, char** argv)
 
 
 	GameObject Astro;
-	Astro.AddLODMesh("Astronaut.arf");
+	Astro.AddLODMesh("Astronaut0.arf");
+	Astro.AddLODMesh("Astronaut1.arf");
+	Astro.AddLODMesh("Astronaut2.arf");
+	Astro.AddLODMesh("Astronaut3.arf");
+	Astro.AddLODMesh("Astronaut4.arf");
+	r.LoadResource("Astronaut4.arf", Resource::Flag::PERSISTENT | Resource::Flag::LOAD_AND_WAIT);
+
+
 	Astro.AddLODTexture("Spacesuit_D.png");
 
 	Astro.pos = DirectX::XMFLOAT3(-10.0f, 0.55f, -5.0f);
@@ -326,9 +357,18 @@ void Interleave(const Resource::Ptr& resource, ArfData::Data& data, ArfData::Dat
 				// Normals
 				memcpy(&vertices[index].norm, &datap.normals[ind.index[2] - 1], sizeof(MeshData::Normal));
 				// TexCoords
-				memcpy(&vertices[index].tex, &datap.texCoords[ind.index[1] - 1], sizeof(MeshData::TexCoord));
-				vertices[index].tex.v = 1 - vertices[index].tex.v;
+				if (ind.index[1] == UINT32_MAX)
+				{
+					memcpy(&vertices[index].tex, &datap.texCoords[0], sizeof(MeshData::TexCoord));
+					vertices[index].tex.v = 1 - vertices[index].tex.v;
+				}
+				else
+				{
+					memcpy(&vertices[index].tex, &datap.texCoords[ind.index[1] - 1], sizeof(MeshData::TexCoord));
+					vertices[index].tex.v = 1 - vertices[index].tex.v;
+				}
 				index++;
+
 			}
 		}
 	}
