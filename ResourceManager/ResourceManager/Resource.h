@@ -38,11 +38,11 @@ public:
 		Observer** _observerPtr;
 	};
 
-	CreateFlag(Flag, uint32_t, 4,
-		PERSISTENT = 1 << 0,
-		NOT_URGENT = 1 << 1,
-		NEEDED_NOW = 1 << 2,
-		LOAD_AND_WAIT = 1 << 3
+	CreateFlag(Flag, uint32_t, 4,		
+		NOT_URGENT = 1 << 0,
+		NEEDED_NOW = 1 << 1,
+		LOAD_AND_WAIT = 1 << 2,
+		PERSISTENT = 1 << 3
 	);
 
 	static const uint32_t NotFound = UINT32_MAX;
@@ -76,6 +76,12 @@ public:
 	};
 
 private:
+	std::mutex modifyLock;
+	uint32_t limit = 0;
+	uint32_t count = 0;
+	void* buffer = nullptr;
+	Resource::DataPointers data;
+
 
 	Resource() : count(0), limit(0)
 	{
@@ -98,14 +104,9 @@ private:
 	{
 		data.pinned[resource.index].unlock();
 	}
-	std::mutex modifyLock;
-	uint32_t limit = 0;
-	uint32_t count = 0;
-	void* buffer = nullptr;
-	Resource::DataPointers data;
-
+	
 	uint32_t Find(const SM_GUID & guid);
-	uint32_t FindLock(const SM_GUID& guid);
+	uint32_t FindLock(const SM_GUID& guid, bool* pinned= nullptr);
 
 	void Remove(const uint32_t index);
 	void Allocate(uint32_t numResources);

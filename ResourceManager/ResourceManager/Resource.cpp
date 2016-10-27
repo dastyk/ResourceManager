@@ -11,21 +11,25 @@ uint32_t Resource::Find(const SM_GUID & guid)
 	return Resource::NotFound;
 }
 
-uint32_t Resource::FindLock(const SM_GUID & guid)
+uint32_t Resource::FindLock(const SM_GUID & guid, bool* pinned)
 {
 	modifyLock.lock();
 	for (uint32_t i = 0; i < count; i++)
 	{
-		if (data.pinned[i].try_lock())
+		if (data.guid[i] == guid)
 		{
-			if (data.guid[i] == guid)
+			if (data.pinned[i].try_lock())
 			{
+
 				modifyLock.unlock();
 				return i;
-			}				
+			}
 			else
-				data.pinned[i].unlock();
-		}		
+			{
+				if (pinned)
+					*pinned = true;
+			}
+		}
 	}
 	modifyLock.unlock();
 	return Resource::NotFound;

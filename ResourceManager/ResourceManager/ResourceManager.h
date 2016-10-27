@@ -73,7 +73,7 @@ private:
 
 	void _LoadingThread(uint16_t threadID);
 	void _ParserThread(uint16_t threadID);
-	//void _UpdatePriority(SM_GUID guid, const Resource::Flag& flag);
+	void _UpdatePriority(uint32_t index, const Resource::Flag& flag);
 
 	//std::function<bool(uint32_t sizeOfLoadRequest, ResourceManager* rm) > _WhatToEvict;
 	
@@ -240,8 +240,12 @@ private:
 
 	Resource _resource;
 
-	std::priority_queue<uint64_t, std::vector<uint64_t>, std::less<uint64_t>> _loadingQueue;
-	std::priority_queue<uint64_t, std::vector<uint64_t>, std::less<uint64_t>> _parserQueue;
+	std::queue<SM_GUID> _loadingQueueHighPrio;
+	std::queue<SM_GUID> _loadingQueueLowPrio;
+
+	std::queue<SM_GUID> _parserQueueHighPrio;
+	std::queue<SM_GUID> _parserQueueLowPrio;
+
 	std::unordered_map<uint16_t, ThreadControl, KeyHasher> _threadRunningMap;
 	std::unordered_map<uint16_t, std::thread, KeyHasher> _threadIDMap;
 	IAssetLoader* _assetLoader = nullptr;
