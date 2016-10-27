@@ -64,8 +64,9 @@ int main(int argc, char** argv)
 	MemoryManager::CreateInstance();
 	MemoryManager::GetInstance()->Init(1024U * 1024U * 1024U);
 	ResourceManager& r = ResourceManager::Instance(); // Kickstart at our will
-	r.Init(512U * 1024U * 1024U);
-	r.SetEvictPolicy(ResourceManager::EvictPolicies::FirstCumulativeFit);
+	r.Init(340U * 1024U * 1024U);
+
+	r.SetEvictPolicy(ResourceManager::EvictPolicies::MRU);
 	//r.SetAssetLoader(new ZipLoader("data.dat"));
 	//r.SetAssetLoader(new FileLoader("filelist.txt"));
 	r.SetAssetLoader(new DarferLoader("data.drf"));

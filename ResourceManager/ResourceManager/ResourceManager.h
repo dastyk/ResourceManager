@@ -14,6 +14,7 @@
 #include "ChunkyAllocator.h"
 #include "Resource.h"
 #include "ConsolePrintDef.h"
+#include "Timer.h"
 
 // TODO:
 // The LoadResource function can not return a finished loaded thing, since we are going to multithread
@@ -182,58 +183,90 @@ private:
 				}
 				return true;
 			}
-			//static bool LRU(uint32_t sizeOfLoadRequest, ResourceManager* rm)
-			//{
-			//	auto found = std::pair<uint64_t, ResourceList*>(UINT64_MAX, nullptr);
-			//	auto r = rm->_resources;
-			//	while (r)
-			//	{
-			//		if (r->resource._flags != Resource::Flag::PERSISTENT && r->resource._refCount == 0 && r->resource.GetState() == Resource::ResourceState::Loaded )
-			//		{
-			//			//if (found.first < r->resource.TimeStamp)
-			//			{
-			//				//found.first = r->resource.TimeStamp;
-			//				found.second = r;
-			//			}
-			//		}
-			//		r = r->next;
-			//	}
+			static bool LRU(uint32_t sizeOfLoadRequest, ResourceManager* rm)
+			{
+				uint32_t num = rm->_allocator->FreeBlocks();
+				if (num >= sizeOfLoadRequest)
+				{
+					PrintDebugString("\tWaiting for defrag\n\n");
+					return true;
+				}
+				std::pair<uint64_t, uint32_t> lru = { rm->_timer.GetTimeStamp(), Resource::NotFound };
+				uint32_t count = rm->_resource.count;
+				auto& data = rm->_resource.data;
+				for (uint32_t i = 0; i < count; i++)
+				{
+					if (data.pinned[i].try_lock())
+					{
+						if (data.refCount[i] == 0 && !(data.flags[i] & Resource::Flag::PERSISTENT))
+						{
+							if (data.timeStamp[i] < lru.first)
+							{
+								if(lru.second != Resource::NotFound)
+									data.pinned[lru.second].unlock();
+								lru = { data.timeStamp[i] ,i };
+							}
+							else
+								data.pinned[i].unlock();
+						}
+						else
+							data.pinned[i].unlock();
+					}
+				}
 
-			//	if (found.second)
-			//	{
-			//		PrintDebugString("\tEvicting resource, GUID: %llu.\n\n", r->resource.ID.data);
-			//		rm->_RemoveResource(found.second, rm->_resources);
-			//		return true;
-			//	}
 
-			//	return false;
-			//}
-			//static bool MRU(uint32_t sizeOfLoadRequest, ResourceManager* rm)
-			//{
-			//	auto found = std::pair<uint64_t, ResourceList*>(0, nullptr);
-			//	auto r = rm->_resources;
-			//	while (r)
-			//	{
-			//		if (r->resource._flags != Resource::Flag::PERSISTENT && r->resource._refCount == 0 && r->resource.GetState() == Resource::ResourceState::Loaded)
-			//		{
-			//			//if (found.first > r->resource.TimeStamp)
-			//			{
-			//				//found.first = r->resource.TimeStamp;
-			//				found.second = r;
-			//			}
-			//		}
-			//		r = r->next;
-			//	}
+				if (lru.second != Resource::NotFound)
+				{
+					PrintDebugString("\tEvicting resource. GUID; %llu\n\n", data.guid[lru.second].data);
+					rm->_resource.Modify();
+					rm->_allocator->Free(data.startBlock[lru.second], data.numBlocks[lru.second]);
+					rm->_resource.Remove(lru.second);
+					return true;
+				}
+				return false;
+			}
+			static bool MRU(uint32_t sizeOfLoadRequest, ResourceManager* rm)
+			{
+				uint32_t num = rm->_allocator->FreeBlocks();
+				if (num >= sizeOfLoadRequest)
+				{
+					PrintDebugString("\tWaiting for defrag\n\n");
+					return true;
+				}
+				std::pair<uint64_t, uint32_t> mru = { 0, Resource::NotFound };
+				uint32_t count = rm->_resource.count;
+				auto& data = rm->_resource.data;
+				for (uint32_t i = 0; i < count; i++)
+				{
+					if (data.pinned[i].try_lock())
+					{
+						if (data.refCount[i] == 0 && !(data.flags[i] & Resource::Flag::PERSISTENT))
+						{
+							if (data.timeStamp[i] > mru.first)
+							{
+								if (mru.second != Resource::NotFound)
+									data.pinned[mru.second].unlock();
+								mru = { data.timeStamp[i] ,i };
+							}
+							else
+								data.pinned[i].unlock();
+						}
+						else
+							data.pinned[i].unlock();
+					}
+				}
 
-			//	if (found.second)
-			//	{
-			//		PrintDebugString("\tEvicting resource, GUID: %llu.\n\n", r->resource.ID.data);
-			//		rm->_RemoveResource(found.second, rm->_resources);
-			//		return true;
-			//	}
 
-			//	return false;
-			//}
+				if (mru.second != Resource::NotFound)
+				{
+					PrintDebugString("\tEvicting resource. GUID; %llu\n\n", data.guid[mru.second].data);
+					rm->_resource.Modify();
+					rm->_allocator->Free(data.startBlock[mru.second], data.numBlocks[mru.second]);
+					rm->_resource.Remove(mru.second);
+					return true;
+				}
+				return false;
+			}
 		};
 		
 			
@@ -263,6 +296,8 @@ private:
 
 	std::vector<uint32_t> _pinned;
 	std::vector<std::pair<uint32_t&, uint32_t>> _defragList;
+
+	Timer _timer;
 };
 
 #endif

@@ -139,6 +139,9 @@ void ResourceManager::UnloadResource(SM_GUID guid)
 		//_resource.data.pinned[found].lock();
 		auto& refCount = _resource.data.refCount[found];
 		refCount = (refCount > 0) ? refCount-1 : 0;
+		if(refCount == 0)
+			_resource.data.timeStamp[found] = _timer.GetTimeStamp();
+
 		_resource.data.pinned[found].unlock();
 		PrintDebugString("Unreferencing resource. GUID: %llu. RefCount: %d\n", guid.data, refCount);
 		
@@ -309,6 +312,7 @@ void ResourceManager::TestAlloc( void )
 
 void ResourceManager::Startup()
 {
+	_timer.Update();
 	_runningThread = thread(&ResourceManager::_Run, this);
 }
 

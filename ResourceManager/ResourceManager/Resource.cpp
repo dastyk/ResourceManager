@@ -55,6 +55,7 @@ void Resource::Remove(const uint32_t index)
 	data.size[index] = data.size[last];
 	data.startBlock[index] = data.startBlock[last];
 	data.numBlocks[index] = data.numBlocks[last];
+	data.timeStamp[index] = data.timeStamp[last];
 	data.pinned[last].unlock();
 	//data.pinned[index].unlock();
 	Remove();
@@ -83,6 +84,7 @@ void Resource::Allocate(uint32_t numResources)
 	newData.size = (uint32_t*)(newData.type + numResources);
 	newData.startBlock = (uint32_t*)(newData.size + numResources);
 	newData.numBlocks = (uint32_t*)(newData.startBlock + numResources);
+	newData.timeStamp = (uint64_t*)(newData.numBlocks + numResources);
 
 	memcpy(newData.pinned, data.pinned, count * sizeof(std::mutex));
 	memcpy(newData.loaded, data.loaded, count * sizeof(bool));
@@ -95,6 +97,7 @@ void Resource::Allocate(uint32_t numResources)
 	memcpy(newData.size, data.size, count * sizeof(uint32_t));
 	memcpy(newData.startBlock, data.startBlock, count * sizeof(uint32_t));
 	memcpy(newData.numBlocks, data.numBlocks, count * sizeof(uint32_t));
+	memcpy(newData.timeStamp, data.timeStamp, count * sizeof(uint64_t));
 
 	for (uint32_t i = 0; i < numResources; i++)
 	{

@@ -58,7 +58,8 @@ public:
 		sizeof(uint8_t) +
 		sizeof(uint32_t) +
 		sizeof(uint32_t) +
-		sizeof(uint32_t);
+		sizeof(uint32_t)+
+		sizeof(uint64_t);
 
 	struct DataPointers
 	{
@@ -73,6 +74,7 @@ public:
 		uint32_t* size;
 		uint32_t* startBlock;
 		uint32_t* numBlocks;
+		uint64_t* timeStamp;
 	};
 
 private:
