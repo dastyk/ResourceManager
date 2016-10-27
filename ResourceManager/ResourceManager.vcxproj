@@ -128,6 +128,7 @@
     <ClInclude Include="ResourceManager\AssetParser.h" />
     <ClInclude Include="ResourceManager\CameraManager.h" />
     <ClInclude Include="ResourceManager\ChunkyAllocator.h" />
+    <ClInclude Include="ResourceManager\ConsolePrintDef.h" />
     <ClInclude Include="ResourceManager\Core.h" />
     <ClInclude Include="ResourceManager\DarferLoader.h" />
     <ClInclude Include="ResourceManager\DebugLogger.h" />

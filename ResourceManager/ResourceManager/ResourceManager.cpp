@@ -66,7 +66,7 @@ const SM_GUID ResourceManager::LoadResource(SM_GUID guid, const Resource::Flag& 
 	{
 		//TODO: Move this so we don't "find" a GUID that early have another flag, and now is LOAD_AND_WAIT, but not loaded and just in queue.
 		_mutexLockLoader.lock();
-		printf("Resource loading. GUID: %llu\n", guid.data);
+		PrintDebugString("Resource loading. GUID: %llu\n", guid.data);
 
 		// TODO: Query asset loader for data size -> reserve memory here -> give pointer where asset data can be stored to the asset loader
 
@@ -94,7 +94,7 @@ const SM_GUID ResourceManager::LoadResource(SM_GUID guid, const Resource::Flag& 
 			return data;
 		} );
 		timestamp = Core::GetInstance()->GetTimer()->GetTimeStamp() - timestamp;
-		printf("Loaded in %ld time units\n", timestamp);
+		PrintDebugString("Loaded in %ld time units\n", timestamp);
 		data.rawData[count] = rawData.data;
 		data.type[count] = rawData.fType;
 		data.size[count] = rawData.size;
@@ -104,7 +104,7 @@ const SM_GUID ResourceManager::LoadResource(SM_GUID guid, const Resource::Flag& 
 		_parser.ParseResource(_resource.MakePtrNoLock(count));
 
 		data.loaded[count] = true;
-		printf("Resource finished loading. GUID: %llu\n", guid.data);
+		PrintDebugString("Resource finished loading. GUID: %llu\n", guid.data);
 		
 	}
 	else
@@ -113,7 +113,7 @@ const SM_GUID ResourceManager::LoadResource(SM_GUID guid, const Resource::Flag& 
 		_mutexLockLoadingQueue.lock();
 		
 		//Set the state of the resource to waiting (to be loaded), print out that it is on the stack and push it to the stack
-		printf("Adding resource to toLoad stack. GUID: %llu\n", guid.data);
+		PrintDebugString("Adding resource to toLoad stack. GUID: %llu\n", guid.data);
 		if (data.flags[count] & Resource::Flag::NEEDED_NOW)
 			_loadingQueueHighPrio.push(guid);
 		else
@@ -140,7 +140,7 @@ void ResourceManager::UnloadResource(SM_GUID guid)
 		auto& refCount = _resource.data.refCount[found];
 		refCount = (refCount > 0) ? refCount-1 : 0;
 		_resource.data.pinned[found].unlock();
-		printf("Unreferencing resource. GUID: %llu. RefCount: %d\n", guid.data, refCount);
+		PrintDebugString("Unreferencing resource. GUID: %llu. RefCount: %d\n", guid.data, refCount);
 		
 	}
 	
@@ -292,13 +292,13 @@ void ResourceManager::TestAlloc( void )
 
 	//list<pair<uint32_t, uint32_t>> defrags;
 
-	//printf("Before defragmenting 3 blocks at index 3:\n");
+	//PrintDebugString("Before defragmenting 3 blocks at index 3:\n");
 	//_allocator->PrintOccupancy();
 
 	//defrags.push_back({ 4, 1 });
 	//_allocator->Defrag(defrags);
 
-	//printf("After defragmenting:\n");
+	//PrintDebugString("After defragmenting:\n");
 	//_allocator->PrintOccupancy();
 
 	//_allocator->Allocate(3);
@@ -529,7 +529,7 @@ void ResourceManager::_LoadingThread(uint16_t threadID)
 			const auto& data = _resource.data;
 			//Proudly write out what GUID we have started working on.
 			SM_GUID guid = data.guid[job];
-			//printf("Started loading resource. GUID: %llu\n", guid.data);
+			//PrintDebugString("Started loading resource. GUID: %llu\n", guid.data);
 
 
 			//Lock the loader so we can work in peace and quiet.
@@ -561,8 +561,8 @@ void ResourceManager::_LoadingThread(uint16_t threadID)
 
 				_mutexLockLoader.unlock();
 
-				printf("Finished loading resource. GUID: %llu\n", guid.data);
-				//	printf("Loaded in %ld time units\n", timestamp);
+				PrintDebugString("Finished loading resource. GUID: %llu\n", guid.data);
+				//	PrintDebugString("Loaded in %ld time units\n", timestamp);
 
 				data.rawData[job] = rawData.data;
 				data.type[job] = rawData.fType;
@@ -583,7 +583,7 @@ void ResourceManager::_LoadingThread(uint16_t threadID)
 			catch (std::runtime_error& e)
 			{
 				//We don't have enough memory. Wait one "sleep", but push the job back onto the queue for a new try.
-				printf("Resource Manager out of memory...\n");
+				PrintDebugString("Resource Manager out of memory...\n");
 
 				data.pinned[job].unlock();
 				if (_WhatToEvict(numBlocks, this))
@@ -601,7 +601,7 @@ void ResourceManager::_LoadingThread(uint16_t threadID)
 				}
 				else
 				{
-					printf("\tCould not find a resource to evict.\n\n");
+					PrintDebugString("\tCould not find a resource to evict.\n\n");
 					job = _resource.FindLock(guid);
 					if (job != Resource::NotFound)
 					{
@@ -703,7 +703,7 @@ void ResourceManager::_ParserThread(uint16_t threadID)
 
 
 			//Mark it as parsed, notify the user and start parsing it.
-			//printf("Starting parsing resource. GUID: %llu\n", guid.data);
+			//PrintDebugString("Starting parsing resource. GUID: %llu\n", guid.data);
 
 			_parser.ParseResource(resource);
 			data.loaded[job] = true;
@@ -711,7 +711,7 @@ void ResourceManager::_ParserThread(uint16_t threadID)
 
 
 			//The resource is now loaded and marked as such, the user is notified.
-			//printf("Finished parsing resource. GUID: %llu\n", guid.data);
+			//PrintDebugString("Finished parsing resource. GUID: %llu\n", guid.data);
 
 			_resource.DestroyPtr(resource);
 

@@ -37,7 +37,6 @@ uint32_t Resource::FindLock(const SM_GUID & guid, bool* pinned)
 
 void Resource::Remove(const uint32_t index)
 {
-	
 	uint32_t last = count - 1;
 	if (last == index)
 	{

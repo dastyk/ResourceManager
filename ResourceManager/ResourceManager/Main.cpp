@@ -16,6 +16,8 @@
 #include "FileLoader.h"
 #include "Scene.h"
 #include "Parsers.h"
+#include "ConsolePrintDef.h"
+
 void ArfParser(const Resource::Ptr& resource);
 void ObjParser(const Resource::Ptr& resource);
 
@@ -44,14 +46,15 @@ std::string bytesToString(uint32_t freeMemory)
 int main(int argc, char** argv)
 {
 	srand(time(NULL));
-
+#ifdef _DEBUG
+	// Create debug console
 	if (!AllocConsole()) throw std::runtime_error("Failed to alloc console.");
 	freopen("conin$", "r", stdin);
 	freopen("conout$", "w", stdout);
 	freopen("conout$", "w", stderr);
 
-	printf("<----||Console Initialized||---->\n\n");
-
+	PrintDebugString("<----||Console Initialized||---->\n\n");
+#endif
 	_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
 	// Flex/Bison causes 3 memory leaks per run time, does not increase during runtime.
 	//_crtBreakAlloc = 312;
@@ -253,7 +256,7 @@ int main(int argc, char** argv)
 	r.LoadResource("tileable-light-wood-textures-5.jpg", Resource::Flag::PERSISTENT | Resource::Flag::LOAD_AND_WAIT);
 
 
-	printf("<----||Starting Game loop||---->\n\n");
+	PrintDebugString("<----||Starting Game loop||---->\n\n");
 	InputManager* input = core->GetInputManager();
 	std::vector<GameObject> renderObjects;
 	core->GetWindow()->LockMouseToScreen(true);
@@ -330,7 +333,7 @@ int main(int argc, char** argv)
 	}
 
 
-	printf("\n\n<----||Game loop ended||---->\n\n");
+	PrintDebugString("\n\n<----||Game loop ended||---->\n\n");
 
 
 	ResourceManager::Instance().ShutDown();

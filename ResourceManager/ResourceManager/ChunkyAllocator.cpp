@@ -2,6 +2,7 @@
 
 #include <stdio.h>
 #include "MemoryManager.h"
+#include "ConsolePrintDef.h"
 
 using namespace std;
 
@@ -203,7 +204,7 @@ void ChunkyAllocator::PrintOccupancy(void)
 			for (uint32_t i = 0; i < free->Blocks; ++i)
 			{
 				//OutputDebugStringA( "[O]" );
-				printf("[O]");
+				PrintDebugString("[O]");
 			}
 
 			walker += free->Blocks * _blockSize;
@@ -212,13 +213,13 @@ void ChunkyAllocator::PrintOccupancy(void)
 		else
 		{
 			//OutputDebugStringA( "[X]" );
-			printf("[X]");
+			PrintDebugString("[X]");
 			walker += _blockSize;
 		}
 	}
 
 	//OutputDebugStringA( "\n" );
-	printf("\n");
+	PrintDebugString("\n");
 }
 
 void ChunkyAllocator::_SetupFreeBlockList(void)

@@ -13,6 +13,8 @@
 #include <map>
 #include "ChunkyAllocator.h"
 #include "Resource.h"
+#include "ConsolePrintDef.h"
+
 // TODO:
 // The LoadResource function can not return a finished loaded thing, since we are going to multithread
 // stack _toLoad;
@@ -92,7 +94,7 @@ private:
 				if (num >= sizeOfLoadRequest)
 
 				{
-					printf("\tWaiting for defrag\n\n");
+					PrintDebugString("\tWaiting for defrag\n\n");
 					return true;
 				}
 					
@@ -105,7 +107,7 @@ private:
 					{
 						if (data.refCount[i] == 0 && !(data.flags[i] & Resource::Flag::PERSISTENT) && data.numBlocks[i] + num >= sizeOfLoadRequest)
 						{
-							printf("\tEvicting resource. GUID; %llu\n\n", data.guid[i].data);
+							PrintDebugString("\tEvicting resource. GUID; %llu\n\n", data.guid[i].data);
 							rm->_resource.Modify();
 							rm->_allocator->Free(data.startBlock[i], data.numBlocks[i]);
 							rm->_resource.Remove(i);
@@ -125,7 +127,7 @@ private:
 				uint32_t num = rm->_allocator->FreeBlocks();
 				if (num >= sizeOfLoadRequest)
 				{
-					printf("\tWaiting for defrag\n\n");
+					PrintDebugString("\tWaiting for defrag\n\n");
 					return true;
 				}
 
@@ -138,7 +140,7 @@ private:
 					{
 						if (data.refCount[i] == 0 && !(data.flags[i] & Resource::Flag::PERSISTENT))
 						{
-							printf("\tEvicting resource. GUID; %llu\n\n", data.guid[i].data);
+							PrintDebugString("\tEvicting resource. GUID; %llu\n\n", data.guid[i].data);
 							num += data.numBlocks[i];
 							rm->_resource.Modify();
 							rm->_allocator->Free(data.startBlock[i], data.numBlocks[i]);
@@ -167,7 +169,7 @@ private:
 					{
 						if (data.refCount[i] == 0 && !(data.flags[i] & Resource::Flag::PERSISTENT))
 						{
-							printf("\tEvicting resource. GUID; %llu\n\n", data.guid[i].data);
+							PrintDebugString("\tEvicting resource. GUID; %llu\n\n", data.guid[i].data);
 
 							rm->_resource.Modify();
 							rm->_allocator->Free(data.startBlock[i], data.numBlocks[i]);
@@ -199,7 +201,7 @@ private:
 
 			//	if (found.second)
 			//	{
-			//		printf("\tEvicting resource, GUID: %llu.\n\n", r->resource.ID.data);
+			//		PrintDebugString("\tEvicting resource, GUID: %llu.\n\n", r->resource.ID.data);
 			//		rm->_RemoveResource(found.second, rm->_resources);
 			//		return true;
 			//	}
@@ -225,7 +227,7 @@ private:
 
 			//	if (found.second)
 			//	{
-			//		printf("\tEvicting resource, GUID: %llu.\n\n", r->resource.ID.data);
+			//		PrintDebugString("\tEvicting resource, GUID: %llu.\n\n", r->resource.ID.data);
 			//		rm->_RemoveResource(found.second, rm->_resources);
 			//		return true;
 			//	}
