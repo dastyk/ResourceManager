@@ -175,38 +175,46 @@ private:
 			}
 			static bool LRU(uint32_t sizeOfLoadRequest, ResourceManager* rm)
 			{
-				std::pair<uint64_t, uint32_t> lru = { rm->_timer.GetTimeStamp(), Resource::NotFound };
-				uint32_t count = rm->_resource.count;
-				auto& data = rm->_resource.data;
-				for (uint32_t i = 0; i < count; i++)
+				uint32_t num = rm->_allocator->FreeBlocks();
+				while (num < sizeOfLoadRequest)
 				{
-					if (data.pinned[i].try_lock())
+					std::pair<uint64_t, uint32_t> lru = { rm->_timer.GetTimeStamp(), Resource::NotFound };
+					uint32_t count = rm->_resource.count;
+					auto& data = rm->_resource.data;
+					for (uint32_t i = 0; i < count; i++)
 					{
-						if (data.refCount[i] == 0 && !(data.flags[i] & Resource::Flag::PERSISTENT))
+						if (data.pinned[i].try_lock())
 						{
-							if (data.timeStamp[i] < lru.first)
+							if (data.refCount[i] == 0 && !(data.flags[i] & Resource::Flag::PERSISTENT))
 							{
-								if(lru.second != Resource::NotFound)
-									data.pinned[lru.second].unlock();
-								lru = { data.timeStamp[i] ,i };
+								if (data.timeStamp[i] < lru.first)
+								{
+									if (lru.second != Resource::NotFound)
+										data.pinned[lru.second].unlock();
+									lru = { data.timeStamp[i] ,i };
+								}
+								else
+									data.pinned[i].unlock();
 							}
 							else
 								data.pinned[i].unlock();
 						}
-						else
-							data.pinned[i].unlock();
 					}
-				}
 
 
-				if (lru.second != Resource::NotFound)
-				{
-					PrintDebugString("\tEvicting resource. GUID; %llu\n\n", data.guid[lru.second].data);
-					rm->_resource.Modify();
-					rm->_allocator->Free(data.startBlock[lru.second], data.numBlocks[lru.second]);
-					rm->_resource.Remove(lru.second);
-					return true;
+					if (lru.second != Resource::NotFound)
+					{
+						PrintDebugString("\tEvicting resource. GUID; %llu\n\n", data.guid[lru.second].data);
+						rm->_resource.Modify();
+						rm->_allocator->Free(data.startBlock[lru.second], data.numBlocks[lru.second]);
+						rm->_resource.Remove(lru.second);
+						data.pinned[lru.second].unlock();
+						return true;
+					}
+					else
+						break;
 				}
+				
 				return false;
 			}
 			static bool MRU(uint32_t sizeOfLoadRequest, ResourceManager* rm)

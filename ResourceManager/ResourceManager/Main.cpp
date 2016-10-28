@@ -64,9 +64,9 @@ int main(int argc, char** argv)
 	MemoryManager::CreateInstance();
 	MemoryManager::GetInstance()->Init(512U * 1024U * 1024U);
 	ResourceManager& r = ResourceManager::Instance(); // Kickstart at our will
-	r.Init(200U * 1024U * 1024U);
+	r.Init(220U * 1024U * 1024U);
 
-	r.SetEvictPolicy(ResourceManager::EvictPolicies::MRU);
+	r.SetEvictPolicy(ResourceManager::EvictPolicies::LRU);
 	//r.SetAssetLoader(new ZipLoader("data.dat"));
 	//r.SetAssetLoader(new FileLoader("filelist.txt"));
 	r.SetAssetLoader(new DarferLoader("data.drf"));
@@ -338,11 +338,13 @@ int main(int argc, char** argv)
 
 
 	ResourceManager::Instance().ShutDown();
-	MemoryManager::DeleteInstance();
+	
 	Core::ShutDown();
 	
 	getchar();
 	DebugLogger::GetInstance()->Dump();
+
+	MemoryManager::DeleteInstance();
 	return 0;
 }
 

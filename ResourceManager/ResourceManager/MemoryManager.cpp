@@ -214,16 +214,17 @@ StackAllocator * MemoryManager::CreateStackAllocator(uint64_t size)
 void * MemoryManager::Alloc(uint32_t size)
 {
 	_instance->_mutexLock.lock();
-	if (_instance->_remainingMemory < size+ sizeof(uint32_t))
+	uint32_t tSize = size + sizeof(uint32_t);
+	if (_instance->_remainingMemory < tSize)
 		throw std::runtime_error("Memory Manager ran out of memory.");
 
-	void* ret = _instance->_Allocate(size + sizeof(uint32_t));
-	*((uint64_t*)ret) = size;
-	_instance->_allocatedBlocks[ret] = size + sizeof(uint32_t);
-	_instance->_remainingMemory -= size + sizeof(uint32_t);
+	void* ret = _instance->_Allocate(tSize);
+	*(uint32_t*)ret = tSize;
+	_instance->_allocatedBlocks[ret] = tSize;
+	_instance->_remainingMemory -= tSize;
 	_instance->_mutexLock.unlock();
 	
-	return (void*)((size_t)ret  + sizeof(uint32_t));
+	return (void*)((uint32_t*)ret  + 1);
 }
 
 void MemoryManager::ReleasePoolAllocator(PoolAllocator * object)
@@ -249,7 +250,7 @@ void MemoryManager::Release(void * p)
 	if(p)
 	{
 		_instance->_mutexLock.lock();
-		void* a = (void*)((size_t)p - sizeof(uint32_t));
+		void* a = (void*)((uint32_t*)p - 1);
 		uint32_t size = *(uint32_t*)a;
 		_instance->_Free(a, size);
 		_instance->_remainingMemory += _instance->_allocatedBlocks[a];

@@ -369,31 +369,7 @@ void ResourceManager::SetEvictPolicy(evfunc evictPolicy)
 
 void ResourceManager::_Run()
 {
-	//Lock so we can initialize everything without any intereference.
-	_mutexLockGeneral.lock();
-
-	//Create threads and initialize them as "free"
-	//Both the loadingThread and the parserThread.
-	for (uint16_t i = 0; i < NR_OF_LOADING_THREADS; i++)
-	{
-		_threadIDMap.insert({ i, thread() });
-
-		_threadIDMap.find(i)->second = thread(&ResourceManager::_LoadingThread, this, i);
-
-		_threadRunningMap.insert({ i, ThreadControl() });
-	}
-
-	for (uint16_t i = NR_OF_LOADING_THREADS; i < NR_OF_PARSING_THREADS + NR_OF_LOADING_THREADS; i++)
-	{
-		_threadIDMap.insert({ i, thread() });
-
-		_threadIDMap.find(i)->second = thread(&ResourceManager::_ParserThread, this, i);
-
-		_threadRunningMap.insert({ i, ThreadControl() });
-
-	}
-	_running = true;
-	_mutexLockGeneral.unlock();
+	
 
 	while (_running)
 	{
@@ -562,7 +538,6 @@ void ResourceManager::_LoadingThread(uint16_t threadID)
 				});
 				//timestamp = Core::GetInstance()->GetTimer()->GetTimeStamp() - timestamp;
 
-
 				_mutexLockLoader.unlock();
 
 				PrintDebugString("Finished loading resource. GUID: %llu\n", guid.data);
@@ -588,7 +563,6 @@ void ResourceManager::_LoadingThread(uint16_t threadID)
 			{
 				//We don't have enough memory. Wait one "sleep", but push the job back onto the queue for a new try.
 				PrintDebugString("Resource Manager out of memory...\n");
-
 				data.pinned[job].unlock();
 				if (_WhatToEvict(numBlocks, this))
 				{
@@ -597,9 +571,11 @@ void ResourceManager::_LoadingThread(uint16_t threadID)
 					{
 						_mutexLockLoadingQueue.lock();
 						if (data.flags[job] & Resource::Flag::NEEDED_NOW)
-							_parserQueueHighPrio.push(guid);
+							_loadingQueueHighPrio.push(guid);
 						else
-							_parserQueueLowPrio.push(guid);
+							_loadingQueueLowPrio.push(guid);
+						PrintDebugString("Adding resource to toLoad stack. GUID: %llu\n", guid.data);
+						_resource.data.pinned[job].unlock();
 						_mutexLockLoadingQueue.unlock();
 					}
 				}
@@ -611,6 +587,7 @@ void ResourceManager::_LoadingThread(uint16_t threadID)
 					{
 						_resource.Modify();
 						_resource.Remove(job);
+						_resource.data.pinned[job].unlock();
 					}
 
 				}
