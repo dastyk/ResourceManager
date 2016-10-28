@@ -2,7 +2,7 @@
 
 #include <stdio.h>
 #include "MemoryManager.h"
-#include "ConsolePrintDef.h"
+#include "DebugConsole.h"
 
 using namespace std;
 

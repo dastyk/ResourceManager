@@ -8,9 +8,6 @@
 #include <sstream>
 #include "Core.h"
 
-#define NR_OF_LOADING_THREADS 1
-#define NR_OF_PARSING_THREADS 2
-
 using namespace std;
 
 ResourceManager& ResourceManager::Instance()
@@ -310,10 +307,29 @@ void ResourceManager::TestAlloc( void )
 	//int hej = 0;
 }
 
-void ResourceManager::Startup()
+void ResourceManager::Startup(uint32_t numLoadingThreads, uint32_t numParsingThreads)
 {
 	_timer.Update();
-	_runningThread = thread(&ResourceManager::_Run, this);
+	_running = true;
+	
+	//Lock so we can initialize everything without any intereference.
+	_mutexLockGeneral.lock();
+	_threads.push_back(std::thread(&ResourceManager::_Run, this));
+
+	//Create threads and initialize them as "free"
+	//Both the loadingThread and the parserThread.
+	for (uint16_t i = 0; i < numLoadingThreads; i++)
+	{
+		_threads.push_back(std::thread(&ResourceManager::_LoadingThread, this));
+	}
+
+	for (uint16_t i = 0; i < numParsingThreads; i++)
+	{
+		_threads.push_back(std::thread(&ResourceManager::_ParserThread, this));
+
+	}
+	
+	_mutexLockGeneral.unlock();
 }
 
 
@@ -401,6 +417,8 @@ void ResourceManager::_Run()
 		if (index != UINT32_MAX)
 		{
 			data.rawData[_pinned[index]] = _allocator->Data(_defragList[index].first);
+			_allocator->PrintOccupancy();
+			PrintDebugString("\n\n");
 		}
 
 		for (auto& m : _pinned)
@@ -412,32 +430,7 @@ void ResourceManager::_Run()
 		this_thread::sleep_for(std::chrono::milliseconds(17));
 	}
 
-	if (_resource.modifyLock.try_lock())
-		_resource.modifyLock.unlock();
-
-	//When we're shutting down, we wait for our child-threads and join them in.
-	bool allThreadsJoined = false;
-	while (!allThreadsJoined)
-	{
-		allThreadsJoined = true;
-		_mutexLockGeneral.lock();
-		for (auto &it : _threadRunningMap)
-		{
-			if (it.second.inUse)
-			{
-				allThreadsJoined = false;
-			}
-			else
-			{
-				if (!it.second.beenJoined)
-				{
-					_threadIDMap.find(it.first)->second.join();
-					it.second.beenJoined = true;
-				}
-			}
-		}
-		_mutexLockGeneral.unlock();
-	}
+	
 }
 
 
@@ -453,15 +446,10 @@ void ResourceManager::_Run()
 /*	about 1 "frame".
 /*	=============================================================
 */
-void ResourceManager::_LoadingThread(uint16_t threadID)
+void ResourceManager::_LoadingThread()
 {
 
 	//Lock the general so we can change ourselves to "in use" and "not joined"
-	_mutexLockGeneral.lock();
-
-	_threadRunningMap.find(threadID)->second.inUse = true;
-	_threadRunningMap.find(threadID)->second.beenJoined = false;
-	_mutexLockGeneral.unlock();
 	bool pinned = false;
 	while (_running)
 	{
@@ -562,7 +550,8 @@ void ResourceManager::_LoadingThread(uint16_t threadID)
 			catch (std::runtime_error& e)
 			{
 				//We don't have enough memory. Wait one "sleep", but push the job back onto the queue for a new try.
-				PrintDebugString("Resource Manager out of memory...\n");
+				PrintDebugString("Error: %s\n", e.what());
+
 				data.pinned[job].unlock();
 				if (_WhatToEvict(numBlocks, this))
 				{
@@ -574,7 +563,7 @@ void ResourceManager::_LoadingThread(uint16_t threadID)
 							_loadingQueueHighPrio.push(guid);
 						else
 							_loadingQueueLowPrio.push(guid);
-						PrintDebugString("Adding resource to toLoad stack. GUID: %llu\n", guid.data);
+						PrintDebugString("\tAdding resource to toLoad stack. GUID: %llu\n", guid.data);
 						_resource.data.pinned[job].unlock();
 						_mutexLockLoadingQueue.unlock();
 					}
@@ -601,12 +590,6 @@ void ResourceManager::_LoadingThread(uint16_t threadID)
 
 	}
 
-
-
-	//Mark us "done", that is "not in use".
-	_mutexLockGeneral.lock();
-	_threadRunningMap.find(threadID)->second.inUse = false;
-	_mutexLockGeneral.unlock();
 }
 
 
@@ -621,14 +604,8 @@ void ResourceManager::_LoadingThread(uint16_t threadID)
 /*	about 1 "frame".
 /*	=============================================================
 */
-void ResourceManager::_ParserThread(uint16_t threadID)
+void ResourceManager::_ParserThread()
 {
-	//Lock general so we can mark that we're in use.
-	_mutexLockGeneral.lock();
-
-	_threadRunningMap[threadID].inUse = true;
-	_threadRunningMap[threadID].beenJoined = false;
-	_mutexLockGeneral.unlock();
 
 	bool pinned = false;
 	while (_running)
@@ -702,12 +679,7 @@ void ResourceManager::_ParserThread(uint16_t threadID)
 		std::this_thread::sleep_for(std::chrono::milliseconds(17));
 	}
 
-	if (_resource.modifyLock.try_lock())
-		_resource.modifyLock.unlock();
-	//Let us join in the thread, mark us as "no longer in use"
-	_mutexLockGeneral.lock();
-	_threadRunningMap[threadID].inUse = false;
-	_mutexLockGeneral.unlock();
+	
 }
 
 void ResourceManager::Init(uint64_t maxMemory)
@@ -723,7 +695,11 @@ void ResourceManager::Init(uint64_t maxMemory)
 void ResourceManager::ShutDown()
 {
 	_running = false;
-	_runningThread.join();
+
+
+	//When we're shutting down, we wait for our child-threads and join them in.
+	for (auto& t : _threads)
+		t.join();
 
 	delete _assetLoader;
 	_assetLoader = nullptr;

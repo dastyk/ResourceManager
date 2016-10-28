@@ -13,7 +13,7 @@
 #include <map>
 #include "ChunkyAllocator.h"
 #include "Resource.h"
-#include "ConsolePrintDef.h"
+#include "DebugConsole.h"
 #include "Timer.h"
 
 // TODO:
@@ -48,23 +48,7 @@ public:
 	void SetEvictPolicy(evfunc evictPolicy);
 	void Init(uint64_t maxMemory);
 	void ShutDown();
-	void Startup();
-
-private:
-
-	struct ThreadControl
-	{
-		bool inUse = false;
-		bool beenJoined = true;
-	};
-	
-	struct KeyHasher
-	{
-		std::size_t operator()(const uint16_t &a) const
-		{
-			return (size_t)a;
-		}
-	};
+	void Startup(uint32_t numLoadingThreads, uint32_t numParsingThreads);
 
 private:
 	ResourceManager();
@@ -73,9 +57,9 @@ private:
 	ResourceManager& operator=(const ResourceManager& rhs) = delete;
 	
 	void _Run();
+	void _LoadingThread();
+	void _ParserThread();
 
-	void _LoadingThread(uint16_t threadID);
-	void _ParserThread(uint16_t threadID);
 	void _UpdatePriority(uint32_t index, const Resource::Flag& flag);
 
 	//std::function<bool(uint32_t sizeOfLoadRequest, ResourceManager* rm) > _WhatToEvict;
@@ -267,14 +251,12 @@ private:
 	std::queue<SM_GUID> _parserQueueHighPrio;
 	std::queue<SM_GUID> _parserQueueLowPrio;
 
-	std::unordered_map<uint16_t, ThreadControl, KeyHasher> _threadRunningMap;
-	std::unordered_map<uint16_t, std::thread, KeyHasher> _threadIDMap;
 	IAssetLoader* _assetLoader = nullptr;
 
 	bool _running;
 	AssetParser _parser;
 
-	std::thread _runningThread;
+	std::vector<std::thread> _threads;
 	std::mutex _mutexLockGeneral;
 	std::mutex _mutexLockLoader;
 	std::mutex _mutexLockLoadingQueue;

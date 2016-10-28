@@ -16,7 +16,7 @@
 #include "FileLoader.h"
 #include "Scene.h"
 #include "Parsers.h"
-#include "ConsolePrintDef.h"
+#include "DebugConsole.h"
 
 void ArfParser(const Resource::Ptr& resource);
 void ObjParser(const Resource::Ptr& resource);
@@ -89,7 +89,7 @@ int main(int argc, char** argv)
 
 	r.AddParser("obj", ObjParser);
 
-	r.Startup();
+	r.Startup(1,2);
 
 
 

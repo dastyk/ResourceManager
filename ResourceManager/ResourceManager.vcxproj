@@ -128,7 +128,7 @@
     <ClInclude Include="ResourceManager\AssetParser.h" />
     <ClInclude Include="ResourceManager\CameraManager.h" />
     <ClInclude Include="ResourceManager\ChunkyAllocator.h" />
-    <ClInclude Include="ResourceManager\ConsolePrintDef.h" />
+    <ClInclude Include="ResourceManager\DebugConsole.h" />
     <ClInclude Include="ResourceManager\Core.h" />
     <ClInclude Include="ResourceManager\DarferLoader.h" />
     <ClInclude Include="ResourceManager\DebugLogger.h" />
@@ -172,6 +172,7 @@
     <ClCompile Include="ResourceManager\ChunkyAllocator.cpp" />
     <ClCompile Include="ResourceManager\Core.cpp" />
     <ClCompile Include="ResourceManager\DarferLoader.cpp" />
+    <ClCompile Include="ResourceManager\DebugConsole.cpp" />
     <ClCompile Include="ResourceManager\DebugLogger.cpp" />
     <ClCompile Include="ResourceManager\Direct3D11.cpp" />
     <ClCompile Include="ResourceManager\DirectXTK\DDSTextureLoader.cpp" />

@@ -141,7 +141,7 @@
     <ClInclude Include="ResourceManager\Direct3D11.h">
       <Filter>Header Files\Graphics</Filter>
     </ClInclude>
-    <ClInclude Include="ResourceManager\ConsolePrintDef.h">
+    <ClInclude Include="ResourceManager\DebugConsole.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -223,6 +223,9 @@
     </ClCompile>
     <ClCompile Include="ResourceManager\Direct3D11.cpp">
       <Filter>Source Files\Graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="ResourceManager\DebugConsole.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
