@@ -533,7 +533,7 @@ void ResourceManager::_LoadingThread(uint16_t threadID)
 			const auto& data = _resource.data;
 			//Proudly write out what GUID we have started working on.
 			SM_GUID guid = data.guid[job];
-			//PrintDebugString("Started loading resource. GUID: %llu\n", guid.data);
+			PrintDebugString("Started loading resource. GUID: %llu\n", guid.data);
 
 
 			//Lock the loader so we can work in peace and quiet.
@@ -684,7 +684,7 @@ void ResourceManager::_ParserThread(uint16_t threadID)
 			SM_GUID guid = _parserQueueLowPrio.front();
 
 			_parserQueueLowPrio.pop();
-
+			
 
 			pinned = false;
 			job = _resource.FindLock(guid, &pinned);
@@ -698,13 +698,13 @@ void ResourceManager::_ParserThread(uint16_t threadID)
 
 		if (job != Resource::NotFound)
 		{
-
+			
 			const Resource::Ptr& resource = _resource.MakePtrNoLock(job);
 
 
 			auto& data = _resource.data;
 			SM_GUID guid = data.guid[job];
-
+			PrintDebugString("Started parsing. GUID: %llu\n", guid.data);
 
 			//Mark it as parsed, notify the user and start parsing it.
 			//PrintDebugString("Starting parsing resource. GUID: %llu\n", guid.data);
@@ -716,7 +716,7 @@ void ResourceManager::_ParserThread(uint16_t threadID)
 
 			//The resource is now loaded and marked as such, the user is notified.
 			//PrintDebugString("Finished parsing resource. GUID: %llu\n", guid.data);
-
+			PrintDebugString("Finished parsing. GUID: %llu\n", guid.data);
 			_resource.DestroyPtr(resource);
 
 

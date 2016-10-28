@@ -62,9 +62,9 @@ int main(int argc, char** argv)
 	Core* core = Core::GetInstance();
 	core->Init(800, 600, false);
 	MemoryManager::CreateInstance();
-	MemoryManager::GetInstance()->Init(1024U * 1024U * 1024U);
+	MemoryManager::GetInstance()->Init(512U * 1024U * 1024U);
 	ResourceManager& r = ResourceManager::Instance(); // Kickstart at our will
-	r.Init(340U * 1024U * 1024U);
+	r.Init(200U * 1024U * 1024U);
 
 	r.SetEvictPolicy(ResourceManager::EvictPolicies::MRU);
 	//r.SetAssetLoader(new ZipLoader("data.dat"));
@@ -149,7 +149,7 @@ int main(int argc, char** argv)
 	bunnyObject.AddLODMesh("Bunny2.arf");
 	bunnyObject.AddLODMesh("Bunny3.arf");
 	bunnyObject.AddLODMesh("Bunny4.arf");
-	r.LoadResource("Bunny4.arf", Resource::Flag::PERSISTENT | Resource::Flag::LOAD_AND_WAIT);
+//	r.LoadResource("Bunny4.arf", Resource::Flag::PERSISTENT | Resource::Flag::LOAD_AND_WAIT);
 
 	bunnyObject.AddLODTexture("blue.png");
 
@@ -168,7 +168,7 @@ int main(int argc, char** argv)
 	dragonObject.AddLODMesh("Dragon3.arf");
 	dragonObject.AddLODMesh("Dragon4.arf");
 	dragonObject.AddLODTexture("blue.png");
-	r.LoadResource("Dragon4.arf", Resource::Flag::PERSISTENT | Resource::Flag::LOAD_AND_WAIT);
+//	r.LoadResource("Dragon4.arf", Resource::Flag::PERSISTENT | Resource::Flag::LOAD_AND_WAIT);
 	
 	DirectX::XMStoreFloat4x4(&dragonObject.transform, DirectX::XMMatrixScaling(0.3, 0.3, 0.3) * DirectX::XMMatrixTranslation(10.0f, 0.0f, 10.0f));
 	dragonObject.pos = DirectX::XMFLOAT3(10.0f, 00.0f, 10.0f);
@@ -184,7 +184,7 @@ int main(int argc, char** argv)
 	cat.AddLODMesh("Cat2.arf");
 	cat.AddLODMesh("Cat3.arf");
 	cat.AddLODMesh("Cat4.arf");
-	r.LoadResource("Cat4.arf", Resource::Flag::PERSISTENT | Resource::Flag::LOAD_AND_WAIT);
+//	r.LoadResource("Cat4.arf", Resource::Flag::PERSISTENT | Resource::Flag::LOAD_AND_WAIT);
 
 	cat.AddLODTexture("cat_diff.jpg");
 
@@ -201,7 +201,7 @@ int main(int argc, char** argv)
 	doge.AddLODMesh("Dog2.arf");
 	doge.AddLODMesh("Dog3.arf");
 	doge.AddLODMesh("Dog4.arf");
-	r.LoadResource("Dog4.arf", Resource::Flag::PERSISTENT | Resource::Flag::LOAD_AND_WAIT);
+//	r.LoadResource("Dog4.arf", Resource::Flag::PERSISTENT | Resource::Flag::LOAD_AND_WAIT);
 
 	doge.AddLODTexture("Tex_0552_7.jpg");
 
@@ -230,7 +230,7 @@ int main(int argc, char** argv)
 	Astro.AddLODMesh("Astronaut2.arf");
 	Astro.AddLODMesh("Astronaut3.arf");
 	Astro.AddLODMesh("Astronaut4.arf");
-	r.LoadResource("Astronaut4.arf", Resource::Flag::PERSISTENT | Resource::Flag::LOAD_AND_WAIT);
+//	r.LoadResource("Astronaut4.arf", Resource::Flag::PERSISTENT | Resource::Flag::LOAD_AND_WAIT);
 
 
 	Astro.AddLODTexture("Spacesuit_D.png");
