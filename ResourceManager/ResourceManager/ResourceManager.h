@@ -92,13 +92,7 @@ private:
 			static bool FirstFit(uint32_t sizeOfLoadRequest, ResourceManager* rm)
 			{
 				uint32_t num = rm->_allocator->FreeBlocks();
-				if (num >= sizeOfLoadRequest)
 
-				{
-					PrintDebugString("\tWaiting for defrag\n\n");
-					return true;
-				}
-					
 				uint32_t count = rm->_resource.count;
 				auto& data = rm->_resource.data;
 				for (uint32_t i = 0; i < count; i++)
@@ -126,11 +120,7 @@ private:
 			static bool FirstCumulativeFit(uint32_t sizeOfLoadRequest, ResourceManager* rm)
 			{
 				uint32_t num = rm->_allocator->FreeBlocks();
-				if (num >= sizeOfLoadRequest)
-				{
-					PrintDebugString("\tWaiting for defrag\n\n");
-					return true;
-				}
+
 
 				uint32_t count = rm->_resource.count;
 				auto& data = rm->_resource.data;
@@ -185,12 +175,6 @@ private:
 			}
 			static bool LRU(uint32_t sizeOfLoadRequest, ResourceManager* rm)
 			{
-				uint32_t num = rm->_allocator->FreeBlocks();
-				if (num >= sizeOfLoadRequest)
-				{
-					PrintDebugString("\tWaiting for defrag\n\n");
-					return true;
-				}
 				std::pair<uint64_t, uint32_t> lru = { rm->_timer.GetTimeStamp(), Resource::NotFound };
 				uint32_t count = rm->_resource.count;
 				auto& data = rm->_resource.data;
@@ -227,12 +211,6 @@ private:
 			}
 			static bool MRU(uint32_t sizeOfLoadRequest, ResourceManager* rm)
 			{
-				uint32_t num = rm->_allocator->FreeBlocks();
-				if (num >= sizeOfLoadRequest)
-				{
-					PrintDebugString("\tWaiting for defrag\n\n");
-					return true;
-				}
 				std::pair<uint64_t, uint32_t> mru = { 0, Resource::NotFound };
 				uint32_t count = rm->_resource.count;
 				auto& data = rm->_resource.data;
