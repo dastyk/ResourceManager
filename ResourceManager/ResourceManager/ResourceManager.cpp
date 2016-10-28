@@ -472,7 +472,6 @@ void ResourceManager::_LoadingThread()
 			if (pinned)
 				_loadingQueueHighPrio.push(guid);
 
-
 		}
 		if (job == Resource::NotFound && _loadingQueueLowPrio.size())
 		{
@@ -489,91 +488,92 @@ void ResourceManager::_LoadingThread()
 			if (pinned)
 				_loadingQueueLowPrio.push(guid);
 		}
-
 		_mutexLockLoadingQueue.unlock();
 		if (job != Resource::NotFound)
 		{
 			const auto& data = _resource.data;
-			//Proudly write out what GUID we have started working on.
-			SM_GUID guid = data.guid[job];
-			PrintDebugString("Started loading resource. GUID: %llu\n", guid.data);
-
-
-			//Lock the loader so we can work in peace and quiet.
-			_mutexLockLoader.lock();
-
-			//Call asset loader to load the data we want
-			uint32_t startBlock = 0;
-			uint32_t numBlocks = 0;
-
-			try
+			if (!data.loaded[job])
 			{
-				//uint64_t timestamp = Core::GetInstance()->GetTimer()->GetTimeStamp();
-				RawData rawData = _assetLoader->LoadResource(guid, [this, &startBlock, &numBlocks](uint32_t dataSize) -> char*
+				//Proudly write out what GUID we have started working on.
+				SM_GUID guid = data.guid[job];
+				PrintDebugString("Started loading resource. GUID: %llu\n", guid.data);
+
+
+				//Lock the loader so we can work in peace and quiet.
+				_mutexLockLoader.lock();
+
+				//Call asset loader to load the data we want
+				uint32_t startBlock = 0;
+				uint32_t numBlocks = 0;
+
+				try
 				{
-					char* data = nullptr;
-
-					numBlocks = static_cast<uint32_t>(ceilf(static_cast<float>(dataSize) / _allocator->BlockSize()));
-					startBlock = _allocator->Allocate(numBlocks);
-
-					if (startBlock != -1)
+					//uint64_t timestamp = Core::GetInstance()->GetTimer()->GetTimeStamp();
+					RawData rawData = _assetLoader->LoadResource(guid, [this, &startBlock, &numBlocks](uint32_t dataSize) -> char*
 					{
-						data = _allocator->Data(startBlock);
+						char* data = nullptr;
+
+						numBlocks = static_cast<uint32_t>(ceilf(static_cast<float>(dataSize) / _allocator->BlockSize()));
+						startBlock = _allocator->Allocate(numBlocks);
+
+						if (startBlock != -1)
+						{
+							data = _allocator->Data(startBlock);
+						}
+
+						return data;
+					});
+					//timestamp = Core::GetInstance()->GetTimer()->GetTimeStamp() - timestamp;
+
+					_mutexLockLoader.unlock();
+
+					PrintDebugString("Finished loading resource. GUID: %llu\n", guid.data);
+					//	PrintDebugString("Loaded in %ld time units\n", timestamp);
+
+					data.rawData[job] = rawData.data;
+					data.type[job] = rawData.fType;
+					data.size[job] = rawData.size;
+					data.startBlock[job] = startBlock;
+					data.numBlocks[job] = numBlocks;
+
+					//Lock so we can insert the data to the resources
+					_mutexLockParserQueue.lock();
+					if (data.flags[job] & Resource::Flag::NEEDED_NOW)
+						_parserQueueHighPrio.push(guid);
+					else
+						_parserQueueLowPrio.push(guid);
+					_mutexLockParserQueue.unlock();
+
+					data.pinned[job].unlock();
+				}
+				catch (std::runtime_error& e)
+				{
+					//We don't have enough memory. Wait one "sleep", but push the job back onto the queue for a new try.
+					PrintDebugString("Error: %s\n", e.what());
+
+
+					if (_WhatToEvict(numBlocks, this))
+					{
+						_mutexLockLoadingQueue.lock();
+						if (data.flags[job] & Resource::Flag::NEEDED_NOW)
+							_loadingQueueHighPrio.push(guid);
+						else
+							_loadingQueueLowPrio.push(guid);
+						PrintDebugString("\tAdding resource to toLoad stack. GUID: %llu\n", guid.data);
+						_mutexLockLoadingQueue.unlock();
+					}
+					else
+					{
+						PrintDebugString("\tCould not find a resource to evict.\n\n");
+
+						_resource.Modify();
+						_resource.Remove(job);
 					}
 
-					return data;
-				});
-				//timestamp = Core::GetInstance()->GetTimer()->GetTimeStamp() - timestamp;
-
-				_mutexLockLoader.unlock();
-
-				PrintDebugString("Finished loading resource. GUID: %llu\n", guid.data);
-				//	PrintDebugString("Loaded in %ld time units\n", timestamp);
-
-				data.rawData[job] = rawData.data;
-				data.type[job] = rawData.fType;
-				data.size[job] = rawData.size;
-				data.startBlock[job] = startBlock;
-				data.numBlocks[job] = numBlocks;
-
-				//Lock so we can insert the data to the resources
-				_mutexLockParserQueue.lock();
-				if (data.flags[job] & Resource::Flag::NEEDED_NOW)
-					_parserQueueHighPrio.push(guid);
-				else
-					_parserQueueLowPrio.push(guid);
-				_mutexLockParserQueue.unlock();
-
-				data.pinned[job].unlock();
-			}
-			catch (std::runtime_error& e)
-			{
-				//We don't have enough memory. Wait one "sleep", but push the job back onto the queue for a new try.
-				PrintDebugString("Error: %s\n", e.what());
-
-				
-				if (_WhatToEvict(numBlocks, this))
-				{
-					_mutexLockLoadingQueue.lock();
-					if (data.flags[job] & Resource::Flag::NEEDED_NOW)
-						_loadingQueueHighPrio.push(guid);
-					else
-						_loadingQueueLowPrio.push(guid);
-					PrintDebugString("\tAdding resource to toLoad stack. GUID: %llu\n", guid.data);
-					_mutexLockLoadingQueue.unlock();
+					data.pinned[job].unlock();
+					_mutexLockLoader.unlock();
 				}
-				else
-				{
-					PrintDebugString("\tCould not find a resource to evict.\n\n");
-
-					_resource.Modify();
-					_resource.Remove(job);
-				}
-
-				data.pinned[job].unlock();
-				_mutexLockLoader.unlock();
 			}
-
 		}
 		std::this_thread::sleep_for(std::chrono::milliseconds(17));
 
@@ -641,27 +641,29 @@ void ResourceManager::_ParserThread()
 
 		if (job != Resource::NotFound)
 		{
-			
-			const Resource::Ptr& resource = _resource.MakePtrNoLock(job);
-
-
 			auto& data = _resource.data;
-			SM_GUID guid = data.guid[job];
-			PrintDebugString("Started parsing. GUID: %llu\n", guid.data);
-
-			//Mark it as parsed, notify the user and start parsing it.
-			//PrintDebugString("Starting parsing resource. GUID: %llu\n", guid.data);
-
-			_parser.ParseResource(resource);
-			data.loaded[job] = true;
+			if (!data.loaded[job])
+			{
+				const Resource::Ptr& resource = _resource.MakePtrNoLock(job);
 
 
 
-			//The resource is now loaded and marked as such, the user is notified.
-			//PrintDebugString("Finished parsing resource. GUID: %llu\n", guid.data);
-			PrintDebugString("Finished parsing. GUID: %llu\n", guid.data);
-			_resource.DestroyPtr(resource);
+				SM_GUID guid = data.guid[job];
+				PrintDebugString("Started parsing. GUID: %llu\n", guid.data);
 
+				//Mark it as parsed, notify the user and start parsing it.
+				//PrintDebugString("Starting parsing resource. GUID: %llu\n", guid.data);
+
+				_parser.ParseResource(resource);
+				data.loaded[job] = true;
+
+
+
+				//The resource is now loaded and marked as such, the user is notified.
+				//PrintDebugString("Finished parsing resource. GUID: %llu\n", guid.data);
+				PrintDebugString("Finished parsing. GUID: %llu\n", guid.data);
+				_resource.DestroyPtr(resource);
+			}
 
 		}
 
