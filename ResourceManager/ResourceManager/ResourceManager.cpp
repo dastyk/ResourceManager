@@ -849,43 +849,58 @@ bool ResourceManager::EvictPolicies::LRU(uint32_t sizeOfLoadRequest, ResourceMan
 bool ResourceManager::EvictPolicies::MRU(uint32_t sizeOfLoadRequest, ResourceManager * rm)
 {
 
-	std::pair<uint64_t, uint32_t> mru = { 0, Resource::NotFound };
+	std::stack<std::pair<uint64_t, uint32_t>> mrus;
 	uint32_t count = rm->_resource.count;
 	auto& data = rm->_resource.data;
 	uint32_t num = rm->_allocator->FreeBlocks();
-	bool ret = false;
-	while (num < sizeOfLoadRequest)
+
+	for (uint32_t i = 0; i < count; i++)
 	{
-		for (uint32_t i = 0; i < count; i++)
+		if (data.pinned[i].try_lock())
 		{
-			if (data.pinned[i].try_lock())
+			if (data.refCount[i] == 0 && !(data.flags[i] & Resource::Flag::PERSISTENT) && data.numBlocks[i])
 			{
-				if (data.refCount[i] == 0 && !(data.flags[i] & Resource::Flag::PERSISTENT))
+				if (mrus.size())
 				{
-					if (data.timeStamp[i] > mru.first)
+					auto pmru = mrus.top();
+					if (pmru.first > data.timeStamp[i])
 					{
-						if (mru.second != Resource::NotFound)
-							data.pinned[mru.second].unlock();
-						mru = { data.timeStamp[i] ,i };
+						mrus.pop();
+						mrus.push({ data.timeStamp[i] ,i });
+						mrus.push(pmru);
 					}
 					else
-						data.pinned[i].unlock();
+					{
+						mrus.push({ data.timeStamp[i] ,i });
+					}
+
 				}
 				else
-					data.pinned[i].unlock();
+				{
+					mrus.push({ data.timeStamp[i] ,i });
+				}
 			}
-		}
-
-
-		if (mru.second != Resource::NotFound)
-		{
-			PrintDebugString("\tEvicting resource. GUID; %llu\n\n", data.guid[mru.second].data);
-			rm->_resource.Modify();
-			rm->_allocator->Free(data.startBlock[mru.second], data.numBlocks[mru.second]);
-			num += data.numBlocks[mru.second];
-			rm->_resource.Remove(mru.second);
-			ret = true;
+			else
+				data.pinned[i].unlock();
 		}
 	}
+
+	bool ret = false;
+	while (mrus.size() && num < sizeOfLoadRequest)
+	{
+		auto& mru = mrus.top();
+		PrintDebugString("\tEvicting resource. GUID; %llu\n", data.guid[mru.second].data);
+		rm->_resource.Modify();
+		rm->_allocator->Free(data.startBlock[mru.second], data.numBlocks[mru.second]);
+		num += data.numBlocks[mru.second];
+		rm->_resource.Remove(mru.second);
+		data.pinned[mru.second].unlock();
+		mrus.pop();
+		ret = true;
+	}
+	if (ret)
+		PrintDebugString("\n");
+
+
 	return ret;
 }
