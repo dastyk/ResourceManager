@@ -28,6 +28,8 @@ uint32_t Resource::FindLock(const SM_GUID & guid, bool* pinned)
 			{
 				if (pinned)
 					*pinned = true;
+				modifyLock.unlock();
+				return Resource::NotFound;
 			}
 		}
 	}
@@ -45,7 +47,8 @@ void Resource::Remove(const uint32_t index)
 		return;
 	}
 	data.pinned[last].lock();
-	data.observer[index]->NotifyDelete(data.guid[index]);
+	if(data.observer[index])
+		data.observer[index]->NotifyDelete(data.guid[index]);
 	data.loaded[index] = data.loaded[last];
 	data.guid[index] = data.guid[last];
 	data.flags[index] = data.flags[last];

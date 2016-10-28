@@ -50,6 +50,7 @@ const SM_GUID ResourceManager::LoadResource(SM_GUID guid, const Resource::Flag& 
 	uint32_t count = _resource.count;
 	//new(&data.pinned[count]) std::mutex();
 	data.pinned[count].lock();
+	data.observer[count] = nullptr;
 	data.loaded[count] = false;
 	data.flags[count] = flag;
 	data.guid[count] = guid;
@@ -62,7 +63,7 @@ const SM_GUID ResourceManager::LoadResource(SM_GUID guid, const Resource::Flag& 
 	if (flag & Resource::Flag::LOAD_AND_WAIT)
 	{
 		//TODO: Move this so we don't "find" a GUID that early have another flag, and now is LOAD_AND_WAIT, but not loaded and just in queue.
-		_mutexLockLoader.lock();
+		
 		PrintDebugString("Resource loading. GUID: %llu\n", guid.data);
 
 		// TODO: Query asset loader for data size -> reserve memory here -> give pointer where asset data can be stored to the asset loader
@@ -70,8 +71,9 @@ const SM_GUID ResourceManager::LoadResource(SM_GUID guid, const Resource::Flag& 
 		uint32_t startBlock = 0;
 		uint32_t numBlocks = 0;
 
-
+		_mutexLockLoader.lock();
 		uint64_t timestamp = Core::GetInstance()->GetTimer()->GetTimeStamp();
+
 		RawData rawData = _assetLoader->LoadResource( guid, [this, &startBlock, &numBlocks](uint32_t dataSize) -> char*
 		{
 			char* data = nullptr;
@@ -90,19 +92,22 @@ const SM_GUID ResourceManager::LoadResource(SM_GUID guid, const Resource::Flag& 
 
 			return data;
 		} );
+		_mutexLockLoader.unlock();
+
 		timestamp = Core::GetInstance()->GetTimer()->GetTimeStamp() - timestamp;
 		PrintDebugString("Loaded in %ld time units\n", timestamp);
 		data.rawData[count] = rawData.data;
 		data.type[count] = rawData.fType;
 		data.size[count] = rawData.size;
 
-		_mutexLockLoader.unlock();
+		
 
 		_parser.ParseResource(_resource.MakePtrNoLock(count));
 
 		data.loaded[count] = true;
 		PrintDebugString("Resource finished loading. GUID: %llu\n", guid.data);
-		
+		data.pinned[count].unlock();
+		_resource.Add();
 	}
 	else
 	{
@@ -116,13 +121,14 @@ const SM_GUID ResourceManager::LoadResource(SM_GUID guid, const Resource::Flag& 
 		else
 			_loadingQueueLowPrio.push(guid);
 
+		data.pinned[count].unlock();
+		_resource.Add();
+
 		//Unlock the loading queue so we don't cause a deadlock
 		_mutexLockLoadingQueue.unlock();
 	}
 
-	//Unlock the general lock and return the function with the GUID.
-	data.pinned[count].unlock();
-	_resource.Add();
+	
 	return guid;
 }
 
@@ -139,8 +145,9 @@ void ResourceManager::UnloadResource(SM_GUID guid)
 		if(refCount == 0)
 			_resource.data.timeStamp[found] = _timer.GetTimeStamp();
 
-		_resource.data.pinned[found].unlock();
+		
 		PrintDebugString("Unreferencing resource. GUID: %llu. RefCount: %d\n", guid.data, refCount);
+		_resource.data.pinned[found].unlock();
 		
 	}
 	
@@ -227,13 +234,15 @@ void ResourceManager::_UpdatePriority(uint32_t index,const Resource::Flag& flag)
 
 bool ResourceManager::IsLoaded(SM_GUID guid)
 {
-	//_mutexLockGeneral.lock();
+	_resource.modifyLock.lock();
 	auto find = _resource.Find(guid);
 	if (find != Resource::NotFound)
 	{	
-		return _resource.data.loaded[find];
+		bool loaded = _resource.data.loaded[find];
+		_resource.modifyLock.unlock();
+		return loaded;
 	}
-	//_mutexLockGeneral.unlock();
+	_resource.modifyLock.unlock();
 	return false;
 }
 
@@ -841,10 +850,17 @@ bool ResourceManager::EvictPolicies::LRU(uint32_t sizeOfLoadRequest, ResourceMan
 		lrus.pop();
 		ret = true;
 	}
-	if(ret)
+	if (ret)
+	{
+		while (lrus.size())
+		{
+			auto& lru = lrus.top();
+			data.pinned[lru.second].unlock();
+			lrus.pop();
+		}
 		PrintDebugString("\n");
 
-
+	}
 	return ret;
 }
 
@@ -901,8 +917,16 @@ bool ResourceManager::EvictPolicies::MRU(uint32_t sizeOfLoadRequest, ResourceMan
 		ret = true;
 	}
 	if (ret)
+	{
+		while (mrus.size())
+		{
+			auto& mru = mrus.top();
+			data.pinned[mru.second].unlock();
+			mrus.pop();
+		}
 		PrintDebugString("\n");
 
+	}
 
 	return ret;
 }
