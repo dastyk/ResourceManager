@@ -463,7 +463,7 @@ void ResourceManager::_LoadingThread()
 	{
 		//We don't wish for nasty surprises.
 		_mutexLockLoadingQueue.lock();
-
+		std::vector<SM_GUID> addback;
 		uint32_t job = Resource::NotFound;
 		if (_loadingQueueHighPrio.size())
 		{
@@ -479,9 +479,11 @@ void ResourceManager::_LoadingThread()
 
 			// We found the resource but it was pinned, so add it back into the queue and try later.
 			if (pinned)
-				_loadingQueueHighPrio.push(guid);
+				addback.push_back(guid);
 
 		}
+		for (auto& g : addback)
+			_loadingQueueHighPrio.push(g);
 		if (job == Resource::NotFound && _loadingQueueLowPrio.size())
 		{
 			//Get the job
@@ -551,15 +553,18 @@ void ResourceManager::_LoadingThread()
 						_parserQueueHighPrio.push(guid);
 					else
 						_parserQueueLowPrio.push(guid);
-					_mutexLockParserQueue.unlock();
 
 					data.pinned[job].unlock();
+
+					_mutexLockParserQueue.unlock();
+
+					
 				}
 				catch (std::runtime_error& e)
 				{
 					//We don't have enough memory. Wait one "sleep", but push the job back onto the queue for a new try.
 					PrintDebugString("Error: %s\n", e.what());
-
+					_mutexLockLoader.unlock();
 
 					if (_WhatToEvict(numBlocks, this))
 					{
@@ -569,6 +574,8 @@ void ResourceManager::_LoadingThread()
 						else
 							_loadingQueueLowPrio.push(guid);
 						PrintDebugString("\tAdding resource to toLoad stack. GUID: %llu\n", guid.data);
+
+						data.pinned[job].unlock();
 						_mutexLockLoadingQueue.unlock();
 					}
 					else
@@ -577,10 +584,11 @@ void ResourceManager::_LoadingThread()
 
 						_resource.Modify();
 						_resource.Remove(job);
+						data.pinned[job].unlock();
 					}
 
-					data.pinned[job].unlock();
-					_mutexLockLoader.unlock();
+					
+					
 				}
 			}
 		}
@@ -612,7 +620,8 @@ void ResourceManager::_ParserThread()
 		_mutexLockParserQueue.lock();
 
 		uint32_t job = Resource::NotFound;
-		if (_parserQueueHighPrio.size())
+		std::vector<SM_GUID> addback;
+		while (_parserQueueHighPrio.size())
 		{
 			//Get the job
 			SM_GUID guid = _parserQueueHighPrio.front();
@@ -626,10 +635,15 @@ void ResourceManager::_ParserThread()
 
 			// We found the resource but it was pinned, so add it back into the queue and try later.
 			if (pinned)
-				_parserQueueHighPrio.push(guid);
+				addback.push_back(guid);
 
+			if (job != Resource::NotFound)
+				break;
 
 		}
+		for (auto& g : addback)
+			_parserQueueHighPrio.push(g);
+
 		if (job == Resource::NotFound && _parserQueueLowPrio.size())
 		{
 			//Get the job
@@ -789,6 +803,7 @@ bool ResourceManager::EvictPolicies::InstantEvict(uint32_t sizeOfLoadRequest, Re
 				rm->_resource.Modify();
 				rm->_allocator->Free(data.startBlock[i], data.numBlocks[i]);
 				rm->_resource.Remove(i);
+				data.pinned[i].unlock();
 
 			}
 			data.pinned[i].unlock();
@@ -850,17 +865,15 @@ bool ResourceManager::EvictPolicies::LRU(uint32_t sizeOfLoadRequest, ResourceMan
 		lrus.pop();
 		ret = true;
 	}
-	if (ret)
+	while (lrus.size())
 	{
-		while (lrus.size())
-		{
-			auto& lru = lrus.top();
-			data.pinned[lru.second].unlock();
-			lrus.pop();
-		}
+		auto& lru = lrus.top();
+		data.pinned[lru.second].unlock();
+		lrus.pop();
+	}
+	if (ret)
 		PrintDebugString("\n");
 
-	}
 	return ret;
 }
 
@@ -915,18 +928,16 @@ bool ResourceManager::EvictPolicies::MRU(uint32_t sizeOfLoadRequest, ResourceMan
 		data.pinned[mru.second].unlock();
 		mrus.pop();
 		ret = true;
+	}		
+	while (mrus.size())
+	{
+		auto& mru = mrus.top();
+		data.pinned[mru.second].unlock();
+		mrus.pop();
 	}
 	if (ret)
-	{
-		while (mrus.size())
-		{
-			auto& mru = mrus.top();
-			data.pinned[mru.second].unlock();
-			mrus.pop();
-		}
 		PrintDebugString("\n");
 
-	}
 
 	return ret;
 }
