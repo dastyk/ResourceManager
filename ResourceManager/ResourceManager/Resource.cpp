@@ -73,7 +73,7 @@ void Resource::Allocate(uint32_t numResources)
 	void* newC = (char*)MemoryManager::Alloc(Resource::Size*numResources);
 	Resource::DataPointers newData;
 
-	newData.pinned = (std::mutex*)newC;
+	newData.pinned = (std::recursive_mutex*)newC;
 	newData.loaded = (bool*)(newData.pinned + numResources);
 	newData.guid = (SM_GUID*)(newData.loaded + numResources);
 	newData.flags = (Resource::Flag*)(newData.guid + numResources);
@@ -86,7 +86,7 @@ void Resource::Allocate(uint32_t numResources)
 	newData.numBlocks = (uint32_t*)(newData.startBlock + numResources);
 	newData.timeStamp = (uint64_t*)(newData.numBlocks + numResources);
 
-	memcpy(newData.pinned, data.pinned, count * sizeof(std::mutex));
+	memcpy(newData.pinned, data.pinned, count * sizeof(std::recursive_mutex));
 	memcpy(newData.loaded, data.loaded, count * sizeof(bool));
 	memcpy(newData.guid, data.guid, count * sizeof(SM_GUID));
 	memcpy(newData.flags, data.flags, count * sizeof(Resource::Flag));
@@ -101,7 +101,7 @@ void Resource::Allocate(uint32_t numResources)
 
 	for (uint32_t i = 0; i < numResources; i++)
 	{
-		new (&newData.pinned[i]) std::mutex();
+		new (&newData.pinned[i]) std::recursive_mutex();
 	}
 
 	limit = numResources;

@@ -2,7 +2,7 @@
 #define _STRUCTS_H_
 
 #include <DirectXMath.h>
-#include "DebugLogger.h"
+#include "DebugLog.h"
 #include <vector>
 #include <unordered_map>
 #include "SM_GUID.h"

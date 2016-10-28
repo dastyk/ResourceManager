@@ -1,6 +1,6 @@
 #include "CameraManager.h"
 #include "Core.h"
-#include "DebugLogger.h"
+#include "DebugLog.h"
 
 using namespace DirectX;
 
@@ -61,7 +61,7 @@ void CameraManager::SetActiveCamera(unsigned id)
 {
 	if (id >= _cameras.size())
 	{
-		DebugLogger::GetInstance()->AddMsg("Tried to set nonexistant camera.");
+		DebugLog::PrintToConsole("Tried to set nonexistant camera.");
 		return;
 	}
 	_activeCamera = id;

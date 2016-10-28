@@ -48,7 +48,7 @@ public:
 	static const uint32_t NotFound = UINT32_MAX;
 
 	const static size_t Size =
-		sizeof(std::mutex) +
+		sizeof(std::recursive_mutex) +
 		sizeof(bool) +
 		sizeof(SM_GUID) +
 		sizeof(Resource::Flag) +
@@ -63,7 +63,7 @@ public:
 
 	struct DataPointers
 	{
-		std::mutex* pinned;
+		std::recursive_mutex* pinned;
 		bool* loaded;
 		SM_GUID* guid;
 		Resource::Flag* flags;

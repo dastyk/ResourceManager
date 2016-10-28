@@ -4,7 +4,7 @@
 #include <stdexcept>
 #include <Windows.h> // Because fuck off VS. Start following standards
 #include <iostream>
-#include "DebugLogger.h"
+#include "DebugLog.h"
 #include <sstream>
 #include "Core.h"
 
@@ -371,8 +371,7 @@ void ResourceManager::SetEvictPolicy(evfunc evictPolicy)
 
 /*===============================================================
 /*		The main "Run" thread for the Resource Manager
-/*	From here, we start the LoadingThread and the two ParserThreads
-/*	For as long as we haven't shut down this thread, it'll loop through
+/*	From here, it'll loop through
 /*	the resources and remove resources not "currently in use".
 /*	(Read: Loaded, non-persistent and without a _refCount)
 /*	When this function is closed, it makes sure that it's child
@@ -417,8 +416,8 @@ void ResourceManager::_Run()
 		if (index != UINT32_MAX)
 		{
 			data.rawData[_pinned[index]] = _allocator->Data(_defragList[index].first);
-			_allocator->PrintOccupancy();
-			PrintDebugString("\n\n");
+			//_allocator->PrintOccupancy();
+			//PrintDebugString("\n\n");
 		}
 
 		for (auto& m : _pinned)
@@ -552,36 +551,26 @@ void ResourceManager::_LoadingThread()
 				//We don't have enough memory. Wait one "sleep", but push the job back onto the queue for a new try.
 				PrintDebugString("Error: %s\n", e.what());
 
-				data.pinned[job].unlock();
+				
 				if (_WhatToEvict(numBlocks, this))
 				{
-					job = _resource.FindLock(guid);
-					if (job != Resource::NotFound)
-					{
-						_mutexLockLoadingQueue.lock();
-						if (data.flags[job] & Resource::Flag::NEEDED_NOW)
-							_loadingQueueHighPrio.push(guid);
-						else
-							_loadingQueueLowPrio.push(guid);
-						PrintDebugString("\tAdding resource to toLoad stack. GUID: %llu\n", guid.data);
-						_resource.data.pinned[job].unlock();
-						_mutexLockLoadingQueue.unlock();
-					}
+					_mutexLockLoadingQueue.lock();
+					if (data.flags[job] & Resource::Flag::NEEDED_NOW)
+						_loadingQueueHighPrio.push(guid);
+					else
+						_loadingQueueLowPrio.push(guid);
+					PrintDebugString("\tAdding resource to toLoad stack. GUID: %llu\n", guid.data);
+					_mutexLockLoadingQueue.unlock();
 				}
 				else
 				{
 					PrintDebugString("\tCould not find a resource to evict.\n\n");
-					job = _resource.FindLock(guid);
-					if (job != Resource::NotFound)
-					{
-						_resource.Modify();
-						_resource.Remove(job);
-						_resource.data.pinned[job].unlock();
-					}
 
+					_resource.Modify();
+					_resource.Remove(job);
 				}
 
-
+				data.pinned[job].unlock();
 				_mutexLockLoader.unlock();
 			}
 
@@ -709,4 +698,194 @@ void ResourceManager::ShutDown()
 
 	_resource.UnAllocte();
 	delete _allocator;
+}
+
+bool ResourceManager::EvictPolicies::FirstFit(uint32_t sizeOfLoadRequest, ResourceManager * rm)
+{
+	uint32_t num = rm->_allocator->FreeBlocks();
+
+	uint32_t count = rm->_resource.count;
+	auto& data = rm->_resource.data;
+	for (uint32_t i = 0; i < count; i++)
+	{
+		bool pinned = data.pinned[i].try_lock();
+		if (pinned)
+		{
+			if (data.refCount[i] == 0 && !(data.flags[i] & Resource::Flag::PERSISTENT) && data.numBlocks[i] + num >= sizeOfLoadRequest)
+			{
+				PrintDebugString("\tEvicting resource. GUID; %llu\n\n", data.guid[i].data);
+				rm->_resource.Modify();
+				rm->_allocator->Free(data.startBlock[i], data.numBlocks[i]);
+				rm->_resource.Remove(i);
+				data.pinned[i].unlock();
+				return true;
+			}
+			else
+				data.pinned[i].unlock();
+
+		}
+
+	}
+	return false;
+}
+
+bool ResourceManager::EvictPolicies::FirstCumulativeFit(uint32_t sizeOfLoadRequest, ResourceManager * rm)
+{
+	uint32_t num = rm->_allocator->FreeBlocks();
+
+
+	uint32_t count = rm->_resource.count;
+	auto& data = rm->_resource.data;
+	for (uint32_t i = 0; i < count; i++)
+	{
+		bool pinned = data.pinned[i].try_lock();
+		if (pinned)
+		{
+			if (data.refCount[i] == 0 && !(data.flags[i] & Resource::Flag::PERSISTENT))
+			{
+				PrintDebugString("\tEvicting resource. GUID; %llu\n\n", data.guid[i].data);
+				num += data.numBlocks[i];
+				rm->_resource.Modify();
+				rm->_allocator->Free(data.startBlock[i], data.numBlocks[i]);
+				rm->_resource.Remove(i);
+				data.pinned[i].unlock();
+				if (num >= sizeOfLoadRequest)
+				{
+					return true;
+				}
+			}
+			else
+				data.pinned[i].unlock();
+
+		}
+
+	}
+	return false;
+}
+
+bool ResourceManager::EvictPolicies::InstantEvict(uint32_t sizeOfLoadRequest, ResourceManager * rm)
+{
+	uint32_t count = rm->_resource.count;
+	auto& data = rm->_resource.data;
+	for (uint32_t i = 0; i < count; i++)
+	{
+		if (data.pinned[i].try_lock())
+		{
+			if (data.refCount[i] == 0 && !(data.flags[i] & Resource::Flag::PERSISTENT))
+			{
+				PrintDebugString("\tEvicting resource. GUID; %llu\n\n", data.guid[i].data);
+
+				rm->_resource.Modify();
+				rm->_allocator->Free(data.startBlock[i], data.numBlocks[i]);
+				rm->_resource.Remove(i);
+
+			}
+			data.pinned[i].unlock();
+		}
+
+	}
+	return true;
+}
+
+
+bool ResourceManager::EvictPolicies::LRU(uint32_t sizeOfLoadRequest, ResourceManager * rm)
+{
+	std::stack<std::pair<uint64_t, uint32_t>> lrus;
+	uint32_t count = rm->_resource.count;
+	auto& data = rm->_resource.data;
+	uint32_t num = rm->_allocator->FreeBlocks();
+
+	for (uint32_t i = 0; i < count; i++)
+	{
+		if (data.pinned[i].try_lock())
+		{
+			if (data.refCount[i] == 0 && !(data.flags[i] & Resource::Flag::PERSISTENT) && data.numBlocks[i])
+			{
+				if (lrus.size())
+				{
+					auto plru = lrus.top();
+					if (plru.first < data.timeStamp[i])
+					{
+						lrus.pop();
+						lrus.push({ data.timeStamp[i] ,i });
+						lrus.push(plru);
+					}
+					else
+					{
+						lrus.push({ data.timeStamp[i] ,i });
+					}
+
+				}
+				else
+				{
+					lrus.push({ data.timeStamp[i] ,i });
+				}
+			}
+			else
+				data.pinned[i].unlock();
+		}
+	}
+
+	bool ret = false;
+	while(lrus.size() && num < sizeOfLoadRequest)
+	{
+		auto& lru = lrus.top();
+		PrintDebugString("\tEvicting resource. GUID; %llu\n", data.guid[lru.second].data);
+		rm->_resource.Modify();
+		rm->_allocator->Free(data.startBlock[lru.second], data.numBlocks[lru.second]);
+		num += data.numBlocks[lru.second];
+		rm->_resource.Remove(lru.second);
+		data.pinned[lru.second].unlock();
+		lrus.pop();
+		ret = true;
+	}
+	if(ret)
+		PrintDebugString("\n");
+
+
+	return ret;
+}
+
+bool ResourceManager::EvictPolicies::MRU(uint32_t sizeOfLoadRequest, ResourceManager * rm)
+{
+
+	std::pair<uint64_t, uint32_t> mru = { 0, Resource::NotFound };
+	uint32_t count = rm->_resource.count;
+	auto& data = rm->_resource.data;
+	uint32_t num = rm->_allocator->FreeBlocks();
+	bool ret = false;
+	while (num < sizeOfLoadRequest)
+	{
+		for (uint32_t i = 0; i < count; i++)
+		{
+			if (data.pinned[i].try_lock())
+			{
+				if (data.refCount[i] == 0 && !(data.flags[i] & Resource::Flag::PERSISTENT))
+				{
+					if (data.timeStamp[i] > mru.first)
+					{
+						if (mru.second != Resource::NotFound)
+							data.pinned[mru.second].unlock();
+						mru = { data.timeStamp[i] ,i };
+					}
+					else
+						data.pinned[i].unlock();
+				}
+				else
+					data.pinned[i].unlock();
+			}
+		}
+
+
+		if (mru.second != Resource::NotFound)
+		{
+			PrintDebugString("\tEvicting resource. GUID; %llu\n\n", data.guid[mru.second].data);
+			rm->_resource.Modify();
+			rm->_allocator->Free(data.startBlock[mru.second], data.numBlocks[mru.second]);
+			num += data.numBlocks[mru.second];
+			rm->_resource.Remove(mru.second);
+			ret = true;
+		}
+	}
+	return ret;
 }

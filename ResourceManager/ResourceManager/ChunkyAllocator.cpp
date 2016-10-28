@@ -2,8 +2,7 @@
 
 #include <stdio.h>
 #include "MemoryManager.h"
-#include "DebugConsole.h"
-
+#include "DebugLog.h"
 using namespace std;
 
 ChunkyAllocator::ChunkyAllocator(uint32_t blocks)

@@ -1,5 +1,5 @@
 #include "Core.h"
-#include "DebugLogger.h"
+#include "DebugLog.h"
 #include <SDL_events.h>
 #include <sstream>
 #include <iomanip>
@@ -16,7 +16,6 @@
 #include "FileLoader.h"
 #include "Scene.h"
 #include "Parsers.h"
-#include "DebugConsole.h"
 
 void ArfParser(const Resource::Ptr& resource);
 void ObjParser(const Resource::Ptr& resource);
@@ -46,15 +45,9 @@ std::string bytesToString(uint32_t freeMemory)
 int main(int argc, char** argv)
 {
 	srand(time(NULL));
-#ifdef _DEBUG
-	// Create debug console
-	if (!AllocConsole()) throw std::runtime_error("Failed to alloc console.");
-	freopen("conin$", "r", stdin);
-	freopen("conout$", "w", stdout);
-	freopen("conout$", "w", stderr);
 
-	PrintDebugString("<----||Console Initialized||---->\n\n");
-#endif
+	DebugLog::Initialize();
+
 	_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
 	// Flex/Bison causes 3 memory leaks per run time, does not increase during runtime.
 	//_crtBreakAlloc = 312;
@@ -342,7 +335,7 @@ int main(int argc, char** argv)
 	Core::ShutDown();
 	
 	getchar();
-	DebugLogger::GetInstance()->Dump();
+	DebugLog::Shutdown();
 
 	MemoryManager::DeleteInstance();
 	return 0;

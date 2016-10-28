@@ -13,7 +13,7 @@
 #include <map>
 #include "ChunkyAllocator.h"
 #include "Resource.h"
-#include "DebugConsole.h"
+
 #include "Timer.h"
 
 // TODO:
@@ -73,170 +73,11 @@ private:
 			{
 				return false;
 			}
-			static bool FirstFit(uint32_t sizeOfLoadRequest, ResourceManager* rm)
-			{
-				uint32_t num = rm->_allocator->FreeBlocks();
-
-				uint32_t count = rm->_resource.count;
-				auto& data = rm->_resource.data;
-				for (uint32_t i = 0; i < count; i++)
-				{
-					bool pinned = data.pinned[i].try_lock();
-					if (pinned)
-					{
-						if (data.refCount[i] == 0 && !(data.flags[i] & Resource::Flag::PERSISTENT) && data.numBlocks[i] + num >= sizeOfLoadRequest)
-						{
-							PrintDebugString("\tEvicting resource. GUID; %llu\n\n", data.guid[i].data);
-							rm->_resource.Modify();
-							rm->_allocator->Free(data.startBlock[i], data.numBlocks[i]);
-							rm->_resource.Remove(i);
-							data.pinned[i].unlock();
-							return true;
-						}
-						else
-							data.pinned[i].unlock();
-						
-					}
-						
-				}
-				return false;
-			}
-			static bool FirstCumulativeFit(uint32_t sizeOfLoadRequest, ResourceManager* rm)
-			{
-				uint32_t num = rm->_allocator->FreeBlocks();
-
-
-				uint32_t count = rm->_resource.count;
-				auto& data = rm->_resource.data;
-				for (uint32_t i = 0; i < count; i++)
-				{
-					bool pinned = data.pinned[i].try_lock();
-					if (pinned)
-					{
-						if (data.refCount[i] == 0 && !(data.flags[i] & Resource::Flag::PERSISTENT))
-						{
-							PrintDebugString("\tEvicting resource. GUID; %llu\n\n", data.guid[i].data);
-							num += data.numBlocks[i];
-							rm->_resource.Modify();
-							rm->_allocator->Free(data.startBlock[i], data.numBlocks[i]);
-							rm->_resource.Remove(i);
-							data.pinned[i].unlock();
-							if (num >= sizeOfLoadRequest)
-							{
-								return true;
-							}
-						}
-						else
-							data.pinned[i].unlock();
-
-					}
-
-				}
-				return false;
-			}
-			static bool InstantEvict(uint32_t sizeOfLoadRequest, ResourceManager* rm)
-			{
-				uint32_t count = rm->_resource.count;
-				auto& data = rm->_resource.data;
-				for (uint32_t i = 0; i < count; i++)
-				{
-					if (data.pinned[i].try_lock())
-					{
-						if (data.refCount[i] == 0 && !(data.flags[i] & Resource::Flag::PERSISTENT))
-						{
-							PrintDebugString("\tEvicting resource. GUID; %llu\n\n", data.guid[i].data);
-
-							rm->_resource.Modify();
-							rm->_allocator->Free(data.startBlock[i], data.numBlocks[i]);
-							rm->_resource.Remove(i);
-
-						}
-						data.pinned[i].unlock();
-					}
-
-				}
-				return true;
-			}
-			static bool LRU(uint32_t sizeOfLoadRequest, ResourceManager* rm)
-			{
-				uint32_t num = rm->_allocator->FreeBlocks();
-				while (num < sizeOfLoadRequest)
-				{
-					std::pair<uint64_t, uint32_t> lru = { rm->_timer.GetTimeStamp(), Resource::NotFound };
-					uint32_t count = rm->_resource.count;
-					auto& data = rm->_resource.data;
-					for (uint32_t i = 0; i < count; i++)
-					{
-						if (data.pinned[i].try_lock())
-						{
-							if (data.refCount[i] == 0 && !(data.flags[i] & Resource::Flag::PERSISTENT))
-							{
-								if (data.timeStamp[i] < lru.first)
-								{
-									if (lru.second != Resource::NotFound)
-										data.pinned[lru.second].unlock();
-									lru = { data.timeStamp[i] ,i };
-								}
-								else
-									data.pinned[i].unlock();
-							}
-							else
-								data.pinned[i].unlock();
-						}
-					}
-
-
-					if (lru.second != Resource::NotFound)
-					{
-						PrintDebugString("\tEvicting resource. GUID; %llu\n\n", data.guid[lru.second].data);
-						rm->_resource.Modify();
-						rm->_allocator->Free(data.startBlock[lru.second], data.numBlocks[lru.second]);
-						rm->_resource.Remove(lru.second);
-						data.pinned[lru.second].unlock();
-						return true;
-					}
-					else
-						break;
-				}
-				
-				return false;
-			}
-			static bool MRU(uint32_t sizeOfLoadRequest, ResourceManager* rm)
-			{
-				std::pair<uint64_t, uint32_t> mru = { 0, Resource::NotFound };
-				uint32_t count = rm->_resource.count;
-				auto& data = rm->_resource.data;
-				for (uint32_t i = 0; i < count; i++)
-				{
-					if (data.pinned[i].try_lock())
-					{
-						if (data.refCount[i] == 0 && !(data.flags[i] & Resource::Flag::PERSISTENT))
-						{
-							if (data.timeStamp[i] > mru.first)
-							{
-								if (mru.second != Resource::NotFound)
-									data.pinned[mru.second].unlock();
-								mru = { data.timeStamp[i] ,i };
-							}
-							else
-								data.pinned[i].unlock();
-						}
-						else
-							data.pinned[i].unlock();
-					}
-				}
-
-
-				if (mru.second != Resource::NotFound)
-				{
-					PrintDebugString("\tEvicting resource. GUID; %llu\n\n", data.guid[mru.second].data);
-					rm->_resource.Modify();
-					rm->_allocator->Free(data.startBlock[mru.second], data.numBlocks[mru.second]);
-					rm->_resource.Remove(mru.second);
-					return true;
-				}
-				return false;
-			}
+			static bool FirstFit(uint32_t sizeOfLoadRequest, ResourceManager* rm);
+			static bool FirstCumulativeFit(uint32_t sizeOfLoadRequest, ResourceManager* rm);
+			static bool InstantEvict(uint32_t sizeOfLoadRequest, ResourceManager* rm);
+			static bool LRU(uint32_t sizeOfLoadRequest, ResourceManager* rm);
+			static bool MRU(uint32_t sizeOfLoadRequest, ResourceManager* rm);
 		};
 		
 			
