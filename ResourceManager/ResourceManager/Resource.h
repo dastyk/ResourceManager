@@ -93,36 +93,46 @@ private:
 	{
 		
 	}
+
+	/*The MakePtr function may not be called on a resource that is not pinned.*/
 	Ptr MakePtr(uint32_t index)
-	{
-		data.pinned[index].lock();
-		return Ptr(index,(const SM_GUID&) data.guid[index], (const void*&)data.rawData[index], (const uint8_t&)data.type[index], (const uint32_t&)data.size[index], &data.observer[index]); 
-	}
-	Ptr MakePtrNoLock(uint32_t index)
 	{
 		return Ptr(index, (const SM_GUID&)data.guid[index], (const void*&)data.rawData[index], (const uint8_t&)data.type[index], (const uint32_t&)data.size[index], &data.observer[index]);
 	}
+	
 	void DestroyPtr(const Ptr& resource)
 	{
 		data.pinned[resource.index].unlock();
 	}
 	
-	uint32_t Find(const SM_GUID & guid);
-	uint32_t FindLock(const SM_GUID& guid, bool* pinned= nullptr);
+	uint32_t FindAndWait(const SM_GUID& guid);
+	uint32_t Find(const SM_GUID& guid, uint32_t* pinned = nullptr);
 
+	/*The Remove function may only be called after Modify has been called.*/
 	void Remove(const uint32_t index);
 	void Allocate(uint32_t numResources);
 	void UnAllocte();
 
+	/*The Modify function must be called before a number of functions.*/
 	inline void Modify()
 	{
 		modifyLock.lock();
 	}
+
+	/*The SearchDone function may only be called after Modify has been called.*/
+	inline void SearchDone()
+	{
+		modifyLock.unlock();
+	}
+
+	/*The Remove function may only be called after Modify has been called.*/
 	inline void Remove()
 	{
 		count--;
 		modifyLock.unlock();
 	}
+
+	/*The Add function may only be called after Modify has been called.*/
 	inline void Add()
 	{
 		count++;

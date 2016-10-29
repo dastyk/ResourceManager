@@ -1,19 +1,9 @@
 #include "Resource.h"
 
 
-uint32_t Resource::Find(const SM_GUID & guid)
+uint32_t Resource::FindAndWait(const SM_GUID & guid)
 {
-	for (uint32_t i = 0; i < count; i++)
-	{
-		if (data.guid[i] == guid)
-			return i;
-	}
-	return Resource::NotFound;
-}
-
-uint32_t Resource::FindLock(const SM_GUID & guid, bool* pinned)
-{
-	modifyLock.lock();
+	Modify();
 	for (uint32_t i = 0; i < count; i++)
 	{
 		if (data.guid[i] == guid)
@@ -26,16 +16,42 @@ uint32_t Resource::FindLock(const SM_GUID & guid, bool* pinned)
 			}
 			else
 			{
-				if (pinned)
-					*pinned = true;
+				data.pinned[i].lock();
 				modifyLock.unlock();
+				return i;
+			}
+		}
+	}
+	SearchDone();
+	return Resource::NotFound;
+}
+
+uint32_t Resource::Find(const SM_GUID & guid, uint32_t* pinned)
+{
+	Modify();
+	for (uint32_t i = 0; i < count; i++)
+	{
+		if (data.guid[i] == guid)
+		{
+			if (data.pinned[i].try_lock())
+			{
+
+				SearchDone();
+				return i;
+			}
+			else
+			{
+				if (pinned)
+					*pinned = i;
+				SearchDone();
 				return Resource::NotFound;
 			}
 		}
 	}
-	modifyLock.unlock();
+	SearchDone();
 	return Resource::NotFound;
 }
+
 
 void Resource::Remove(const uint32_t index)
 {

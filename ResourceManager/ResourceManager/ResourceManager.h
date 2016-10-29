@@ -16,10 +16,6 @@
 
 #include "Timer.h"
 
-// TODO:
-// The LoadResource function can not return a finished loaded thing, since we are going to multithread
-// stack _toLoad;
-
 class ResourceManager
 {
 private:

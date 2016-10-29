@@ -28,27 +28,23 @@ ResourceManager::~ResourceManager()
 
 const SM_GUID ResourceManager::LoadResource(SM_GUID guid, const Resource::Flag& flag)
 {
-	//Lock the "general" lock so that we won't be able to change a resource before we're done with it. Unlocked right before a return
-	//_mutexLockGeneral.lock();
+	const Resource::DataPointers& data = _resource.data;
 
 	//Check to see if the GUID is already loaded, in that case see if we can update the priority and then return the Load Resource
 	// (Simply put: if already loaded or in queue to be loaded, don't push it into the queue to be loaded.
-
-	auto find = _resource.FindLock(guid);
+	uint32_t find = _resource.FindAndWait(guid);
 	if (find != Resource::NotFound)
 	{
 		_resource.data.refCount[find]++;
 		_UpdatePriority(find, flag);
 		_resource.data.pinned[find].unlock();
-		//_mutexLockGeneral.unlock();
 		return guid;
 	}
 	
 	//Create the resource
 	_resource.Modify();
-	const Resource::DataPointers& data = _resource.data;
+	
 	uint32_t count = _resource.count;
-	//new(&data.pinned[count]) std::mutex();
 	data.pinned[count].lock();
 	data.observer[count] = nullptr;
 	data.loaded[count] = false;
@@ -102,7 +98,7 @@ const SM_GUID ResourceManager::LoadResource(SM_GUID guid, const Resource::Flag& 
 
 		
 
-		_parser.ParseResource(_resource.MakePtrNoLock(count));
+		_parser.ParseResource(_resource.MakePtr(count));
 
 		data.loaded[count] = true;
 		PrintDebugString("Resource finished loading. GUID: %llu\n", guid.data);
@@ -135,11 +131,9 @@ const SM_GUID ResourceManager::LoadResource(SM_GUID guid, const Resource::Flag& 
 void ResourceManager::UnloadResource(SM_GUID guid)
 {
 
-	auto found = _resource.FindLock(guid);
-
+	uint32_t found = _resource.FindAndWait(guid);
 	if (found != Resource::NotFound)
 	{
-		//_resource.data.pinned[found].lock();
 		auto& refCount = _resource.data.refCount[found];
 		refCount = (refCount > 0) ? refCount-1 : 0;
 		if(refCount == 0)
@@ -234,15 +228,20 @@ void ResourceManager::_UpdatePriority(uint32_t index,const Resource::Flag& flag)
 
 bool ResourceManager::IsLoaded(SM_GUID guid)
 {
-	_resource.modifyLock.lock();
-	auto find = _resource.Find(guid);
-	if (find != Resource::NotFound)
-	{	
-		bool loaded = _resource.data.loaded[find];
-		_resource.modifyLock.unlock();
-		return loaded;
+	_resource.Modify();
+	auto& count = _resource.count;
+	auto& data = _resource.data;
+	for (uint32_t i = 0; i < count; i++)
+	{
+		if (data.guid[i] == guid)
+		{
+			bool loaded = data.loaded[i];
+			_resource.SearchDone();
+			return loaded;
+		}
+
 	}
-	_resource.modifyLock.unlock();
+	_resource.SearchDone();
 	return false;
 }
 
@@ -344,10 +343,10 @@ void ResourceManager::Startup(uint32_t numLoadingThreads, uint32_t numParsingThr
 
 const Resource::Ptr ResourceManager::GetResource(const SM_GUID & guid)
 {
-	uint32_t find = _resource.FindLock(guid);
+	uint32_t find = _resource.FindAndWait(guid);
 	if (find != Resource::NotFound)
 	{
-		return _resource.MakePtrNoLock(find);
+		return _resource.MakePtr(find);
 	}
 
 	throw std::runtime_error("Tried to get a non-existing resource. GUID: " + std::to_string(guid.data));
@@ -408,6 +407,7 @@ void ResourceManager::_Run()
 
 		auto& data = _resource.data;
 		uint32_t count = _resource.count;
+		_resource.Modify();
 		for (uint32_t i = 0; i < count; i++)
 		{
 			if (data.pinned[i].try_lock())
@@ -421,6 +421,7 @@ void ResourceManager::_Run()
 					data.pinned[i].unlock();
 			}
 		}
+		_resource.SearchDone();
 		uint32_t index = _allocator->Defrag(_defragList);
 		if (index != UINT32_MAX)
 		{
@@ -458,7 +459,7 @@ void ResourceManager::_LoadingThread()
 {
 
 	//Lock the general so we can change ourselves to "in use" and "not joined"
-	bool pinned = false;
+	uint32_t pinned = Resource::NotFound;
 	while (_running)
 	{
 		//We don't wish for nasty surprises.
@@ -474,11 +475,11 @@ void ResourceManager::_LoadingThread()
 
 
 
-			pinned = false;
-			job = _resource.FindLock(guid, &pinned);
+			pinned = Resource::NotFound;
+			job = _resource.Find(guid, &pinned);
 
 			// We found the resource but it was pinned, so add it back into the queue and try later.
-			if (pinned)
+			if (pinned != Resource::NotFound)
 				addback.push_back(guid);
 
 		}
@@ -492,11 +493,11 @@ void ResourceManager::_LoadingThread()
 			_loadingQueueLowPrio.pop();
 
 
-			pinned = false;
-			job = _resource.FindLock(guid, &pinned);
+			pinned = Resource::NotFound;
+			job = _resource.Find(guid, &pinned);
 
 			// We found the resource but it was pinned, so add it back into the queue and try later.
-			if (pinned)
+			if (pinned != Resource::NotFound)
 				_loadingQueueLowPrio.push(guid);
 		}
 		_mutexLockLoadingQueue.unlock();
@@ -613,7 +614,7 @@ void ResourceManager::_LoadingThread()
 void ResourceManager::_ParserThread()
 {
 
-	bool pinned = false;
+	uint32_t pinned = Resource::NotFound;
 	while (_running)
 	{
 		//We don't wish for nasty surprises.
@@ -630,11 +631,11 @@ void ResourceManager::_ParserThread()
 
 
 
-			pinned = false;
-			job = _resource.FindLock(guid, &pinned);
+			pinned = Resource::NotFound;
+			job = _resource.Find(guid, &pinned);
 
 			// We found the resource but it was pinned, so add it back into the queue and try later.
-			if (pinned)
+			if (pinned != Resource::NotFound)
 				addback.push_back(guid);
 
 			if (job != Resource::NotFound)
@@ -652,11 +653,11 @@ void ResourceManager::_ParserThread()
 			_parserQueueLowPrio.pop();
 			
 
-			pinned = false;
-			job = _resource.FindLock(guid, &pinned);
+			pinned = Resource::NotFound;
+			job = _resource.Find(guid, &pinned);
 
 			// We found the resource but it was pinned, so add it back into the queue and try later.
-			if (pinned)
+			if (pinned != Resource::NotFound)
 				_parserQueueLowPrio.push(guid);
 		}
 
@@ -667,9 +668,6 @@ void ResourceManager::_ParserThread()
 			auto& data = _resource.data;
 			if (!data.loaded[job])
 			{
-				const Resource::Ptr& resource = _resource.MakePtrNoLock(job);
-
-
 
 				SM_GUID guid = data.guid[job];
 				PrintDebugString("Started parsing. GUID: %llu\n", guid.data);
@@ -677,7 +675,7 @@ void ResourceManager::_ParserThread()
 				//Mark it as parsed, notify the user and start parsing it.
 				//PrintDebugString("Starting parsing resource. GUID: %llu\n", guid.data);
 
-				_parser.ParseResource(resource);
+				_parser.ParseResource(_resource.MakePtr(job));
 				data.loaded[job] = true;
 
 
@@ -685,7 +683,7 @@ void ResourceManager::_ParserThread()
 				//The resource is now loaded and marked as such, the user is notified.
 				//PrintDebugString("Finished parsing resource. GUID: %llu\n", guid.data);
 				PrintDebugString("Finished parsing. GUID: %llu\n", guid.data);
-				_resource.DestroyPtr(resource);
+				data.pinned[job].unlock();
 			}
 
 		}
@@ -718,8 +716,6 @@ void ResourceManager::ShutDown()
 	delete _assetLoader;
 	_assetLoader = nullptr;
 
-	if (_resource.modifyLock.try_lock())
-		_resource.modifyLock.unlock();
 
 	_resource.UnAllocte();
 	delete _allocator;
@@ -731,6 +727,7 @@ bool ResourceManager::EvictPolicies::FirstFit(uint32_t sizeOfLoadRequest, Resour
 
 	uint32_t count = rm->_resource.count;
 	auto& data = rm->_resource.data;
+	rm->_resource.Modify();
 	for (uint32_t i = 0; i < count; i++)
 	{
 		bool pinned = data.pinned[i].try_lock();
@@ -743,6 +740,7 @@ bool ResourceManager::EvictPolicies::FirstFit(uint32_t sizeOfLoadRequest, Resour
 				rm->_allocator->Free(data.startBlock[i], data.numBlocks[i]);
 				rm->_resource.Remove(i);
 				data.pinned[i].unlock();
+				rm->_resource.SearchDone();
 				return true;
 			}
 			else
@@ -751,6 +749,7 @@ bool ResourceManager::EvictPolicies::FirstFit(uint32_t sizeOfLoadRequest, Resour
 		}
 
 	}
+	rm->_resource.SearchDone();
 	return false;
 }
 
@@ -761,12 +760,13 @@ bool ResourceManager::EvictPolicies::FirstCumulativeFit(uint32_t sizeOfLoadReque
 
 	uint32_t count = rm->_resource.count;
 	auto& data = rm->_resource.data;
+	rm->_resource.Modify();
 	for (uint32_t i = 0; i < count; i++)
 	{
 		bool pinned = data.pinned[i].try_lock();
 		if (pinned)
 		{
-			if (data.refCount[i] == 0 && !(data.flags[i] & Resource::Flag::PERSISTENT))
+			if (data.refCount[i] == 0 && !(data.flags[i] & Resource::Flag::PERSISTENT) && data.numBlocks[i])
 			{
 				PrintDebugString("\tEvicting resource. GUID; %llu\n\n", data.guid[i].data);
 				num += data.numBlocks[i];
@@ -776,6 +776,7 @@ bool ResourceManager::EvictPolicies::FirstCumulativeFit(uint32_t sizeOfLoadReque
 				data.pinned[i].unlock();
 				if (num >= sizeOfLoadRequest)
 				{
+					rm->_resource.SearchDone();
 					return true;
 				}
 			}
@@ -785,6 +786,7 @@ bool ResourceManager::EvictPolicies::FirstCumulativeFit(uint32_t sizeOfLoadReque
 		}
 
 	}
+	rm->_resource.SearchDone();
 	return false;
 }
 
@@ -792,11 +794,12 @@ bool ResourceManager::EvictPolicies::InstantEvict(uint32_t sizeOfLoadRequest, Re
 {
 	uint32_t count = rm->_resource.count;
 	auto& data = rm->_resource.data;
+	rm->_resource.Modify();
 	for (uint32_t i = 0; i < count; i++)
 	{
 		if (data.pinned[i].try_lock())
 		{
-			if (data.refCount[i] == 0 && !(data.flags[i] & Resource::Flag::PERSISTENT))
+			if (data.refCount[i] == 0 && !(data.flags[i] & Resource::Flag::PERSISTENT) && data.numBlocks[i])
 			{
 				PrintDebugString("\tEvicting resource. GUID; %llu\n\n", data.guid[i].data);
 
@@ -810,6 +813,7 @@ bool ResourceManager::EvictPolicies::InstantEvict(uint32_t sizeOfLoadRequest, Re
 		}
 
 	}
+	rm->_resource.SearchDone();
 	return true;
 }
 
@@ -821,6 +825,7 @@ bool ResourceManager::EvictPolicies::LRU(uint32_t sizeOfLoadRequest, ResourceMan
 	auto& data = rm->_resource.data;
 	uint32_t num = rm->_allocator->FreeBlocks();
 
+	rm->_resource.Modify();
 	for (uint32_t i = 0; i < count; i++)
 	{
 		if (data.pinned[i].try_lock())
@@ -851,7 +856,7 @@ bool ResourceManager::EvictPolicies::LRU(uint32_t sizeOfLoadRequest, ResourceMan
 				data.pinned[i].unlock();
 		}
 	}
-
+	rm->_resource.SearchDone();
 	bool ret = false;
 	while(lrus.size() && num < sizeOfLoadRequest)
 	{
@@ -884,7 +889,7 @@ bool ResourceManager::EvictPolicies::MRU(uint32_t sizeOfLoadRequest, ResourceMan
 	uint32_t count = rm->_resource.count;
 	auto& data = rm->_resource.data;
 	uint32_t num = rm->_allocator->FreeBlocks();
-
+	rm->_resource.Modify();
 	for (uint32_t i = 0; i < count; i++)
 	{
 		if (data.pinned[i].try_lock())
@@ -915,7 +920,7 @@ bool ResourceManager::EvictPolicies::MRU(uint32_t sizeOfLoadRequest, ResourceMan
 				data.pinned[i].unlock();
 		}
 	}
-
+	rm->_resource.SearchDone();
 	bool ret = false;
 	while (mrus.size() && num < sizeOfLoadRequest)
 	{
