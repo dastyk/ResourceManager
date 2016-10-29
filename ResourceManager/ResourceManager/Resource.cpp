@@ -63,13 +63,16 @@ void Resource::Remove(const uint32_t index)
 		return;
 	}
 	data.pinned[last].lock();
-	if(data.observer[index])
-		data.observer[index]->NotifyDelete(data.guid[index]);
+	for (uint32_t i = 0; i < data.observers[index].numObservers; i++)
+	{
+		data.observers[index].observers[i]->NotifyDelete(data.guid[index]);
+	}
+		
 	data.loaded[index] = data.loaded[last];
 	data.guid[index] = data.guid[last];
 	data.flags[index] = data.flags[last];
 	data.refCount[index] = data.refCount[last];
-	data.observer[index] = data.observer[last];
+	data.observers[index] = data.observers[last];
 	data.rawData[index] = data.rawData[last];
 	data.type[index] = data.type[last];
 	data.size[index] = data.size[last];
@@ -98,8 +101,8 @@ void Resource::Allocate(uint32_t numResources)
 	newData.guid = (SM_GUID*)(newData.loaded + numResources);
 	newData.flags = (Resource::Flag*)(newData.guid + numResources);
 	newData.refCount = (uint16_t*)(newData.flags + numResources);
-	newData.observer = (Observer**)(newData.refCount + numResources);
-	newData.rawData = (void**)(newData.observer + numResources);
+	newData.observers = (ObserverData*)(newData.refCount + numResources);
+	newData.rawData = (void**)(newData.observers + numResources);
 	newData.type = (uint8_t*)(newData.rawData + numResources);
 	newData.size = (uint32_t*)(newData.type + numResources);
 	newData.startBlock = (uint32_t*)(newData.size + numResources);
@@ -111,7 +114,7 @@ void Resource::Allocate(uint32_t numResources)
 	memcpy(newData.guid, data.guid, count * sizeof(SM_GUID));
 	memcpy(newData.flags, data.flags, count * sizeof(Resource::Flag));
 	memcpy(newData.refCount, data.refCount, count * sizeof(uint16_t));
-	memcpy(newData.observer, data.observer, count * sizeof(Observer*));
+	memcpy(newData.observers, data.observers, count * sizeof(ObserverData));
 	memcpy(newData.rawData, data.rawData, count * sizeof(void*));
 	memcpy(newData.type, data.type, count * sizeof(uint8_t));
 	memcpy(newData.size, data.size, count * sizeof(uint32_t));
@@ -141,4 +144,13 @@ void Resource::UnAllocte()
 		data.pinned[i].~mutex();
 	}*/
 	MemoryManager::Release(buffer);
+}
+
+void Resource::Ptr::RegisterObserver(Observer * observer)const
+{
+	if (_observers->numObservers < Resource::MAX_OBSERVERS)
+	{
+		_observers->observers[_observers->numObservers] = observer;
+		_observers->numObservers++;
+	}
 }

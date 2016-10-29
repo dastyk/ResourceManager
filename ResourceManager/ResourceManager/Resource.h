@@ -11,32 +11,7 @@ class Resource
 {
 	friend ResourceManager;
 public:
-	class Ptr
-	{
-		friend Resource;
-		//friend ResourceManager;
-	private:
-		Ptr(uint32_t index,const SM_GUID& guid, const void*& data, const  uint8_t& type, const  uint32_t& size, Observer** observerPtr) : index(index), guid(guid), data(data), type(type), size(size), _observerPtr(observerPtr)
-		{
-
-		}
-	public:
-		~Ptr()
-		{
-
-		}
-		const SM_GUID& guid;
-		const void*& data;
-		const uint8_t& type;
-		const uint32_t& size;
-		void RegisterObserver(Observer* observer) const
-		{
-			*_observerPtr = observer;
-		}
-	private:
-		const uint32_t index;
-		Observer** _observerPtr;
-	};
+	
 
 	CreateFlag(Flag, uint32_t, 4,		
 		NOT_URGENT = 1 << 0,
@@ -47,13 +22,21 @@ public:
 
 	static const uint32_t NotFound = UINT32_MAX;
 
+private:
+	const static uint8_t MAX_OBSERVERS = 10;
+	struct ObserverData
+	{
+		uint8_t numObservers;
+		Observer* observers[MAX_OBSERVERS];
+	};
+
 	const static size_t Size =
 		sizeof(std::recursive_mutex) +
 		sizeof(bool) +
 		sizeof(SM_GUID) +
 		sizeof(Resource::Flag) +
 		sizeof(uint16_t) +
-		sizeof(Observer*) +
+		sizeof(ObserverData*) +
 		sizeof(void*) +
 		sizeof(uint8_t) +
 		sizeof(uint32_t) +
@@ -68,7 +51,7 @@ public:
 		SM_GUID* guid;
 		Resource::Flag* flags;
 		uint16_t* refCount;
-		Observer** observer;
+		ObserverData* observers;
 		void** rawData;
 		uint8_t* type;
 		uint32_t* size;
@@ -76,7 +59,29 @@ public:
 		uint32_t* numBlocks;
 		uint64_t* timeStamp;
 	};
+public:
+	class Ptr
+	{
+		friend Resource;
+	private:
+		Ptr(uint32_t index, const SM_GUID& guid, const void*& data, const  uint8_t& type, const  uint32_t& size,ObserverData* observers) : index(index), guid(guid), data(data), type(type), size(size), _observers(observers)
+		{
 
+		}
+	public:
+		~Ptr()
+		{
+
+		}
+		const SM_GUID& guid;
+		const void*& data;
+		const uint8_t& type;
+		const uint32_t& size;
+		void RegisterObserver(Observer* observer)const;
+	private:
+		const uint32_t index;
+		ObserverData* _observers;
+	};
 private:
 	std::mutex modifyLock;
 	uint32_t limit = 0;
@@ -97,7 +102,7 @@ private:
 	/*The MakePtr function may not be called on a resource that is not pinned.*/
 	Ptr MakePtr(uint32_t index)
 	{
-		return Ptr(index, (const SM_GUID&)data.guid[index], (const void*&)data.rawData[index], (const uint8_t&)data.type[index], (const uint32_t&)data.size[index], &data.observer[index]);
+		return Ptr(index, (const SM_GUID&)data.guid[index], (const void*&)data.rawData[index], (const uint8_t&)data.type[index], (const uint32_t&)data.size[index], &data.observers[index]);
 	}
 	
 	void DestroyPtr(const Ptr& resource)

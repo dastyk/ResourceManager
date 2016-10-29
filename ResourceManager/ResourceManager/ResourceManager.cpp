@@ -46,7 +46,7 @@ const SM_GUID ResourceManager::LoadResource(SM_GUID guid, const Resource::Flag& 
 	
 	uint32_t count = _resource.count;
 	data.pinned[count].lock();
-	data.observer[count] = nullptr;
+	data.observers[count].numObservers = 0;
 	data.loaded[count] = false;
 	data.flags[count] = flag;
 	data.guid[count] = guid;
