@@ -10,10 +10,9 @@ int ParseObj(const char * filename, ArfData::Data * data, ArfData::DataPointers 
 	if (file.is_open())
 	{
 		int res = parser.parse(&file, data, dataPointers);
-		cout << "Parse complete. Result = " << res << endl;
 		return res;
 	}
-	return 2;
+	return OBJ_PARSER_FILE_NOT_FOUND;
 }
 struct membuf : std::streambuf
 {
@@ -31,9 +30,7 @@ int ParseObj(const void * rawData, size_t size, ArfData::Data * data, ArfData::D
 		istream stream(&buf);
 
 		int res = parser.parse(&stream, data, dataPointers);
-		cout << "Parse complete. Result = " << res << endl;
-
 		return res;
 	}
-	return 2;
+	return OBJ_PARSER_FILE_NOT_FOUND;
 }
