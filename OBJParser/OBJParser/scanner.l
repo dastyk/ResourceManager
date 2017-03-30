@@ -26,7 +26,7 @@
 %option prefix="ObjParser_"
 
 %x comment
-ws      [ \t\n]+
+ws      [ \t\n\r]+
 
 %%
 
@@ -55,9 +55,13 @@ usemtl												{ return ObjParser::Parser::make_USEMTL(yytext, ObjParser::loc
 off													{ return ObjParser::Parser::make_BOOLEAN(false, ObjParser::location());}
 on													{ return ObjParser::Parser::make_BOOLEAN(true, ObjParser::location());}
 
-[a-zA-Z0-9._:]+										{ return ObjParser::Parser::make_NAME(yytext, ObjParser::location());}
+[a-zA-Z0-9._:-]+									{ std::cout << yytext << std::endl; return ObjParser::Parser::make_NAME(yytext, ObjParser::location());}
 
 \/													{ return ObjParser::Parser::make_SEP("true", ObjParser::location());}
+
 <<EOF>>     { return yyterminate(); }
+
+.													{}
+
 
 %%
