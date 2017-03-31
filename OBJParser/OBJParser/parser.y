@@ -118,13 +118,13 @@ optreal2		: real										{ $$ = $1;}
 				| /*empty*/									{ $$ = 0.0f;}
 				;
 				
-createface		: indices 									{ $$.push_back($1 - 1); }
-				| createface indices						{ $$ = $1; $$.push_back($2 - 1);}
+createface		: indices 									{ $$.push_back($1); }
+				| createface indices						{ $$ = $1; $$.push_back($2);}
 				;
 				
-indices			: INTEGER									{ $$.push_back($1); }
-				| indices SEP SEP INTEGER					{ $$ = $1; $$.push_back(UINT64_MAX); $$.push_back($4);}
-				| indices SEP INTEGER						{ $$ = $1; $$.push_back($3);}		
+indices			: INTEGER									{ $$.push_back($1 - 1); }
+				| indices SEP SEP INTEGER					{ $$ = $1; $$.push_back(UINT32_MAX); $$.push_back($4 - 1);}
+				| indices SEP INTEGER						{ $$ = $1; $$.push_back($3 - 1);}		
 				;	
 
 %%

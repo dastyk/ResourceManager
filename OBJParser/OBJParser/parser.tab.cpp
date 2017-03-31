@@ -783,19 +783,19 @@ namespace  ObjParser  {
 
   case 24:
 #line 125 "parser.y" // lalr1.cc:846
-    { yylhs.value.as< std::vector<uint32_t> > ().push_back(yystack_[0].value.as< uint32_t > ()); }
+    { yylhs.value.as< std::vector<uint32_t> > ().push_back(yystack_[0].value.as< uint32_t > () - 1); }
 #line 788 "parser.tab.cpp" // lalr1.cc:846
     break;
 
   case 25:
 #line 126 "parser.y" // lalr1.cc:846
-    { yylhs.value.as< std::vector<uint32_t> > () = yystack_[3].value.as< std::vector<uint32_t> > (); yylhs.value.as< std::vector<uint32_t> > ().push_back(UINT64_MAX); yylhs.value.as< std::vector<uint32_t> > ().push_back(yystack_[0].value.as< uint32_t > ());}
+    { yylhs.value.as< std::vector<uint32_t> > () = yystack_[3].value.as< std::vector<uint32_t> > (); yylhs.value.as< std::vector<uint32_t> > ().push_back(UINT32_MAX); yylhs.value.as< std::vector<uint32_t> > ().push_back(yystack_[0].value.as< uint32_t > () - 1);}
 #line 794 "parser.tab.cpp" // lalr1.cc:846
     break;
 
   case 26:
 #line 127 "parser.y" // lalr1.cc:846
-    { yylhs.value.as< std::vector<uint32_t> > () = yystack_[2].value.as< std::vector<uint32_t> > (); yylhs.value.as< std::vector<uint32_t> > ().push_back(yystack_[0].value.as< uint32_t > ());}
+    { yylhs.value.as< std::vector<uint32_t> > () = yystack_[2].value.as< std::vector<uint32_t> > (); yylhs.value.as< std::vector<uint32_t> > ().push_back(yystack_[0].value.as< uint32_t > () - 1);}
 #line 800 "parser.tab.cpp" // lalr1.cc:846
     break;
 
