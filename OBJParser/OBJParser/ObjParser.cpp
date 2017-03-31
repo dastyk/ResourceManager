@@ -174,7 +174,7 @@ void ObjParser::Interpreter::AddFace(const ArfData::Face & face)
 			std::vector<uint32_t> in;
 			for (uint8_t j = 0; j < face.indices[i].indexCount; j++)
 			{
-				in.push_back(face.indices[i].index[j]);
+				in.push_back(face.indices[i].index[j]-1);
 			}
 			face1v.push_back(in);
 		}
@@ -190,7 +190,7 @@ void ObjParser::Interpreter::AddFace(const ArfData::Face & face)
 			std::vector<uint32_t> in;
 			for (uint8_t j = 0; j < face.indices[indices[i]].indexCount; j++)
 			{
-				in.push_back(face.indices[indices[i]].index[j]);
+				in.push_back(face.indices[indices[i]].index[j]-1);
 			}
 			face1v.push_back(in);
 		}
