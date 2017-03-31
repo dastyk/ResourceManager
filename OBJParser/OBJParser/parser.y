@@ -118,8 +118,8 @@ optreal2		: real										{ $$ = $1;}
 				| /*empty*/									{ $$ = 0.0f;}
 				;
 				
-createface		: indices 									{ $$.push_back($1); }
-				| createface indices						{ $$ = $1; $$.push_back($2);}
+createface		: indices 									{ $$.push_back($1 - 1); }
+				| createface indices						{ $$ = $1; $$.push_back($2 - 1);}
 				;
 				
 indices			: INTEGER									{ $$.push_back($1); }
