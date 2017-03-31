@@ -2,7 +2,7 @@
 #include "ObjParser.h"
 #include <fstream>
 
-int ParseObj(const char * filename, ArfData::Data * data, ArfData::DataPointers * dataPointers)
+int ParseObj(const char * filename, ArfData::Data * data, ArfData::DataPointers * dataPointers, uint32_t flags)
 {
 	ObjParser::Interpreter parser;
 	ifstream file(filename);
@@ -12,7 +12,7 @@ int ParseObj(const char * filename, ArfData::Data * data, ArfData::DataPointers 
 		int res = parser.parse(&file, data, dataPointers);
 		return res;
 	}
-	return OBJ_PARSER_FILE_NOT_FOUND;
+	return PARSER_FILE_NOT_FOUND;
 }
 struct membuf : std::streambuf
 {
@@ -21,7 +21,7 @@ struct membuf : std::streambuf
 	}
 };
 
-int ParseObj(const void * rawData, size_t size, ArfData::Data * data, ArfData::DataPointers * dataPointers)
+int ParseObj(const void * rawData, size_t size, ArfData::Data * data, ArfData::DataPointers * dataPointers, uint32_t flags)
 {
 	if (rawData != nullptr)
 	{
@@ -32,5 +32,33 @@ int ParseObj(const void * rawData, size_t size, ArfData::Data * data, ArfData::D
 		int res = parser.parse(&stream, data, dataPointers);
 		return res;
 	}
-	return OBJ_PARSER_FILE_NOT_FOUND;
+	return PARSER_FILE_NOT_FOUND;
+}
+
+int ParseArf(const char * filename, ArfData::Data * data, ArfData::DataPointers * dataPointers, uint32_t flags)
+{
+	fstream f;
+	f.open(filename, ios::binary);
+	if (!f.is_open())
+		return PARSER_FILE_NOT_FOUND;
+
+	f.read((char*)data, sizeof(ArfData::Data));
+
+	dataPointers->buffer = operator new(data->allocated);
+	f.read((char*)dataPointers->buffer, data->allocated);
+
+	dataPointers->positions = (ArfData::Position*)dataPointers->buffer;
+	dataPointers->texCoords = (ArfData::TexCoord*)(dataPointers->positions + data->PosCap);
+	dataPointers->normals = (ArfData::Normal*)(dataPointers->texCoords + data->TexCap);
+	dataPointers->faces = (ArfData::Face*)(dataPointers->normals + data->NormCap);
+	dataPointers->subMesh = (ArfData::SubMesh*)(dataPointers->faces + data->FaceCap);
+
+	f.close();
+
+	return PARSER_SUCCESS;
+}
+
+int Interleave(ArfData::Data * data, ArfData::DataPointers * dataPointers, uint32_t flags)
+{
+	return PARSER_SUCCESS;
 }

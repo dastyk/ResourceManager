@@ -30,7 +30,7 @@
 // This special exception was added by the Free Software Foundation in
 // version 2.2 of Bison.
 // //                    "%code top" blocks.
-#line 31 "parser.y" // lalr1.cc:391
+#line 32 "parser.y" // lalr1.cc:391
 
     #include <iostream>
     #include "scanner.h"
@@ -650,151 +650,151 @@ namespace  ObjParser  {
         switch (yyn)
           {
   case 2:
-#line 88 "parser.y" // lalr1.cc:846
+#line 89 "parser.y" // lalr1.cc:846
     { }
 #line 656 "parser.tab.cpp" // lalr1.cc:846
     break;
 
   case 3:
-#line 89 "parser.y" // lalr1.cc:846
+#line 90 "parser.y" // lalr1.cc:846
     { }
 #line 662 "parser.tab.cpp" // lalr1.cc:846
     break;
 
   case 4:
-#line 92 "parser.y" // lalr1.cc:846
+#line 93 "parser.y" // lalr1.cc:846
     { driver.AddSubMesh(yystack_[0].value.as< std::string > ());}
 #line 668 "parser.tab.cpp" // lalr1.cc:846
     break;
 
   case 5:
-#line 93 "parser.y" // lalr1.cc:846
+#line 94 "parser.y" // lalr1.cc:846
     { }
 #line 674 "parser.tab.cpp" // lalr1.cc:846
     break;
 
   case 6:
-#line 94 "parser.y" // lalr1.cc:846
+#line 95 "parser.y" // lalr1.cc:846
     { driver.AddPosition(ArfData::Position(yystack_[3].value.as< float > (),yystack_[2].value.as< float > (),yystack_[1].value.as< float > ())); }
 #line 680 "parser.tab.cpp" // lalr1.cc:846
     break;
 
   case 7:
-#line 95 "parser.y" // lalr1.cc:846
+#line 96 "parser.y" // lalr1.cc:846
     { driver.AddTexCoord(ArfData::TexCoord(yystack_[2].value.as< float > (),yystack_[1].value.as< float > ()));}
 #line 686 "parser.tab.cpp" // lalr1.cc:846
     break;
 
   case 8:
-#line 96 "parser.y" // lalr1.cc:846
+#line 97 "parser.y" // lalr1.cc:846
     { driver.AddNormal(ArfData::Normal(yystack_[2].value.as< float > (),yystack_[1].value.as< float > (),yystack_[0].value.as< float > ())); }
 #line 692 "parser.tab.cpp" // lalr1.cc:846
     break;
 
   case 9:
-#line 97 "parser.y" // lalr1.cc:846
+#line 98 "parser.y" // lalr1.cc:846
     { }
 #line 698 "parser.tab.cpp" // lalr1.cc:846
     break;
 
   case 10:
-#line 98 "parser.y" // lalr1.cc:846
+#line 99 "parser.y" // lalr1.cc:846
     {}
 #line 704 "parser.tab.cpp" // lalr1.cc:846
     break;
 
   case 11:
-#line 99 "parser.y" // lalr1.cc:846
+#line 100 "parser.y" // lalr1.cc:846
     { }
 #line 710 "parser.tab.cpp" // lalr1.cc:846
     break;
 
   case 12:
-#line 100 "parser.y" // lalr1.cc:846
+#line 101 "parser.y" // lalr1.cc:846
     { }
 #line 716 "parser.tab.cpp" // lalr1.cc:846
     break;
 
   case 13:
-#line 101 "parser.y" // lalr1.cc:846
+#line 102 "parser.y" // lalr1.cc:846
     { driver.AddFace(ArfData::Face(yystack_[0].value.as< std::vector<std::vector<uint32_t>> > ()));}
 #line 722 "parser.tab.cpp" // lalr1.cc:846
     break;
 
   case 14:
-#line 104 "parser.y" // lalr1.cc:846
+#line 105 "parser.y" // lalr1.cc:846
     { yylhs.value.as< float > () = yystack_[0].value.as< float > (); }
 #line 728 "parser.tab.cpp" // lalr1.cc:846
     break;
 
   case 15:
-#line 105 "parser.y" // lalr1.cc:846
+#line 106 "parser.y" // lalr1.cc:846
     { yylhs.value.as< float > () = static_cast<float>(yystack_[0].value.as< uint32_t > ());}
 #line 734 "parser.tab.cpp" // lalr1.cc:846
     break;
 
   case 16:
-#line 108 "parser.y" // lalr1.cc:846
+#line 109 "parser.y" // lalr1.cc:846
     { yylhs.value.as< std::string > ()= yystack_[0].value.as< std::string > ();}
 #line 740 "parser.tab.cpp" // lalr1.cc:846
     break;
 
   case 17:
-#line 109 "parser.y" // lalr1.cc:846
+#line 110 "parser.y" // lalr1.cc:846
     { yylhs.value.as< std::string > () = "default";}
 #line 746 "parser.tab.cpp" // lalr1.cc:846
     break;
 
   case 18:
-#line 112 "parser.y" // lalr1.cc:846
+#line 113 "parser.y" // lalr1.cc:846
     { yylhs.value.as< float > () = yystack_[0].value.as< float > (); }
 #line 752 "parser.tab.cpp" // lalr1.cc:846
     break;
 
   case 19:
-#line 113 "parser.y" // lalr1.cc:846
+#line 114 "parser.y" // lalr1.cc:846
     { yylhs.value.as< float > () = 1.0f; }
 #line 758 "parser.tab.cpp" // lalr1.cc:846
     break;
 
   case 20:
-#line 116 "parser.y" // lalr1.cc:846
+#line 117 "parser.y" // lalr1.cc:846
     { yylhs.value.as< float > () = yystack_[0].value.as< float > ();}
 #line 764 "parser.tab.cpp" // lalr1.cc:846
     break;
 
   case 21:
-#line 117 "parser.y" // lalr1.cc:846
+#line 118 "parser.y" // lalr1.cc:846
     { yylhs.value.as< float > () = 0.0f;}
 #line 770 "parser.tab.cpp" // lalr1.cc:846
     break;
 
   case 22:
-#line 120 "parser.y" // lalr1.cc:846
+#line 121 "parser.y" // lalr1.cc:846
     { yylhs.value.as< std::vector<std::vector<uint32_t>> > ().push_back(yystack_[0].value.as< std::vector<uint32_t> > ()); }
 #line 776 "parser.tab.cpp" // lalr1.cc:846
     break;
 
   case 23:
-#line 121 "parser.y" // lalr1.cc:846
+#line 122 "parser.y" // lalr1.cc:846
     { yylhs.value.as< std::vector<std::vector<uint32_t>> > () = yystack_[1].value.as< std::vector<std::vector<uint32_t>> > (); yylhs.value.as< std::vector<std::vector<uint32_t>> > ().push_back(yystack_[0].value.as< std::vector<uint32_t> > ());}
 #line 782 "parser.tab.cpp" // lalr1.cc:846
     break;
 
   case 24:
-#line 124 "parser.y" // lalr1.cc:846
+#line 125 "parser.y" // lalr1.cc:846
     { yylhs.value.as< std::vector<uint32_t> > ().push_back(yystack_[0].value.as< uint32_t > ()); }
 #line 788 "parser.tab.cpp" // lalr1.cc:846
     break;
 
   case 25:
-#line 125 "parser.y" // lalr1.cc:846
+#line 126 "parser.y" // lalr1.cc:846
     { yylhs.value.as< std::vector<uint32_t> > () = yystack_[3].value.as< std::vector<uint32_t> > (); yylhs.value.as< std::vector<uint32_t> > ().push_back(UINT64_MAX); yylhs.value.as< std::vector<uint32_t> > ().push_back(yystack_[0].value.as< uint32_t > ());}
 #line 794 "parser.tab.cpp" // lalr1.cc:846
     break;
 
   case 26:
-#line 126 "parser.y" // lalr1.cc:846
+#line 127 "parser.y" // lalr1.cc:846
     { yylhs.value.as< std::vector<uint32_t> > () = yystack_[2].value.as< std::vector<uint32_t> > (); yylhs.value.as< std::vector<uint32_t> > ().push_back(yystack_[0].value.as< uint32_t > ());}
 #line 800 "parser.tab.cpp" // lalr1.cc:846
     break;
@@ -1158,9 +1158,9 @@ namespace  ObjParser  {
   const unsigned char
    Parser ::yyrline_[] =
   {
-       0,    88,    88,    89,    92,    93,    94,    95,    96,    97,
-      98,    99,   100,   101,   104,   105,   108,   109,   112,   113,
-     116,   117,   120,   121,   124,   125,   126
+       0,    89,    89,    90,    93,    94,    95,    96,    97,    98,
+      99,   100,   101,   102,   105,   106,   109,   110,   113,   114,
+     117,   118,   121,   122,   125,   126,   127
   };
 
   // Print the state stack on the debug stream.
@@ -1196,7 +1196,7 @@ namespace  ObjParser  {
 #line 9 "parser.y" // lalr1.cc:1156
 } //  ObjParser 
 #line 1199 "parser.tab.cpp" // lalr1.cc:1156
-#line 129 "parser.y" // lalr1.cc:1157
+#line 130 "parser.y" // lalr1.cc:1157
 
 
 // Bison expects us to provide implementation - otherwise linker complains

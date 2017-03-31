@@ -7,6 +7,7 @@
 %define api.value.type variant
 %define parse.assert
 %define api.namespace { ObjParser }
+
 %code requires
 {
     #include <iostream>
